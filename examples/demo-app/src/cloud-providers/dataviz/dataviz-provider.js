@@ -169,14 +169,20 @@ export default class DatavizProvider extends Provider {
         // For this MVP, every save might create a new project unless we enhance the API.
         // However, to be safe and simple, we will just POST as a new project for now.
 
+        let thumbnailBase64 = null;
+        if (thumbnail) {
+            thumbnailBase64 = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(thumbnail);
+            });
+        }
+
         const body = {
             name,
             app_name: 'keplergl',
             data: map,
-            // thumbnail is a Blob. We might need to encode it if we want to send it.
-            // But the spec mostly talks about JSON data. 
-            // We will skip sending thumbnail to API for now unless we base64 it.
-            // Let's rely on just the JSON data as per spec "data: { ...rawgraphs_json_content... }".
+            thumbnail: thumbnailBase64
         };
 
         const response = await fetch(`${API_URL}/projects`, {
