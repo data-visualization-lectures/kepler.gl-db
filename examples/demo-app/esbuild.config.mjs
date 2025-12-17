@@ -94,7 +94,8 @@ const config = {
   outfile: 'dist/bundle.js',
   bundle: true,
   define: {
-    NODE_ENV
+    NODE_ENV,
+    'process.env': JSON.stringify(process.env)
   },
   plugins: [
     dotenvRun({
@@ -106,6 +107,10 @@ const config = {
     replace({
       __PACKAGE_VERSION__: KeplerPackage.version,
       include: /constants\/src\/default-settings\.ts/
+    }),
+    replace({
+      'import { bpfrpt_proptype_WindowScroller } from "../WindowScroller.js";': '',
+      include: /react-virtualized\/dist\/es\/WindowScroller\/utils\/onScroll\.js/
     })
   ]
 };
