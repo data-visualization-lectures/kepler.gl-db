@@ -171,11 +171,17 @@ export default class DatavizProvider extends Provider {
 
         let thumbnailBase64 = null;
         if (thumbnail) {
-            thumbnailBase64 = await new Promise((resolve) => {
+            console.log('DatavizProvider: Thumbnail Blob found', thumbnail.size);
+            const dataUrl = await new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result);
                 reader.readAsDataURL(thumbnail);
             });
+            // Remove Data-URI prefix if present (api likely expects pure base64 or handles it, trying pure base64)
+            thumbnailBase64 = dataUrl.split(',')[1];
+            console.log('DatavizProvider: Thumbnail Base64 length', thumbnailBase64.length);
+        } else {
+            console.warn('DatavizProvider: No thumbnail blob in mapData');
         }
 
         const body = {
