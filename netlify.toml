@@ -1,8 +1,7 @@
 [build]
-# demo-app をローカルでビルドした成果物だけを配置する前提
-base = "examples/demo-app"
-publish = "dist"
-command = "echo 'Use local build: netlify deploy --dir=examples/demo-app/dist'"
+# ルートからの絶対パスで指定することで誤解を避ける
+publish = "examples/demo-app/dist"
+command = "echo 'Using committed artifacts'"
 
 # Netlify 側でのビルド／依存インストールは行わないため、環境変数指定は不要
 
