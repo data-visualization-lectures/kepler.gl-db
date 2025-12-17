@@ -1,10 +1,10 @@
 {
   "scripts": {
-    "start": "node esbuild.config.mjs --start",
-    "build": "node esbuild.config.mjs --build",
+    "start": "mkdir -p dist/assets && cp -r src/assets/* dist/assets/ && node esbuild.config.mjs --start",
+    "build": "node esbuild.config.mjs --build && mkdir -p dist/assets && cp -r src/assets/* dist/assets/",
     "deploy": "yarn build && netlify deploy -d dist",
     "deploy:prod": "yarn build && netlify deploy -d dist --prod",
-    "start:local": "NODE_ENV=local node esbuild.config.mjs --start",
+    "start:local": "mkdir -p dist/assets && cp -r src/assets/* dist/assets/ && NODE_ENV=local node esbuild.config.mjs --start",
     "start:local-ai": "NODE_ENV=local node esbuild.config.mjs --start --env.ai",
     "start:local-deck": "NODE_ENV=local node esbuild.config.mjs --start --env.deck",
     "start:local-deck-src": "NODE_ENV=local node esbuild.config.mjs --start --env.deck_src",
