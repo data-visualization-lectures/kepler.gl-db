@@ -1,6 +1,6 @@
 [build]
-# ルートからの絶対パスで指定することで誤解を避ける
-publish = "examples/demo-app/dist"
+base = "examples/demo-app"
+publish = "dist"
 command = "echo 'Using committed artifacts'"
 
 [build.environment]
