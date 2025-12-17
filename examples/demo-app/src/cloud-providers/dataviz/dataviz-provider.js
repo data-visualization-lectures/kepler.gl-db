@@ -42,10 +42,12 @@ export default class DatavizProvider extends Provider {
     }
 
     async getUser() {
-        if (Window.supabase?.auth?.getUser) {
+        if (Window.supabase?.auth?.getSession) {
             // Supabase v2
-            const { data } = await Window.supabase.auth.getUser();
-            const user = data.user;
+            // Use getSession() instead of getUser() to rely on the local session
+            // managed by the shared auth client.
+            const { data } = await Window.supabase.auth.getSession();
+            const user = data.session?.user;
             if (user) {
                 return {
                     name: user.email,
@@ -54,7 +56,7 @@ export default class DatavizProvider extends Provider {
                 };
             }
         } else if (Window.supabase?.auth?.user) {
-            // Supabase v1
+            // Supabase v1 (auth.user() returns the user from local session)
             const user = Window.supabase.auth.user();
             if (user) {
                 return {
@@ -67,20 +69,24 @@ export default class DatavizProvider extends Provider {
         return null;
     }
 
+    async _waitForSupabase() {
+        let retries = 0;
+        while (!Window.supabase && retries < 10) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            retries++;
+        }
+    }
+
     async login() {
-        // We expect the user to be logged in via the shared auth client.
-        // However, if not, we could trigger a login or simply check the status.
-        // The shared header UI manages login state.
+        // Ensure Supabase client is initialized before checking user
+        await this._waitForSupabase();
+
         const user = await this.getUser();
         if (user) {
             return user;
         }
-        // If not logged in, we reject to trigger any potential error handling or just return null
-        // Ideally, the UI shows a "Login" button which calls this.
-        // Since our Login is handled externally by the header, we can try to prompt interaction or just return rejected.
-        // But for now, let's assume the user has clicked "Login" on the header.
-        // Or we could try to re-read the session.
 
+        // If explicitly not logged in after check, prompt user.
         return Promise.reject(new Error('Please log in using the top bar.'));
     }
 

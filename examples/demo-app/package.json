@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "mkdir -p dist/assets && cp -r src/assets/* dist/assets/ && node esbuild.config.mjs --start",
-    "build": "node esbuild.config.mjs --build && mkdir -p dist/assets && cp -r src/assets/* dist/assets/ && cp src/index.html dist/",
+    "build": "node esbuild.config.mjs --build && mkdir -p dist/assets && cp -r src/assets/* dist/assets/ && cp src/index.html dist/ && cp src/_redirects dist/",
     "deploy": "yarn build && netlify deploy -d dist",
     "deploy:prod": "yarn build && netlify deploy -d dist --prod",
     "start:local": "mkdir -p dist/assets && cp -r src/assets/* dist/assets/ && NODE_ENV=local node esbuild.config.mjs --start",
