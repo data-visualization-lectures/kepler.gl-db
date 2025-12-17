@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
+import { CLOUD_PROVIDERS_CONFIGURATION } from '../constants/default-settings';
 
 import DropboxProvider from './dropbox/dropbox-provider';
+import DatavizProvider from './dataviz/dataviz-provider';
 
-const {DROPBOX_CLIENT_ID} = CLOUD_PROVIDERS_CONFIGURATION;
+const { DROPBOX_CLIENT_ID } = CLOUD_PROVIDERS_CONFIGURATION;
 
 const DROPBOX_CLIENT_NAME = 'Kepler.gl Demo App';
 
-export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
+export const DEFAULT_CLOUD_PROVIDER = 'dataviz';
 
 export const CLOUD_PROVIDERS = [
+  new DatavizProvider(),
   new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME)
 ];
 
