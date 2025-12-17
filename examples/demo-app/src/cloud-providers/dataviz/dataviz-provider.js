@@ -147,7 +147,9 @@ export default class DatavizProvider extends Provider {
         };
     }
 
-    async uploadMap({ mapData, options = {} }) {
+    async uploadMap(args) {
+        console.error('DEBUG_ERROR: DatavizProvider.uploadMap called with:', args);
+        const { mapData, options = {} } = args;
         const token = await this.getAccessToken();
         if (!token) {
             throw new Error('Not logged in');
