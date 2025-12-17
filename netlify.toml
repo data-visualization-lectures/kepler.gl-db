@@ -9,6 +9,12 @@ command = "echo 'Using committed artifacts'"
 # Netlify 側でのビルド／依存インストールは行わないため、環境変数指定は不要
 
 [[redirects]]
+  from = "/api/dataviz/*"
+  to = "https://api.dataviz.jp/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
 from = "/*"
 to = "/index.html"
 status = 200

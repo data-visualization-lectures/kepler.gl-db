@@ -7,7 +7,7 @@ import Window from 'global/window';
 
 const NAME = 'dataviz';
 const DISPLAY_NAME = 'Dataviz Cloud';
-const API_URL = 'https://api.dataviz.jp/api';
+const API_URL = '/api/dataviz';
 
 export default class DatavizProvider extends Provider {
     constructor() {
