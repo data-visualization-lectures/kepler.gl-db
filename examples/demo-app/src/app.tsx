@@ -172,12 +172,12 @@ const App = props => {
   useEffect(() => {
     // Inject Supabase Client (Local)
     const supabaseScript = document.createElement('script');
-    supabaseScript.src = 'assets/supabase.js';
+    supabaseScript.src = '/assets/supabase.js';
     supabaseScript.async = true;
     supabaseScript.onload = () => {
       // Inject Dataviz Auth Client (Local)
       const authScript = document.createElement('script');
-      authScript.src = 'assets/dataviz-auth-client.js';
+      authScript.src = '/assets/dataviz-auth-client.js';
       authScript.async = true;
       document.body.appendChild(authScript);
     };
