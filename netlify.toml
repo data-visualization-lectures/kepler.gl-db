@@ -3,6 +3,10 @@
 publish = "examples/demo-app/dist"
 command = "echo 'Using committed artifacts'"
 
+[build.environment]
+  YARN_FLAGS = "--ignore-scripts"
+  NPM_FLAGS = "--ignore-scripts"
+
 # Netlify 側でのビルド／依存インストールは行わないため、環境変数指定は不要
 
 [[redirects]]
