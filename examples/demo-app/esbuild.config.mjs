@@ -108,10 +108,27 @@ const config = {
       __PACKAGE_VERSION__: KeplerPackage.version,
       include: /constants\/src\/default-settings\.ts/
     }),
-    replace({
-      'import { bpfrpt_proptype_WindowScroller } from "../WindowScroller.js";': '',
-      include: /react-virtualized\/dist\/es\/WindowScroller\/utils\/onScroll\.js/
-    })
+    {
+      name: 'react-virtualized-patch',
+      setup(build) {
+        build.onLoad(
+          {
+            filter:
+              /react-virtualized\/dist\/es\/WindowScroller\/utils\/onScroll\.js$/
+          },
+          async args => {
+            const text = await fs.promises.readFile(args.path, 'utf8');
+            return {
+              contents: text.replace(
+                'import { bpfrpt_proptype_WindowScroller } from "../WindowScroller.js";',
+                ''
+              ),
+              loader: 'js'
+            };
+          }
+        );
+      }
+    }
   ]
 };
 
