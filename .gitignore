@@ -3,10 +3,11 @@ node_modules/
 coverage/
 *-coverage/
 .nyc_output/
-dist/
+coverage/
+*-coverage/
+.nyc_output/
 build/
 umd/
-*/**/dist/
 
 typedoc/
 

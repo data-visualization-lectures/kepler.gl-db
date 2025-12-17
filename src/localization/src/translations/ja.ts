@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {LOCALES} from '../locales';
+import { LOCALES } from '../locales';
 
 export default {
   property: {
@@ -422,8 +422,9 @@ export default {
   },
   color: {
     customPalette: 'カスタムパレット',
-    steps: '段階数',
+    steps: '分類数',
     type: 'タイプ',
+    colorBlindSafe: '色覚バリアフリー',
     reversed: '反転'
   },
   scale: {

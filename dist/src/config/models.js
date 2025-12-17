@@ -1,0 +1,26 @@
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.PROVIDER_MODELS = exports.PROVIDER_DEFAULT_BASE_URLS = void 0;
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
+var PROVIDER_DEFAULT_BASE_URLS = exports.PROVIDER_DEFAULT_BASE_URLS = {
+  "openai": "https://api.openai.com/v1",
+  "anthropic": "https://api.anthropic.com/v1",
+  "google": "https://generativelanguage.googleapis.com/v1beta",
+  "deepseek": "https://api.deepseek.com/v1",
+  "xai": "https://api.x.ai/v1",
+  "ollama": "http://localhost:11434/api"
+};
+var PROVIDER_MODELS = exports.PROVIDER_MODELS = {
+  openai: ['gpt-4.1', 'gpt-4o', 'gpt-4o-mini', 'gpt-4', 'gpt-3.5-turbo', 'o1', 'o1-preview', 'o1-mini'],
+  google: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'],
+  deepseek: ['deepseek-chat'],
+  anthropic: ['claude-opus-4-1', 'claude-opus-4-0', 'claude-sonnet-4-0', 'claude-3.7-sonnet', 'claude-3.5-sonnet', 'claude-3.5-haiku', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
+  xai: ['grok-3', 'grok-3-fast', 'grok-3-mini', 'grok-3-mini-fast'],
+  ollama: ['qwen3:32b', 'gpt-oss']
+};
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJQUk9WSURFUl9ERUZBVUxUX0JBU0VfVVJMUyIsImV4cG9ydHMiLCJQUk9WSURFUl9NT0RFTFMiLCJvcGVuYWkiLCJnb29nbGUiLCJkZWVwc2VlayIsImFudGhyb3BpYyIsInhhaSIsIm9sbGFtYSJdLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9haS1hc3Npc3RhbnQvc3JjL2NvbmZpZy9tb2RlbHMudHMiXSwic291cmNlc0NvbnRlbnQiOlsiLy8gU1BEWC1MaWNlbnNlLUlkZW50aWZpZXI6IE1JVFxuLy8gQ29weXJpZ2h0IGNvbnRyaWJ1dG9ycyB0byB0aGUga2VwbGVyLmdsIHByb2plY3RcblxuZXhwb3J0IGNvbnN0IFBST1ZJREVSX0RFRkFVTFRfQkFTRV9VUkxTID0ge1xuICBcIm9wZW5haVwiOiBcImh0dHBzOi8vYXBpLm9wZW5haS5jb20vdjFcIixcbiAgXCJhbnRocm9waWNcIjogXCJodHRwczovL2FwaS5hbnRocm9waWMuY29tL3YxXCIsXG4gIFwiZ29vZ2xlXCI6IFwiaHR0cHM6Ly9nZW5lcmF0aXZlbGFuZ3VhZ2UuZ29vZ2xlYXBpcy5jb20vdjFiZXRhXCIsXG4gIFwiZGVlcHNlZWtcIjogXCJodHRwczovL2FwaS5kZWVwc2Vlay5jb20vdjFcIixcbiAgXCJ4YWlcIjogXCJodHRwczovL2FwaS54LmFpL3YxXCIsXG4gIFwib2xsYW1hXCI6IFwiaHR0cDovL2xvY2FsaG9zdDoxMTQzNC9hcGlcIlxufTtcblxuZXhwb3J0IGNvbnN0IFBST1ZJREVSX01PREVMUyA9IHtcbiAgb3BlbmFpOiBbXG4gICAgJ2dwdC00LjEnLFxuICAgICdncHQtNG8nLFxuICAgICdncHQtNG8tbWluaScsXG4gICAgJ2dwdC00JyxcbiAgICAnZ3B0LTMuNS10dXJibycsXG4gICAgJ28xJyxcbiAgICAnbzEtcHJldmlldycsXG4gICAgJ28xLW1pbmknXG4gIF0sXG4gIGdvb2dsZTogW1xuICAgICdnZW1pbmktMi41LWZsYXNoJyxcbiAgICAnZ2VtaW5pLTIuNS1wcm8nLFxuICAgICdnZW1pbmktMi4wLWZsYXNoJyxcbiAgICAnZ2VtaW5pLTEuNS1mbGFzaCcsXG4gICAgJ2dlbWluaS0xLjUtcHJvJ1xuICBdLFxuICBkZWVwc2VlazogWydkZWVwc2Vlay1jaGF0J10sXG4gIGFudGhyb3BpYzogW1xuICAgICdjbGF1ZGUtb3B1cy00LTEnLFxuICAgICdjbGF1ZGUtb3B1cy00LTAnLFxuICAgICdjbGF1ZGUtc29ubmV0LTQtMCcsXG4gICAgJ2NsYXVkZS0zLjctc29ubmV0JyxcbiAgICAnY2xhdWRlLTMuNS1zb25uZXQnLFxuICAgICdjbGF1ZGUtMy41LWhhaWt1JyxcbiAgICAnY2xhdWRlLTMtb3B1cycsXG4gICAgJ2NsYXVkZS0zLXNvbm5ldCcsXG4gICAgJ2NsYXVkZS0zLWhhaWt1J1xuICBdLFxuICB4YWk6IFsnZ3Jvay0zJywgJ2dyb2stMy1mYXN0JywgJ2dyb2stMy1taW5pJywgJ2dyb2stMy1taW5pLWZhc3QnXSxcbiAgb2xsYW1hOiBbJ3F3ZW4zOjMyYicsICdncHQtb3NzJ11cbn07XG4iXSwibWFwcGluZ3MiOiI7Ozs7OztBQUFBO0FBQ0E7O0FBRU8sSUFBTUEsMEJBQTBCLEdBQUFDLE9BQUEsQ0FBQUQsMEJBQUEsR0FBRztFQUN4QyxRQUFRLEVBQUUsMkJBQTJCO0VBQ3JDLFdBQVcsRUFBRSw4QkFBOEI7RUFDM0MsUUFBUSxFQUFFLGtEQUFrRDtFQUM1RCxVQUFVLEVBQUUsNkJBQTZCO0VBQ3pDLEtBQUssRUFBRSxxQkFBcUI7RUFDNUIsUUFBUSxFQUFFO0FBQ1osQ0FBQztBQUVNLElBQU1FLGVBQWUsR0FBQUQsT0FBQSxDQUFBQyxlQUFBLEdBQUc7RUFDN0JDLE1BQU0sRUFBRSxDQUNOLFNBQVMsRUFDVCxRQUFRLEVBQ1IsYUFBYSxFQUNiLE9BQU8sRUFDUCxlQUFlLEVBQ2YsSUFBSSxFQUNKLFlBQVksRUFDWixTQUFTLENBQ1Y7RUFDREMsTUFBTSxFQUFFLENBQ04sa0JBQWtCLEVBQ2xCLGdCQUFnQixFQUNoQixrQkFBa0IsRUFDbEIsa0JBQWtCLEVBQ2xCLGdCQUFnQixDQUNqQjtFQUNEQyxRQUFRLEVBQUUsQ0FBQyxlQUFlLENBQUM7RUFDM0JDLFNBQVMsRUFBRSxDQUNULGlCQUFpQixFQUNqQixpQkFBaUIsRUFDakIsbUJBQW1CLEVBQ25CLG1CQUFtQixFQUNuQixtQkFBbUIsRUFDbkIsa0JBQWtCLEVBQ2xCLGVBQWUsRUFDZixpQkFBaUIsRUFDakIsZ0JBQWdCLENBQ2pCO0VBQ0RDLEdBQUcsRUFBRSxDQUFDLFFBQVEsRUFBRSxhQUFhLEVBQUUsYUFBYSxFQUFFLGtCQUFrQixDQUFDO0VBQ2pFQyxNQUFNLEVBQUUsQ0FBQyxXQUFXLEVBQUUsU0FBUztBQUNqQyxDQUFDIiwiaWdub3JlTGlzdCI6W119
