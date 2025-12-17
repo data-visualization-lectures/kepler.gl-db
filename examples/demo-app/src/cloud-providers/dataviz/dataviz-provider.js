@@ -189,7 +189,9 @@ export default class DatavizProvider extends Provider {
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to upload map: ${response.statusText}`);
+            const errorText = await response.text();
+            console.error('Dataviz Cloud Upload Error:', errorText);
+            throw new Error(`Failed to upload map: ${response.status} ${response.statusText} - ${errorText}`);
         }
 
         const result = await response.json();
@@ -202,6 +204,6 @@ export default class DatavizProvider extends Provider {
     }
 
     getManagementUrl() {
-        return 'https://auth.dataviz.jp/my';
+        return 'https://auth.dataviz.jp/';
     }
 }

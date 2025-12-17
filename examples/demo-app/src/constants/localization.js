@@ -6,6 +6,7 @@
 const en = {
   'modal.loadData.remote': 'Load Map using URL',
   'sampleMapsTab.noData': 'No data ?',
+  'modal.shareMap.cloudSuccess': '保存されたプロジェクトは「保存プロジェクト一覧」ページにアクセスしてください',
   'sampleMapsTab.trySampleData': 'Try sample data',
   'sampleDataViewer.rowCount': ' {rowCount} rows',
   'loadRemoteMap.description': 'Load your map using your custom URL',
@@ -25,6 +26,7 @@ export const messages = {
   ja: {
     'modal.loadData.remote': 'URL で地図を読み込む',
     'sampleMapsTab.noData': 'データがありませんか？',
+    'modal.shareMap.cloudSuccess': '保存されたプロジェクトは「保存プロジェクト一覧」ページにアクセスしてください',
     'sampleMapsTab.trySampleData': 'サンプルデータを試す',
     'sampleDataViewer.rowCount': ' {rowCount} 行',
     'loadRemoteMap.description': 'カスタム URL で地図を読み込みます',
