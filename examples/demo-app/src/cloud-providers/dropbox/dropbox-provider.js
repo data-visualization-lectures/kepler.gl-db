@@ -2,11 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 // DROPBOX
-import {Dropbox} from 'dropbox';
+import { Dropbox } from 'dropbox';
 import Window from 'global/window';
 import DropboxIcon from './dropbox-icon';
-import {MAP_URI} from '../../constants/default-settings';
-import {KEPLER_FORMAT, Provider} from '@kepler.gl/cloud-providers';
+import { MAP_URI } from '../../constants/default-settings';
+import { KEPLER_FORMAT, Provider } from '@kepler.gl/cloud-providers';
 
 const NAME = 'dropbox';
 const DISPLAY_NAME = 'Dropbox';
@@ -35,7 +35,7 @@ function isConfigFile(err) {
 
 export default class DropboxProvider extends Provider {
   constructor(clientId, appName) {
-    super({name: NAME, displayName: DISPLAY_NAME, icon: DropboxIcon});
+    super({ name: NAME, displayName: DISPLAY_NAME, icon: DropboxIcon });
     // All cloud-providers providers must implement the following properties
 
     this.clientId = clientId;
@@ -72,7 +72,7 @@ export default class DropboxProvider extends Provider {
           Window.removeEventListener('message', handleToken);
         }
 
-        const {token} = event.data;
+        const { token } = event.data;
 
         if (!token) {
           reject('Failed to login to Dropbox');
@@ -112,7 +112,7 @@ export default class DropboxProvider extends Provider {
       const response = await this._dropbox.filesListFolder({
         path: `${this._path}`
       });
-      const {pngs, visualizations} = this._parseEntries(response);
+      const { pngs, visualizations } = this._parseEntries(response);
       // https://dropbox.github.io/dropbox-sdk-js/Dropbox.html#filesGetThumbnailBatch__anchor
       // up to 25 per request
       // TODO: implement pagination, so we don't need to get all the thumbs all at once
@@ -143,9 +143,9 @@ export default class DropboxProvider extends Provider {
    * @param mapData map data and config in one json object {map: {datasets: Array<Object>, config: Object, info: Object}
    * @param blob json file blob to upload
    */
-  async uploadMap({mapData, options = {}}) {
-    const {isPublic} = options;
-    const {map, thumbnail} = mapData;
+  async uploadMap({ mapData, options = {} }) {
+    const { isPublic } = options;
+    const { map, thumbnail } = mapData;
 
     // generate file name if is not provided
     const name = map.info && map.info.title;
@@ -182,7 +182,7 @@ export default class DropboxProvider extends Provider {
       return await this._shareFile(metadata);
     }
 
-    return {id: metadata.id, path: metadata.path_lower};
+    return { id: metadata.id, path: metadata.path_lower };
   }
 
   /**
@@ -190,8 +190,8 @@ export default class DropboxProvider extends Provider {
    * @param loadParams
    */
   async downloadMap(loadParams) {
-    const {path} = loadParams;
-    const result = await this._dropbox.filesDownload({path});
+    const { path } = loadParams;
+    const result = await this._dropbox.filesDownload({ path });
     const json = await this._readFile(result.fileBlob);
 
     const response = {
@@ -246,7 +246,7 @@ export default class DropboxProvider extends Provider {
    * Get the map url of current map, this url can only be accessed by current logged in user
    */
   getMapUrl(loadParams) {
-    const {path} = loadParams;
+    const { path } = loadParams;
     return path;
   }
 
@@ -286,7 +286,7 @@ export default class DropboxProvider extends Provider {
 
   // PRIVATE
   _initializeDropbox() {
-    this._dropbox = new Dropbox({fetch: Window.fetch});
+    this._dropbox = new Dropbox({ fetch: Window.fetch });
     this._dropbox.setClientId(this.clientId);
   }
 
@@ -307,7 +307,7 @@ export default class DropboxProvider extends Provider {
   _readFile(fileBlob) {
     return new Promise((resolve, reject) => {
       const fileReader = new FileReader(fileBlob);
-      fileReader.onload = ({target: {result}}) => {
+      fileReader.onload = ({ target: { result } }) => {
         try {
           const json = JSON.parse(result);
           resolve(json);
@@ -329,7 +329,7 @@ export default class DropboxProvider extends Provider {
 
   // append map url after load map from storage, this url is not meant
   // to be directly shared with others
-  _getMapPermalinkFromParams({path}, fullURL = true) {
+  _getMapPermalinkFromParams({ path }, fullURL = true) {
     const mapLink = `demo/map/dropbox?path=${path}`;
     return fullURL
       ? `${Window.location.protocol}//${Window.location.host}/${mapLink}`
@@ -347,7 +347,7 @@ export default class DropboxProvider extends Provider {
 
     return this._dropbox
       .sharingListSharedLinks(shareArgs)
-      .then(({links} = {}) => {
+      .then(({ links } = {}) => {
         if (links && links.length) {
           return links[0];
         }
@@ -374,7 +374,7 @@ export default class DropboxProvider extends Provider {
   _authLink(path = 'auth') {
     return this._dropbox.getAuthenticationUrl(
       `${Window.location.origin}/${path}`,
-      btoa(JSON.stringify({handler: 'dropbox', origin: Window.location.origin}))
+      btoa(JSON.stringify({ handler: 'dropbox', origin: Window.location.origin }))
     );
   }
 
@@ -391,7 +391,7 @@ export default class DropboxProvider extends Provider {
   }
 
   _getUserFromAccount(response) {
-    const {name} = response;
+    const { name } = response;
     return {
       name: name.display_name,
       email: response.email,
@@ -427,7 +427,7 @@ export default class DropboxProvider extends Provider {
    * @param {*} response
    */
   _parseEntries(response) {
-    const {entries, cursor, has_more} = response;
+    const { entries, cursor, has_more } = response;
 
     if (has_more) {
       this._cursor = cursor;
@@ -436,7 +436,7 @@ export default class DropboxProvider extends Provider {
     const visualizations = {};
 
     entries.forEach(entry => {
-      const {name, path_lower, id, client_modified} = entry;
+      const { name, path_lower, id, client_modified } = entry;
       if (name && name.endsWith('.json')) {
         // find json
         const title = name.replace(/\.json$/, '');
