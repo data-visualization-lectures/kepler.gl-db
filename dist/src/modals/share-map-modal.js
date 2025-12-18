@@ -9,17 +9,17 @@ exports.StyledInputLabel = exports.StyleSharingUrl = exports.SharingUrl = void 0
 exports["default"] = ShareMapUrlModalFactory;
 var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
 var _taggedTemplateLiteral2 = _interopRequireDefault(require("@babel/runtime/helpers/taggedTemplateLiteral"));
-var _react = _interopRequireWildcard(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/node_modules/react"));
-var _styledComponents = _interopRequireWildcard(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/node_modules/styled-components"));
+var _react = _interopRequireWildcard(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/react"));
+var _styledComponents = _interopRequireWildcard(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/styled-components"));
 var _reactCopyToClipboard = require("react-copy-to-clipboard");
-var _src = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/src/styles/src");
+var _src = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/src/styles/src");
 var _imageModalContainer = _interopRequireDefault(require("./image-modal-container"));
 var _styledComponents2 = require("../common/styled-components");
 var _statusPanel = _interopRequireDefault(require("./status-panel"));
-var _src2 = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/src/localization/src");
+var _src2 = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/src/localization/src");
 var _useCloudListProvider2 = require("../hooks/use-cloud-list-provider");
 var _providerSelect = require("./cloud-components/provider-select");
-var _src3 = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/src/constants/src");
+var _src3 = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/src/constants/src");
 var _templateObject, _templateObject2, _templateObject3, _templateObject4; // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }

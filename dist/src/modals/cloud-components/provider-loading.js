@@ -6,9 +6,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.ProviderLoading = void 0;
 var _taggedTemplateLiteral2 = _interopRequireDefault(require("@babel/runtime/helpers/taggedTemplateLiteral"));
-var _react = _interopRequireDefault(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/node_modules/react"));
+var _react = _interopRequireDefault(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/react"));
 var _loadingDialog = _interopRequireDefault(require("../loading-dialog"));
-var _styledComponents = _interopRequireDefault(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/node_modules/styled-components"));
+var _styledComponents = _interopRequireDefault(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/styled-components"));
 var _templateObject; // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 var StyledSpinner = _styledComponents["default"].div(_templateObject || (_templateObject = (0, _taggedTemplateLiteral2["default"])(["\n  text-align: center;\n  span {\n    margin: 0 auto;\n  }\n"])));

@@ -12,16 +12,16 @@ var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/sli
 var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
 var _objectWithoutProperties2 = _interopRequireDefault(require("@babel/runtime/helpers/objectWithoutProperties"));
 var _taggedTemplateLiteral2 = _interopRequireDefault(require("@babel/runtime/helpers/taggedTemplateLiteral"));
-var _react = _interopRequireWildcard(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/node_modules/react"));
-var _styledComponents = _interopRequireDefault(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/node_modules/styled-components"));
+var _react = _interopRequireWildcard(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/react"));
+var _styledComponents = _interopRequireDefault(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/styled-components"));
 var _get = _interopRequireDefault(require("lodash/get"));
-var _reactIntl = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/node_modules/react-intl");
+var _reactIntl = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/react-intl");
 var _fileUpload = _interopRequireDefault(require("../common/file-uploader/file-upload"));
 var _loadStorageMap = _interopRequireDefault(require("./load-storage-map"));
 var _loadTileset = _interopRequireDefault(require("./tilesets-modals/load-tileset"));
 var _modalTabs = _interopRequireDefault(require("./modal-tabs"));
 var _loadingDialog = _interopRequireDefault(require("./loading-dialog"));
-var _src = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/src/constants/src");
+var _src = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/src/constants/src");
 var _excluded = ["onFileUpload", "onTilesetAdded", "fileLoading", "loadingMethods", "isCloudMapLoading"];
 var _templateObject; // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project

@@ -9,13 +9,13 @@ exports.ColumnModeConfigFactory = ColumnModeConfigFactory;
 exports["default"] = void 0;
 var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
 var _taggedTemplateLiteral2 = _interopRequireDefault(require("@babel/runtime/helpers/taggedTemplateLiteral"));
-var _react = _interopRequireWildcard(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/node_modules/react"));
-var _styledComponents = _interopRequireDefault(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/node_modules/styled-components"));
+var _react = _interopRequireWildcard(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/react"));
+var _styledComponents = _interopRequireDefault(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/styled-components"));
 var _styledComponents2 = require("../../common/styled-components");
 var _checkbox = _interopRequireDefault(require("../../common/checkbox"));
 var _panelHeaderAction = _interopRequireDefault(require("../panel-header-action"));
 var _layerColumnConfig = _interopRequireDefault(require("./layer-column-config"));
-var _src = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/src/localization/src");
+var _src = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/src/localization/src");
 var _icons = require("../../common/icons");
 var _templateObject, _templateObject2, _templateObject3; // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project

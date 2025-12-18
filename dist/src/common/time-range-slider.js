@@ -8,9 +8,9 @@ Object.defineProperty(exports, "__esModule", {
 exports["default"] = TimeRangeSliderFactory;
 exports.getTimeBinsForInterval = getTimeBinsForInterval;
 var _taggedTemplateLiteral2 = _interopRequireDefault(require("@babel/runtime/helpers/taggedTemplateLiteral"));
-var _react = _interopRequireWildcard(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/node_modules/react"));
+var _react = _interopRequireWildcard(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/react"));
 var _throttle = _interopRequireDefault(require("lodash/throttle"));
-var _styledComponents = _interopRequireDefault(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/node_modules/styled-components"));
+var _styledComponents = _interopRequireDefault(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/styled-components"));
 var _rangeSlider = _interopRequireDefault(require("./range-slider"));
 var _timeSliderMarker = _interopRequireDefault(require("./time-slider-marker"));
 var _playbackControls = _interopRequireDefault(require("./animation-control/playback-controls"));

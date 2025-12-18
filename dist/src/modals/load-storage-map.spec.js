@@ -3,14 +3,14 @@
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
-var _react = _interopRequireDefault(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/node_modules/react"));
+var _react = _interopRequireDefault(require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/react"));
 var _react2 = require("@testing-library/react");
 var _infoHelper = _interopRequireDefault(require("../common/info-helper"));
 var _cloudHeader = _interopRequireDefault(require("./cloud-components/cloud-header"));
 var _loadStorageMap = _interopRequireDefault(require("./load-storage-map"));
 var _componentJestUtils = require("../../../../test/helpers/component-jest-utils");
 var _useCloudListProvider = require("../hooks/use-cloud-list-provider");
-var _src = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl/src/constants/src");
+var _src = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/src/constants/src");
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
