@@ -253,7 +253,7 @@ const App = props => {
 
     // no dependencies, as this was part of componentDidMount
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [id, provider, query, dispatch]);
 
   /**
    * Update map boundary when view state changes, used by ai-assistant to

@@ -71,7 +71,7 @@ export default class DatavizProvider extends Provider {
 
     async _waitForSupabase() {
         let retries = 0;
-        while (!Window.supabase && retries < 10) {
+        while (!Window.supabase && retries < 25) {
             await new Promise(resolve => setTimeout(resolve, 200));
             retries++;
         }
