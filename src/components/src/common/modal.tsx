@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component, ReactNode, PropsWithChildren} from 'react';
-import {FormattedMessage} from '@kepler.gl/localization';
+import React, { Component, ReactNode, PropsWithChildren } from 'react';
+import { FormattedMessage } from '@kepler.gl/localization';
 
-import styled, {css} from 'styled-components';
+import styled, { css } from 'styled-components';
 import Modal from 'react-modal';
-import {Delete} from './icons';
-import {Button} from './styled-components';
-import {media} from '@kepler.gl/styles';
+import { Delete } from './icons';
+import { Button } from './styled-components';
+import { media } from '@kepler.gl/styles';
 
 type CssStyleType = ReturnType<typeof css>;
 
@@ -137,7 +137,7 @@ type ModalFooterProps = {
 const processDisabledProperty = (props: ModalButtonProps): ModalButtonProps => {
   if (!props.disabled) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const {disabled, ...newProps} = props;
+    const { disabled, ...newProps } = props;
     return newProps;
   }
   return props;
@@ -153,14 +153,21 @@ export const ModalFooter: React.FC<ModalFooterProps> = ({
     ...defaultCancelButton,
     ...cancelButton
   });
-  const confirmButtonProps = processDisabledProperty({...defaultConfirmButton, ...confirmButton});
+  const confirmButtonProps = processDisabledProperty({ ...defaultConfirmButton, ...confirmButton });
   return (
     <StyledModalFooter className="modal--footer">
       <FooterActionWrapper>
         <Button className="modal--footer--cancel-button" {...cancelButtonProps} onClick={cancel}>
           <FormattedMessage id={cancelButtonProps.children ?? ''} />
         </Button>
-        <Button className="modal--footer--confirm-button" {...confirmButtonProps} onClick={confirm}>
+        <Button className="modal--footer--confirm-button" {...confirmButtonProps} onClick={(e) => {
+          console.log('ModalFooter: Confirm button clicked event', e);
+          if (confirm) {
+            confirm(e);
+          } else {
+            console.warn('ModalFooter: confirm callback is missing');
+          }
+        }}>
           <FormattedMessage id={confirmButtonProps.children ?? ''} />
         </Button>
       </FooterActionWrapper>
@@ -205,7 +212,7 @@ export class ModalDialog extends Component<ModalDialogProps> {
   };
 
   render() {
-    const {props} = this;
+    const { props } = this;
     return (
       <Modal
         className={props.className}

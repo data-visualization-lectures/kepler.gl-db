@@ -109,7 +109,14 @@ const OverwriteMapModalFactory = () => {
         </StyledOverwriteMapModal>
         <ModalFooter
           cancel={onCancel}
-          confirm={() => provider && onConfirm(provider)}
+          confirm={() => {
+            console.log('Core OverwriteMapModal: Confirm Clicked', { provider });
+            if (provider) {
+              onConfirm(provider);
+            } else {
+              console.error('Core OverwriteMapModal: Provider is null on click');
+            }
+          }}
           confirmButton={confirmButton}
         />
       </ImageModalContainer>
