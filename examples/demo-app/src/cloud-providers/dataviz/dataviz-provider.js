@@ -12,7 +12,6 @@ const API_URL = '/api/dataviz';
 export default class DatavizProvider extends Provider {
     constructor() {
         super({ name: NAME, displayName: DISPLAY_NAME, icon: DatavizIcon });
-        alert('DatavizProvider: Loaded v2');
     }
 
     /**
