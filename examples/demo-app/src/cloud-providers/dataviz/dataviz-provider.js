@@ -280,20 +280,52 @@ export default class DatavizProvider extends Provider {
         const thumbFilePath = `${user.id}/${id}.png`;
 
         // 3. Upload JSON to Storage
-        // Use Supabase Client SDK for reliable upload/upsert
-        console.log('[DatavizProvider] Uploading JSON to Storage:', {
-            bucket: BUCKET_NAME,
-            path: jsonFilePath,
-            upsert: true,
-            contentLength: JSON.stringify(map).length
-        });
+        // STRATEGY CHANGE: Explicitly delete then upload to avoid 400 errors on upsert
+        console.log('[DatavizProvider] Overwrite strategy: Removing existing file first...', jsonFilePath);
 
+        // 3a. Try to remove existing file (ignore error if not exists)
+        await globalAuthClient.storage
+            .from(BUCKET_NAME)
+            .remove([jsonFilePath])
+            .catch(err => console.warn('[DatavizProvider] Remove failed (non-fatal):', err));
+
+        // 3b. Upload new file (upsert: false because we deleted it)
+        console.log('[DatavizProvider] Uploading new JSON...');
         const { data: uploadData, error: jsonError } = await globalAuthClient.storage
             .from(BUCKET_NAME)
             .upload(jsonFilePath, JSON.stringify(map), {
                 contentType: 'application/json',
-                upsert: true
+                upsert: false
             });
+
+        if (jsonError) {
+            console.error('[DatavizProvider] JSON Upload Error Details:', {
+                message: jsonError.message,
+                statusCode: jsonError.statusCode,
+                error: jsonError.error,
+                fullObj: jsonError
+            });
+            throw new Error(`Failed to upload map data: ${jsonError.message}`);
+        }
+        console.log('[DatavizProvider] JSON Upload Success:', uploadData);
+
+        // 4. Upload Thumbnail to Storage (if provided)
+        if (thumbnailBlob) {
+            // 4a. Remove existing thumbnail
+            await globalAuthClient.storage
+                .from(BUCKET_NAME)
+                .remove([thumbFilePath])
+                .catch(() => { });
+
+            // 4b. Upload new thumbnail
+            await globalAuthClient.storage
+                .from(BUCKET_NAME)
+                .upload(thumbFilePath, thumbnailBlob, {
+                    contentType: 'image/png',
+                    upsert: false
+                });
+            // Ignore thumbnail upload errors (non-fatal)
+        }
 
         if (jsonError) {
             console.error('[DatavizProvider] JSON Upload Error Details:', {
