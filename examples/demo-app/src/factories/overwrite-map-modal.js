@@ -55,9 +55,6 @@ const CONFIRM_BUTTON = {
 // DIRECT RE-IMPLEMENTATION OF THE MODAL
 // To ensure we bypass any build/linking issues with the core library.
 export const CustomOverwriteMapModalFactory = (...deps) => {
-    // If we can't import ImageModalContainer easily, we rely on the injected one or default.
-    // However, to be 100% sure, let's just make a simple modal content.
-
     const OverwriteMapModal = (props) => {
         const { mapSaved, title, isProviderLoading, onUpdateImageSetting, cleanupExportImage, onCancel, onConfirm } = props;
         const { provider, cloudProviders, setProvider } = useCloudListProvider();
@@ -95,10 +92,13 @@ export const CustomOverwriteMapModalFactory = (...deps) => {
                                 {provider && provider.icon ? <provider.icon height="64px" /> : null}
                             </StyledIcon>
                             <StyledMsg className="overwrite-map-msg">
-                                <StyledTitle>新規ファイルとして保存しますか？</StyledTitle>
-                                <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-                                    ※既存のファイルとは別に、新しい履歴として保存されます。
+                                <StyledTitle>保存しなおしますか？</StyledTitle>
+                                <div style={{ marginTop: '10px', fontSize: '13px', color: '#333' }}>
+                                    新規プロジェクトファイルとして保存されます。
                                 </div>
+                                {/* <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+                                    ※既存のファイルとは別に、新しい履歴として保存されます。
+                                </div> */}
                             </StyledMsg>
                         </>
                     )}
