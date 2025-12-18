@@ -280,7 +280,7 @@ export default class DatavizProvider extends Provider {
 
         // Determine ID: ALWAYS generate new ID to implement "Save as New" behavior
         // logic: Even if overwrite is requested, we ignore it and create a new project.
-        id = crypto.randomUUID();
+        const id = crypto.randomUUID();
 
         const now = new Date().toISOString();
         const jsonFilePath = `${user.id}/${id}.json`;

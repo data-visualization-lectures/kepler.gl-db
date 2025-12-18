@@ -15,8 +15,7 @@ const DROPBOX_CLIENT_NAME = 'Kepler.gl Demo App';
 export const DEFAULT_CLOUD_PROVIDER = 'dataviz';
 
 export const CLOUD_PROVIDERS = [
-  new DatavizProvider(),
-  new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME)
+  new DatavizProvider()
 ];
 
 export function getCloudProvider(providerName) {
