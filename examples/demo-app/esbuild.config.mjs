@@ -9,7 +9,9 @@ import process from 'node:process';
 import fs from 'node:fs';
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
-import KeplerPackage from '../../package.json' assert {type: 'json'};
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const KeplerPackage = require('../../package.json');
 
 const args = process.argv;
 
