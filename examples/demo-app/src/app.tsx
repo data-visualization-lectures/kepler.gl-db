@@ -169,20 +169,7 @@ const App = props => {
 
   const prevQueryRef = useRef<number>(null);
 
-  useEffect(() => {
-    // Inject Supabase Client (Local)
-    const supabaseScript = document.createElement('script');
-    supabaseScript.src = '/assets/supabase.js';
-    supabaseScript.async = true;
-    supabaseScript.onload = () => {
-      // Inject Dataviz Auth Client (Local)
-      const authScript = document.createElement('script');
-      authScript.src = '/assets/dataviz-auth-client.js';
-      authScript.async = true;
-      document.body.appendChild(authScript);
-    };
-    document.body.appendChild(supabaseScript);
-  }, []);
+
 
   useEffect(() => {
     // if we pass an id as part of the url
@@ -206,22 +193,30 @@ const App = props => {
     }
 
     // Handle project_id query param (for Dataviz Cloud)
-    if (query.project_id) {
+    // Use window.location.search directly to ensure we catch it regardless of router props
+    const searchParams = new URLSearchParams(window.location.search);
+    const projectId = searchParams.get('project_id');
+
+    if (projectId) {
       const datavizProvider = CLOUD_PROVIDERS.find(c => c.name === 'dataviz');
       if (datavizProvider) {
         // Prevent constant reloading
-        if (isEqual(prevQueryRef.current, { provider, id, query })) {
+        // We use a different ref strategy for direct window check
+        const currentRef = { provider: 'dataviz', id: projectId };
+        if (isEqual(prevQueryRef.current, currentRef)) {
           return;
         }
 
+
+
         dispatch(
           loadCloudMap({
-            loadParams: { id: query.project_id },
+            loadParams: { id: projectId },
             provider: datavizProvider,
             onSuccess: onLoadCloudMapSuccess
           })
         );
-        prevQueryRef.current = { provider, id, query };
+        prevQueryRef.current = currentRef;
         return;
       }
     }
