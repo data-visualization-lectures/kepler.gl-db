@@ -132,9 +132,11 @@ export const CustomOverwriteMapModalFactory = (...deps) => {
                     justifyContent: 'flex-end',
                     paddingTop: '24px',
                     width: '100%',
-                    zIndex: 9999
+                    zIndex: 2147483647, // Max Z-Index
+                    position: 'relative' // Ensure Z-index works
                 }}>
                     <button
+                        type="button"
                         className="button"
                         onClick={onCancel}
                         style={{
@@ -152,14 +154,17 @@ export const CustomOverwriteMapModalFactory = (...deps) => {
                         Cancel
                     </button>
                     <button
+                        type="button"
                         className="button primary"
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
+                            // window.alert('DEBUG: Yes Clicked'); // Comment out for production, but good for local test
+                            console.log('DEBUG: Yes Clicked - Triggering onConfirm');
                             onConfirmClick();
                         }}
                         style={{
-                            background: '#2ba7f0', // Kepler blue
+                            background: '#2ba7f0',
                             border: 'none',
                             color: 'white',
                             cursor: 'pointer',

@@ -215,12 +215,21 @@ export default class DatavizProvider extends Provider {
         if (!mapData.info) {
             mapData.info = {};
         }
-        mapData.info.id = id;
+
+        // HACK: Force Kepler.gl to treat this as a NEW map
+        // By incorrectly setting the ID or title, we force the "New Save" flow.
+        // Actually, if we set the ID, it thinks it is saved.
+        // If we want "Save as New" behavior every time, we should NOT provide the ID here.
+        // mapData.info.id = id;  <-- REMOVE THIS to force "Save as New" behavior
+
+        // However, we want the title to be pre-filled if possible, but Kepler might ignore it without ID?
+        // Let's set title, but skip ID.
         mapData.info.title = project.name;
         mapData.info.description = project.description;
-        // Inject ownership info to ensure Kepler.gl allows overwrite
-        mapData.info.userId = project.user_id;
-        mapData.info.owner = project.user_id;
+
+        // Clear user/owner info so it doesn't think we own it (which might trigger overwrite if ID was present)
+        // mapData.info.userId = project.user_id;
+        // mapData.info.owner = project.user_id;
 
         return {
             map: mapData,
