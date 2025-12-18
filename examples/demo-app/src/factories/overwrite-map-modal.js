@@ -49,7 +49,15 @@ export function CustomOverwriteMapModalFactory(...deps) {
         // Customize the title
         const newProps = {
             ...props,
-            title: '既存プロジェクトファイルを上書きしますか？'
+            title: '既存プロジェクトファイルを上書きしますか？',
+            onConfirm: (p) => {
+                console.log('OverwriteMapModal (Custom): onConfirm triggered', p);
+                if (props.onConfirm) {
+                    props.onConfirm(p);
+                } else {
+                    console.error('OverwriteMapModal (Custom): props.onConfirm is undefined');
+                }
+            }
         };
 
         return <DefaultModal {...newProps} />;
