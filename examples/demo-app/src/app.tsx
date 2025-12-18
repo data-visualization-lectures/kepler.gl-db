@@ -192,6 +192,17 @@ const App = props => {
       return;
     }
 
+    // Hack: Hide "Save As" button in OverwriteMapModal
+    // Because OverwriteMapModalFactory is not exported, we cannot override the component.
+    // DOM manipulation is the only way to hide specific buttons inside the modal.
+    const observer = new MutationObserver(() => {
+      const saveAsBtn = document.getElementById('saveAs');
+      if (saveAsBtn) {
+        saveAsBtn.style.display = 'none';
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
     // Handle project_id query param (for Dataviz Cloud)
     // Use window.location.search directly to ensure we catch it regardless of router props
     const searchParams = new URLSearchParams(window.location.search);

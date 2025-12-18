@@ -9,6 +9,9 @@ const NAME = 'dataviz';
 const DISPLAY_NAME = 'Dataviz Cloud';
 const API_URL = '/api/dataviz';
 
+// Module-level cache to persist ID across provider re-instantiations
+let cachedProjectId = null;
+
 export default class DatavizProvider extends Provider {
     constructor() {
         super({ name: NAME, displayName: DISPLAY_NAME, icon: DatavizIcon });
@@ -123,7 +126,22 @@ export default class DatavizProvider extends Provider {
     }
 
     async downloadMap(loadParams) {
-        const { id } = loadParams;
+        let { id } = loadParams;
+
+        // Update cache if valid ID provided
+        if (id && id !== 'undefined') {
+            cachedProjectId = id;
+        }
+        // Fallback to cache if ID missing
+        else if (cachedProjectId) {
+            id = cachedProjectId;
+        }
+
+        if (!id || id === 'undefined') {
+            // If we really don't have an ID, return empty to avoid crash,
+            // but likely the Save button will be disabled.
+            return { map: {}, format: 'keplergl' };
+        }
 
         // Ensure Supabase is loaded
         await this._waitForSupabase();
@@ -193,6 +211,17 @@ export default class DatavizProvider extends Provider {
 
         const mapData = await jsonResponse.json();
 
+        // Inject metadata into the map configuration
+        if (!mapData.info) {
+            mapData.info = {};
+        }
+        mapData.info.id = id;
+        mapData.info.title = project.name;
+        mapData.info.description = project.description;
+        // Inject ownership info to ensure Kepler.gl allows overwrite
+        mapData.info.userId = project.user_id;
+        mapData.info.owner = project.user_id;
+
         return {
             map: mapData,
             format: 'keplergl'
@@ -240,8 +269,12 @@ export default class DatavizProvider extends Provider {
         const name = (map.info && map.info.title) || 'Untitled Map';
         const thumbnailBlob = thumbnail || options.thumbnail;
 
-        // Use native crypto.randomUUID()
-        const id = crypto.randomUUID();
+        // Determine ID: Use existing if overwriting, otherwise generate new
+        let id = map.info && map.info.id;
+        if (!options.overwrite || !id) {
+            id = crypto.randomUUID();
+        }
+
         const now = new Date().toISOString();
         const jsonFilePath = `${user.id}/${id}.json`;
         const thumbFilePath = `${user.id}/${id}.png`;
@@ -319,6 +352,14 @@ export default class DatavizProvider extends Provider {
             id: savedProject.id,
             // shareUrl: ... (not implemented)
         };
+    }
+
+    getMapUrl(loadParams) {
+        return loadParams ? loadParams.id : '';
+    }
+
+    getShareUrl(fullUrl = true) {
+        return '';
     }
 
     getManagementUrl() {
