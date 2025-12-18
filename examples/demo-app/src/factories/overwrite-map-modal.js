@@ -3,6 +3,23 @@ import styled from 'styled-components';
 import React, { useEffect, useMemo } from 'react';
 import { FormattedMessage } from '@kepler.gl/localization';
 
+// Local replacement for CenterVerticalFlexbox
+const CenterVerticalFlexbox = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+`;
+
+// Simplified loader to avoid importing generic UploadAnimation
+const UploadAnimation = ({ icon }) => (
+    <div style={{ textAlign: 'center', margin: '20px' }}>
+        {icon && <icon height="48px" />}
+        <div>Saving...</div>
+    </div>
+);
+
 // CRITICAL FIX: Extract the exact factory reference used by ModalContainer
 // to ensure injectComponents matches it correctly.
 const CoreFactory = ModalContainerFactory.deps[1];
