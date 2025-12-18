@@ -127,11 +127,53 @@ export const CustomOverwriteMapModalFactory = (...deps) => {
                         </>
                     )}
                 </StyledOverwriteMapModal>
-                <ModalFooter
-                    cancel={onCancel}
-                    confirm={onConfirmClick}
-                    confirmButton={confirmButton}
-                />
+                <div className="custom-modal-footer" style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    paddingTop: '24px',
+                    width: '100%',
+                    zIndex: 9999
+                }}>
+                    <button
+                        className="button"
+                        onClick={onCancel}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#6A7485',
+                            cursor: 'pointer',
+                            fontSize: '11px',
+                            fontWeight: 500,
+                            padding: '9px 12px',
+                            marginRight: '8px',
+                            textTransform: 'uppercase'
+                        }}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="button primary"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onConfirmClick();
+                        }}
+                        style={{
+                            background: '#2ba7f0', // Kepler blue
+                            border: 'none',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontSize: '11px',
+                            fontWeight: 500,
+                            padding: '9px 12px',
+                            borderRadius: '2px',
+                            textTransform: 'uppercase',
+                            minWidth: '105px'
+                        }}
+                    >
+                        Yes
+                    </button>
+                </div>
             </div>
         );
     };
