@@ -269,29 +269,18 @@ export default class DatavizProvider extends Provider {
         const name = (map.info && map.info.title) || 'Untitled Map';
         const thumbnailBlob = thumbnail || options.thumbnail;
 
-        // Determine ID: Use existing if overwriting, otherwise generate new
-        let id = map.info && map.info.id;
-        if (!options.overwrite || !id) {
-            id = crypto.randomUUID();
-        }
+        // Determine ID: ALWAYS generate new ID to implement "Save as New" behavior
+        // logic: Even if overwrite is requested, we ignore it and create a new project.
+        id = crypto.randomUUID();
 
         const now = new Date().toISOString();
         const jsonFilePath = `${user.id}/${id}.json`;
         const thumbFilePath = `${user.id}/${id}.png`;
 
-        // 3. Upload JSON to Storage
-        // STRATEGY CHANGE: Explicitly delete then upload to avoid 400 errors on upsert
-        console.log('[DatavizProvider] Overwrite strategy: Removing existing file first...', jsonFilePath);
+        console.log('[DatavizProvider] Saving as NEW project (ID generated):', id);
 
-        // 3a. Try to remove existing file (ignore error if not exists)
-        await globalAuthClient.storage
-            .from(BUCKET_NAME)
-            .remove([jsonFilePath])
-            .catch(err => console.warn('[DatavizProvider] Remove failed (non-fatal):', err));
-
-        // 3b. Upload new file (upsert: false because we deleted it)
-        console.log('[DatavizProvider] Uploading new JSON...');
-        const { data: uploadData, error: jsonError } = await globalAuthClient.storage
+        // 3. Upload JSON to Storage (New File)
+        const { error: jsonError } = await globalAuthClient.storage
             .from(BUCKET_NAME)
             .upload(jsonFilePath, JSON.stringify(map), {
                 contentType: 'application/json',
@@ -299,54 +288,18 @@ export default class DatavizProvider extends Provider {
             });
 
         if (jsonError) {
-            console.error('[DatavizProvider] JSON Upload Error Details:', {
-                message: jsonError.message,
-                statusCode: jsonError.statusCode,
-                error: jsonError.error,
-                fullObj: jsonError
-            });
+            console.error('[DatavizProvider] JSON Upload Error:', jsonError);
             throw new Error(`Failed to upload map data: ${jsonError.message}`);
         }
-        console.log('[DatavizProvider] JSON Upload Success:', uploadData);
 
         // 4. Upload Thumbnail to Storage (if provided)
         if (thumbnailBlob) {
-            // 4a. Remove existing thumbnail
-            await globalAuthClient.storage
-                .from(BUCKET_NAME)
-                .remove([thumbFilePath])
-                .catch(() => { });
-
-            // 4b. Upload new thumbnail
             await globalAuthClient.storage
                 .from(BUCKET_NAME)
                 .upload(thumbFilePath, thumbnailBlob, {
                     contentType: 'image/png',
                     upsert: false
                 });
-            // Ignore thumbnail upload errors (non-fatal)
-        }
-
-        if (jsonError) {
-            console.error('[DatavizProvider] JSON Upload Error Details:', {
-                message: jsonError.message,
-                statusCode: jsonError.statusCode,
-                error: jsonError.error,
-                fullObj: jsonError
-            });
-            throw new Error(`Failed to upload map data: ${jsonError.message}`);
-        }
-        console.log('[DatavizProvider] JSON Upload Success:', uploadData);
-
-        // 4. Upload Thumbnail to Storage (if provided)
-        if (thumbnailBlob) {
-            await globalAuthClient.storage
-                .from(BUCKET_NAME)
-                .upload(thumbFilePath, thumbnailBlob, {
-                    contentType: 'image/png',
-                    upsert: true
-                });
-            // Ignore thumbnail upload errors (non-fatal)
         }
 
         // 5. Insert Metadata into DB
