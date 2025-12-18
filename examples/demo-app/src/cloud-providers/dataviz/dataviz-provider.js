@@ -281,7 +281,14 @@ export default class DatavizProvider extends Provider {
 
         // 3. Upload JSON to Storage
         // Use Supabase Client SDK for reliable upload/upsert
-        const { error: jsonError } = await globalAuthClient.storage
+        console.log('[DatavizProvider] Uploading JSON to Storage:', {
+            bucket: BUCKET_NAME,
+            path: jsonFilePath,
+            upsert: true,
+            contentLength: JSON.stringify(map).length
+        });
+
+        const { data: uploadData, error: jsonError } = await globalAuthClient.storage
             .from(BUCKET_NAME)
             .upload(jsonFilePath, JSON.stringify(map), {
                 contentType: 'application/json',
@@ -289,8 +296,15 @@ export default class DatavizProvider extends Provider {
             });
 
         if (jsonError) {
+            console.error('[DatavizProvider] JSON Upload Error Details:', {
+                message: jsonError.message,
+                statusCode: jsonError.statusCode,
+                error: jsonError.error,
+                fullObj: jsonError
+            });
             throw new Error(`Failed to upload map data: ${jsonError.message}`);
         }
+        console.log('[DatavizProvider] JSON Upload Success:', uploadData);
 
         // 4. Upload Thumbnail to Storage (if provided)
         if (thumbnailBlob) {
