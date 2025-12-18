@@ -125,6 +125,9 @@ export default class DatavizProvider extends Provider {
     async downloadMap(loadParams) {
         const { id } = loadParams;
 
+        // Ensure Supabase is loaded
+        await this._waitForSupabase();
+
         // 1. Auth & Config
         const globalAuthClient = window.supabase;
         if (!globalAuthClient || !globalAuthClient.auth) {
