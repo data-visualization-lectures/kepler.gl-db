@@ -1,20 +1,18 @@
-// SPDX-License-Identifier: MIT
-// Copyright contributors to the kepler.gl project
-
-import React, { useEffect, useMemo } from 'react';
+import { ModalContainerFactory, useCloudListProvider, ModalFooter } from '@kepler.gl/components';
 import styled from 'styled-components';
-import { CenterVerticalFlexbox } from '@kepler.gl/components/dist/common/styled-components';
-import { UploadAnimation } from '@kepler.gl/components/dist/modals/status-panel';
+import React, { useEffect, useMemo } from 'react';
 import { FormattedMessage } from '@kepler.gl/localization';
-// import ImageModalContainer from '@kepler.gl/components/dist/modals/image-modal-container';
-// Note: ImageModalContainer is not exported from dist usually. We might need to use the factory or implement a simple container.
-// Actually, let's use the one from src if resolvable, or standard ModalDialog.
 
-import { OverwriteMapModalFactory as CoreFactory, useCloudListProvider, ModalFooter, ImageModalContainerFactory } from '@kepler.gl/components';
-import { cleanupExportImage as cleanupExportImageAction } from '@kepler.gl/actions';
+// CRITICAL FIX: Extract the exact factory reference used by ModalContainer
+// to ensure injectComponents matches it correctly.
+const CoreFactory = ModalContainerFactory.deps[1];
 
 console.log('CustomOverwriteMapModal Factory: Module Loaded');
-console.log('CustomOverwriteMapModal Factory: CoreFactory is', CoreFactory);
+console.log('CustomOverwriteMapModal Factory: Extracted CoreFactory from Deps', CoreFactory);
+
+if (!CoreFactory) {
+    console.error('CustomOverwriteMapModal Factory: FAILED TO FIND CORE FACTORY at index 1');
+}
 
 // We need to re-implement the styles because we can't easily import them from source if build is separate.
 const StyledMsg = styled.div`
