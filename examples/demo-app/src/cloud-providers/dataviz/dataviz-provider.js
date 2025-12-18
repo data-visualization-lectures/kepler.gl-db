@@ -181,7 +181,7 @@ export default class DatavizProvider extends Provider {
         }
 
         const BUCKET_NAME = 'user_projects';
-        const APP_NAME = 'keplergl'; // Use specific app name
+        const APP_NAME = 'kepler-gl'; // Use specific app name
 
         // 2. Prepare Data
         const { isPublic } = options;
