@@ -67,6 +67,20 @@ export const CustomOverwriteMapModalFactory = (...deps) => {
                 console.log('CustomOverwriteMapModal: Auto-selecting provider', cloudProviders[0]);
                 setProvider(cloudProviders[0]);
             }
+
+            // HACK: Hide the default modal title "Overwrite Existing File?"
+            // This title is rendered by the parent ModalDialog and cannot be controlled via props here.
+            const timer = setTimeout(() => {
+                const titles = document.querySelectorAll('.modal--title');
+                titles.forEach(el => {
+                    // Check for English or localized text just in case
+                    if (el.textContent.includes('Overwrite Existing File') || el.textContent === 'Overwrite Existing File?') {
+                        el.style.display = 'none';
+                    }
+                });
+            }, 50); // Small delay to ensure render
+
+            return () => clearTimeout(timer);
         }, [provider, cloudProviders, setProvider]);
 
         const onConfirmClick = () => {
