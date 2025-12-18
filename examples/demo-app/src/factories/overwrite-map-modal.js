@@ -141,7 +141,7 @@ export const CustomOverwriteMapModalFactory = (...deps) => {
                             textTransform: 'uppercase'
                         }}
                     >
-                        Cancel
+                        キャンセル
                     </button>
                     <button
                         type="button"
@@ -164,7 +164,7 @@ export const CustomOverwriteMapModalFactory = (...deps) => {
                             minWidth: '105px'
                         }}
                     >
-                        Yes
+                        はい
                     </button>
                 </div>
             </div>
