@@ -27,6 +27,7 @@ import Announcement, { FormLink } from './components/announcement';
 import { replaceLoadDataModal } from './factories/load-data-modal';
 import { replaceMapControl } from './factories/map-control';
 import { replacePanelHeader } from './factories/panel-header';
+import { replaceOverwriteMapModal } from './factories/overwrite-map-modal';
 
 import { CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS } from './constants/default-settings';
 import { messages } from './constants/localization';

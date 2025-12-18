@@ -76,10 +76,9 @@ const OverwriteMapModalFactory = () => {
     const confirmButton = useMemo(
       () => ({
         ...CONFIRM_BUTTON,
-        // FORCE ENABLE: Ignore provider check to ensure button works.
-        disabled: false
+        disabled: !provider
       }),
-      []
+      [provider]
     );
 
     return (
@@ -110,18 +109,7 @@ const OverwriteMapModalFactory = () => {
         </StyledOverwriteMapModal>
         <ModalFooter
           cancel={onCancel}
-          confirm={() => {
-            console.log('Core OverwriteMapModal: Confirm Clicked (Forced)', { provider, cloudProviders });
-            // FORCE EXECUTION: If provider is set use it, otherwise use first available.
-            const targetProvider = provider || (cloudProviders && cloudProviders[0]);
-
-            if (targetProvider) {
-              console.log('Core OverwriteMapModal: Executing onConfirm with', targetProvider);
-              onConfirm(targetProvider);
-            } else {
-              console.error('Core OverwriteMapModal: FATAL - No providers available at all.');
-            }
-          }}
+          confirm={() => provider && onConfirm(provider)}
           confirmButton={confirmButton}
         />
       </ImageModalContainer>
