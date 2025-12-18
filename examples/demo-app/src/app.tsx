@@ -52,7 +52,8 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 const KeplerGl = require('@kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
   replaceMapControl(),
-  replacePanelHeader()
+  replacePanelHeader(),
+  replaceOverwriteMapModal()
 ]);
 
 // Sample data
