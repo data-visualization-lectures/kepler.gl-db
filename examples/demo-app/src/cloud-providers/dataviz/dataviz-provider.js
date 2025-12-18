@@ -12,6 +12,7 @@ const API_URL = '/api/dataviz';
 export default class DatavizProvider extends Provider {
     constructor() {
         super({ name: NAME, displayName: DISPLAY_NAME, icon: DatavizIcon });
+        alert('DatavizProvider: Loaded v2');
     }
 
     /**
@@ -147,73 +148,125 @@ export default class DatavizProvider extends Provider {
         };
     }
 
-    async uploadMap(args) {
-        console.error('DEBUG_ERROR: DatavizProvider.uploadMap called with:', args);
-        const { mapData, options = {} } = args;
-        const token = await this.getAccessToken();
-        if (!token) {
-            throw new Error('Not logged in');
+    async uploadMap({ mapData, options = {} }) {
+        // Direct Supabase implementation modeled after cloudApi.js from rawgraphs-app-db
+
+        // 1. Get Supabase Config & Session
+        const globalAuthClient = window.supabase;
+        if (!globalAuthClient || !globalAuthClient.auth) {
+            throw new Error('Auth client not found. Please reload.');
         }
 
+        const { data: { session }, error: sessionError } = await globalAuthClient.auth.getSession();
+        if (sessionError || !session || !session.user) {
+            throw new Error('Please log in.');
+        }
+
+        // Fallback key from RawGraphs implementation just in case window.supabase.supabaseKey is missing
+        const FALLBACK_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlYmhvZWlsdHhzcHN1cnFveHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNTY4MjMsImV4cCI6MjA4MDYzMjgyM30.5uf-D07Hb0JxL39X9yQ20P-5gFc1CRMdKWhDySrNZ0E";
+
+        const supabaseUrl = globalAuthClient.supabaseUrl || "https://vebhoeiltxspsurqoxvl.supabase.co";
+        // Force use of FALLBACK_KEY (Source of Truth from RawGraphs .env)
+        // The key in globalAuthClient.supabaseKey (suffix ...c4) is INVALID for REST API.
+        let supabaseKey = FALLBACK_KEY;
+
+        // Trim key to remove any potential accidental whitespace/newline
+        if (supabaseKey) supabaseKey = supabaseKey.trim();
+
+        const accessToken = session.access_token;
+        const user = session.user;
+
+        if (!supabaseKey) {
+            throw new Error('Supabase API Key is missing');
+        }
+
+        const BUCKET_NAME = 'user_projects';
+        const APP_NAME = 'keplergl'; // Use specific app name
+
+        // 2. Prepare Data
         const { isPublic } = options;
         const { map, thumbnail } = mapData;
         const name = (map.info && map.info.title) || 'Untitled Map';
+        const thumbnailBlob = thumbnail || options.thumbnail;
 
-        // We only support creating new maps or overwriting if the API supports it.
-        // Our API spec says POST /api/projects creates new.
-        // Updating existing not explicitly detailed in '2. プロジェクト新規保存', 
-        // but typically we might want to update if ID exists.
-        // For now, following the spec strictly: POST to create new.
-        // If we want to update, we might need a PUT endpoint or check if ID exists in map info.
+        // Use native crypto.randomUUID()
+        const id = crypto.randomUUID();
+        const now = new Date().toISOString();
+        const jsonFilePath = `${user.id}/${id}.json`;
+        const thumbFilePath = `${user.id}/${id}.png`;
 
-        // NOTE: The current plan describes POST /api/projects for "新規保存".
-        // If we want to overwrite, we would need to implement that in the backend.
-        // For this MVP, every save might create a new project unless we enhance the API.
-        // However, to be safe and simple, we will just POST as a new project for now.
+        // 3. Upload JSON to Storage
+        const jsonStorageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${jsonFilePath}`;
 
-        let thumbnailBase64 = null;
-        if (thumbnail) {
-            console.log('DatavizProvider: Thumbnail Blob found', thumbnail.size);
-            const dataUrl = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.readAsDataURL(thumbnail);
-            });
-            // Remove Data-URI prefix if present (api likely expects pure base64 or handles it, trying pure base64)
-            thumbnailBase64 = dataUrl.split(',')[1];
-            console.log('DatavizProvider: Thumbnail Base64 length', thumbnailBase64.length);
-        } else {
-            console.warn('DatavizProvider: No thumbnail blob in mapData');
-        }
-
-        const body = {
-            name,
-            app_name: 'keplergl',
-            data: map,
-            thumbnail: thumbnailBase64
-        };
-
-        const response = await fetch(`${API_URL}/projects`, {
+        // Note: Using fetch directly to have fine control, similar to cloudApi.js reference
+        const jsonResponse = await fetch(jsonStorageEndpoint, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+                'x-upsert': 'true',
+                'apikey': supabaseKey
             },
-            body: JSON.stringify(body)
+            body: JSON.stringify(map)
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Dataviz Cloud Upload Error:', errorText);
-            throw new Error(`Failed to upload map: ${response.status} ${response.statusText} - ${errorText}`);
+        if (!jsonResponse.ok) {
+            const errorText = await jsonResponse.text();
+            throw new Error(`Failed to upload map data: ${jsonResponse.status} ${errorText}`);
         }
 
-        const result = await response.json();
+        // 4. Upload Thumbnail to Storage (if provided)
+        if (thumbnailBlob) {
+            const thumbStorageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${thumbFilePath}`;
+            await fetch(thumbStorageEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'image/png',
+                    'x-upsert': 'true',
+                    'apikey': supabaseKey
+                },
+                body: thumbnailBlob
+            });
+            // Ignore thumbnail upload errors (non-fatal)
+        }
 
-        // Result should contain the ID of the new project
+        // 5. Insert Metadata into DB
+        const payload = {
+            id,
+            user_id: user.id,
+            name,
+            storage_path: jsonFilePath,
+            thumbnail_path: thumbnailBlob ? thumbFilePath : null,
+            app_name: APP_NAME,
+            created_at: now,
+            updated_at: now
+        };
+
+        const dbEndpoint = `${supabaseUrl}/rest/v1/projects`;
+
+        const dbResponse = await fetch(dbEndpoint, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`, // Keep this!
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates,return=representation',
+                'apikey': supabaseKey
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!dbResponse.ok) {
+            const errorText = await dbResponse.text();
+            throw new Error(`Failed to save project metadata: ${dbResponse.status} ${errorText}`);
+        }
+
+        const resultData = await dbResponse.json();
+        const savedProject = resultData && resultData.length > 0 ? resultData[0] : { id };
+
         return {
-            id: result.id,
-            // We don't have a direct share URL yet
+            id: savedProject.id,
+            // shareUrl: ... (not implemented)
         };
     }
 
