@@ -124,22 +124,71 @@ export default class DatavizProvider extends Provider {
 
     async downloadMap(loadParams) {
         const { id } = loadParams;
-        const token = await this.getAccessToken();
-        if (!token) {
-            throw new Error('Not logged in');
+
+        // 1. Auth & Config
+        const globalAuthClient = window.supabase;
+        if (!globalAuthClient || !globalAuthClient.auth) {
+            throw new Error('Auth client not found. Please reload.');
         }
 
-        const response = await fetch(`${API_URL}/projects/${id}`, {
+        const { data: { session }, error: sessionError } = await globalAuthClient.auth.getSession();
+        if (sessionError || !session || !session.user) {
+            throw new Error('Please log in.');
+        }
+
+        const FALLBACK_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlYmhvZWlsdHhzcHN1cnFveHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNTY4MjMsImV4cCI6MjA4MDYzMjgyM30.5uf-D07Hb0JxL39X9yQ20P-5gFc1CRMdKWhDySrNZ0E";
+        const supabaseUrl = globalAuthClient.supabaseUrl || "https://vebhoeiltxspsurqoxvl.supabase.co";
+        // Force use of FALLBACK_KEY for consistency
+        let supabaseKey = FALLBACK_KEY;
+        if (supabaseKey) supabaseKey = supabaseKey.trim();
+
+        const accessToken = session.access_token;
+        const BUCKET_NAME = 'user_projects';
+
+        // 2. Get Metadata from DB
+        // Using 'apikey' in Header + Authorization Header (same as uploadMap success pattern)
+        const dbEndpoint = `${supabaseUrl}/rest/v1/projects?id=eq.${id}&select=*`;
+        const dbResponse = await fetch(dbEndpoint, {
+            method: 'GET',
             headers: {
-                Authorization: `Bearer ${token}`
+                'Authorization': `Bearer ${accessToken}`,
+                'apikey': supabaseKey,
+                'Content-Type': 'application/json'
             }
         });
 
-        if (!response.ok) {
-            throw new Error(`Failed to download map: ${response.statusText}`);
+        if (!dbResponse.ok) {
+            const errorText = await dbResponse.text();
+            throw new Error(`Failed to fetch project metadata: ${dbResponse.status} ${errorText}`);
         }
 
-        const mapData = await response.json();
+        const projects = await dbResponse.json();
+        if (!projects || projects.length === 0) {
+            throw new Error('Project not found');
+        }
+        const project = projects[0];
+
+        // 3. Download JSON from Storage
+        // storage_path is like "userid/uuid.json"
+        if (!project.storage_path) {
+            throw new Error('Project has no storage path');
+        }
+
+        const storageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${project.storage_path}`;
+        const jsonResponse = await fetch(storageEndpoint, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'apikey': supabaseKey
+            }
+        });
+
+        if (!jsonResponse.ok) {
+            const errorText = await jsonResponse.text();
+            throw new Error(`Failed to download map properties: ${jsonResponse.status} ${errorText}`);
+        }
+
+        const mapData = await jsonResponse.json();
 
         return {
             map: mapData,

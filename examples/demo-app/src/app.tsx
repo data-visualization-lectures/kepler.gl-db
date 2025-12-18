@@ -205,6 +205,27 @@ const App = props => {
       return;
     }
 
+    // Handle project_id query param (for Dataviz Cloud)
+    if (query.project_id) {
+      const datavizProvider = CLOUD_PROVIDERS.find(c => c.name === 'dataviz');
+      if (datavizProvider) {
+        // Prevent constant reloading
+        if (isEqual(prevQueryRef.current, { provider, id, query })) {
+          return;
+        }
+
+        dispatch(
+          loadCloudMap({
+            loadParams: { id: query.project_id },
+            provider: datavizProvider,
+            onSuccess: onLoadCloudMapSuccess
+          })
+        );
+        prevQueryRef.current = { provider, id, query };
+        return;
+      }
+    }
+
     // Load sample using its id
     if (id) {
       dispatch(loadSampleConfigurations(id));
