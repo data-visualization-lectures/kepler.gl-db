@@ -13,6 +13,9 @@ import { FormattedMessage } from '@kepler.gl/localization';
 import { OverwriteMapModalFactory as CoreFactory, useCloudListProvider, ModalFooter, ImageModalContainerFactory } from '@kepler.gl/components';
 import { cleanupExportImage as cleanupExportImageAction } from '@kepler.gl/actions';
 
+console.log('CustomOverwriteMapModal Factory: Module Loaded');
+console.log('CustomOverwriteMapModal Factory: CoreFactory is', CoreFactory);
+
 // We need to re-implement the styles because we can't easily import them from source if build is separate.
 const StyledMsg = styled.div`
   margin-top: 24px;
