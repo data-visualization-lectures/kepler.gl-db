@@ -1,6 +1,8 @@
-import { ModalContainerFactory, useCloudListProvider, ModalFooter } from '@kepler.gl/components';
+import { ModalContainerFactory, useCloudListProvider } from '@kepler.gl/components';
 import styled from 'styled-components';
 import React, { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
+import { toggleModal } from '@kepler.gl/actions';
 import { FormattedMessage } from '@kepler.gl/localization';
 
 // Local replacement for CenterVerticalFlexbox
@@ -23,13 +25,6 @@ const UploadAnimation = ({ icon }) => (
 // CRITICAL FIX: Extract the exact factory reference used by ModalContainer
 // to ensure injectComponents matches it correctly.
 const CoreFactory = ModalContainerFactory.deps[1];
-
-console.log('CustomOverwriteMapModal Factory: Module Loaded');
-console.log('CustomOverwriteMapModal Factory: Extracted CoreFactory from Deps', CoreFactory);
-
-if (!CoreFactory) {
-    console.error('CustomOverwriteMapModal Factory: FAILED TO FIND CORE FACTORY at index 1');
-}
 
 // We need to re-implement the styles because we can't easily import them from source if build is separate.
 const StyledMsg = styled.div`
@@ -66,6 +61,7 @@ export const CustomOverwriteMapModalFactory = (...deps) => {
     const OverwriteMapModal = (props) => {
         const { mapSaved, title, isProviderLoading, onUpdateImageSetting, cleanupExportImage, onCancel, onConfirm } = props;
         const { provider, cloudProviders, setProvider } = useCloudListProvider();
+        const dispatch = useDispatch();
 
         useEffect(() => {
             console.log('CustomOverwriteMapModal: Mounted', { provider, cloudProviders });
@@ -76,33 +72,13 @@ export const CustomOverwriteMapModalFactory = (...deps) => {
             }
         }, [provider, cloudProviders, setProvider]);
 
-        const confirmButton = useMemo(() => ({
-            ...CONFIRM_BUTTON,
-            disabled: false // FORCE ENABLE
-        }), []);
-
         const onConfirmClick = () => {
-            console.log('CustomOverwriteMapModal: YES Clicked!');
-            const targetProvider = provider || (cloudProviders && cloudProviders[0]);
-            if (targetProvider) {
-                console.log('CustomOverwriteMapModal: Executing onConfirm with', targetProvider);
-                onConfirm(targetProvider);
-            } else {
-                console.error('CustomOverwriteMapModal: No provider found!');
-            }
+            console.log('CustomOverwriteMapModal: YES Clicked! Switching to NEW SAVE modal');
+            // Bypass overwrite logic and toggle the SaveMapModal directly.
+            // This corresponds to "Save as New" behavior.
+            dispatch(toggleModal('saveMap'));
         };
 
-        // We will return a structure that mimics what ImageModalContainer renders, 
-        // OR we can try to use the passed `ImageModalContainer` if it was injected. 
-        // But since we are replacing the factory, we might not have access to internal components easily.
-
-        // Let's rely on the fact that OverwriteMapModal is usually wrapped in a ModalDialog by the container.
-        // We just render the content.
-
-        // Wait, the factory usually returns a component that renders ImageModalContainer.
-        // We will use the DefaultModal from the CoreFactory but intercept the render? No, that failed before.
-
-        // We will try to utilize the DOM structure.
         return (
             <div className="overwrite-map-modal-container" style={{ padding: '24px' }}>
                 <StyledOverwriteMapModal className="overwrite-map-modal">
@@ -119,9 +95,9 @@ export const CustomOverwriteMapModalFactory = (...deps) => {
                                 {provider && provider.icon ? <provider.icon height="64px" /> : null}
                             </StyledIcon>
                             <StyledMsg className="overwrite-map-msg">
-                                <StyledTitle>既存プロジェクトファイルを上書き保存しますか？</StyledTitle>
+                                <StyledTitle>新規ファイルとして保存しますか？</StyledTitle>
                                 <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-                                    ※実際には上書きされず、新しい履歴として保存されます。
+                                    ※既存のファイルとは別に、新しい履歴として保存されます。
                                 </div>
                             </StyledMsg>
                         </>
@@ -159,12 +135,10 @@ export const CustomOverwriteMapModalFactory = (...deps) => {
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            // window.alert('DEBUG: Yes Clicked'); // Comment out for production, but good for local test
-                            console.log('DEBUG: Yes Clicked - Triggering onConfirm');
                             onConfirmClick();
                         }}
                         style={{
-                            background: '#2ba7f0',
+                            background: '#2ba7f0', // Kepler blue
                             border: 'none',
                             color: 'white',
                             cursor: 'pointer',
