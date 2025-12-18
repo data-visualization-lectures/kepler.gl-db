@@ -280,38 +280,26 @@ export default class DatavizProvider extends Provider {
         const thumbFilePath = `${user.id}/${id}.png`;
 
         // 3. Upload JSON to Storage
-        const jsonStorageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${jsonFilePath}`;
+        // Use Supabase Client SDK for reliable upload/upsert
+        const { error: jsonError } = await globalAuthClient.storage
+            .from(BUCKET_NAME)
+            .upload(jsonFilePath, JSON.stringify(map), {
+                contentType: 'application/json',
+                upsert: true
+            });
 
-        // Note: Using fetch directly to have fine control, similar to cloudApi.js reference
-        const jsonResponse = await fetch(jsonStorageEndpoint, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-                'x-upsert': 'true',
-                'apikey': supabaseKey
-            },
-            body: JSON.stringify(map)
-        });
-
-        if (!jsonResponse.ok) {
-            const errorText = await jsonResponse.text();
-            throw new Error(`Failed to upload map data: ${jsonResponse.status} ${errorText}`);
+        if (jsonError) {
+            throw new Error(`Failed to upload map data: ${jsonError.message}`);
         }
 
         // 4. Upload Thumbnail to Storage (if provided)
         if (thumbnailBlob) {
-            const thumbStorageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${thumbFilePath}`;
-            await fetch(thumbStorageEndpoint, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'image/png',
-                    'x-upsert': 'true',
-                    'apikey': supabaseKey
-                },
-                body: thumbnailBlob
-            });
+            await globalAuthClient.storage
+                .from(BUCKET_NAME)
+                .upload(thumbFilePath, thumbnailBlob, {
+                    contentType: 'image/png',
+                    upsert: true
+                });
             // Ignore thumbnail upload errors (non-fatal)
         }
 
