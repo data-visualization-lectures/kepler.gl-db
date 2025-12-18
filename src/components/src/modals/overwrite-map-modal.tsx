@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useMemo} from 'react';
+import React, { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
-import {CenterVerticalFlexbox} from '../common/styled-components';
-import {UploadAnimation} from './status-panel';
-import {FormattedMessage} from '@kepler.gl/localization';
-import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
-import {Provider} from '@kepler.gl/cloud-providers';
-import {cleanupExportImage as cleanupExportImageAction} from '@kepler.gl/actions';
-import {useCloudListProvider} from '../hooks/use-cloud-list-provider';
-import {ModalFooter} from '../common/modal';
+import { CenterVerticalFlexbox } from '../common/styled-components';
+import { UploadAnimation } from './status-panel';
+import { FormattedMessage } from '@kepler.gl/localization';
+import ImageModalContainer, { ImageModalContainerProps } from './image-modal-container';
+import { Provider } from '@kepler.gl/cloud-providers';
+import { cleanupExportImage as cleanupExportImageAction } from '@kepler.gl/actions';
+import { useCloudListProvider } from '../hooks/use-cloud-list-provider';
+import { ModalFooter } from '../common/modal';
 
 const StyledMsg = styled.div`
   margin-top: 24px;
@@ -62,7 +62,16 @@ const OverwriteMapModalFactory = () => {
     onCancel,
     onConfirm
   }) => {
-    const {provider} = useCloudListProvider();
+    const { provider, cloudProviders, setProvider } = useCloudListProvider();
+
+    useEffect(() => {
+      if (!provider && cloudProviders && cloudProviders.length > 0) {
+        // Automatically Select the first provider if none selected
+        // In a real scenario we might want to know which provider the map belongs to
+        // But for standard overwrite, default to the first available (usually the main one)
+        setProvider(cloudProviders[0]);
+      }
+    }, [provider, cloudProviders, setProvider]);
 
     const confirmButton = useMemo(
       () => ({
@@ -93,7 +102,7 @@ const OverwriteMapModalFactory = () => {
               </StyledIcon>
               <StyledMsg className="overwrite-map-msg">
                 <StyledTitle>{title} </StyledTitle>
-                <FormattedMessage id={'modal.overwriteMap.alreadyExists'} values={{mapSaved}} />
+                <FormattedMessage id={'modal.overwriteMap.alreadyExists'} values={{ mapSaved }} />
               </StyledMsg>
             </>
           )}

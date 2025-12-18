@@ -19,8 +19,9 @@ export function CustomOverwriteMapModalFactory(...deps) {
                     matchedProvider = cloudProviders.find(p => p.displayName === mapSaved || p.name === mapSaved);
                 }
 
-                // If only one provider exists, use it as fallback
-                if (!matchedProvider && cloudProviders.length === 1) {
+                // If no match found (or mapSaved is empty), fallback to the first provider (Dataviz)
+                // This ensures the button is always enabled.
+                if (!matchedProvider) {
                     matchedProvider = cloudProviders[0];
                 }
 
