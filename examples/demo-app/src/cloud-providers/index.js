@@ -13,8 +13,9 @@ const DROPBOX_CLIENT_NAME = 'Kepler.gl Demo App';
 export const DEFAULT_CLOUD_PROVIDER = 'dataviz';
 
 export const CLOUD_PROVIDERS = [
-  new DatavizProvider(),
-  new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME)
+  new DatavizProvider()
+  // Dropbox removed to prevent 401 interference
+  // new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME)
 ];
 
 export function getCloudProvider(providerName) {
