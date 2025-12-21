@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo} from 'react';
+import React, { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
-import {FlexContainer} from '../common/flex-container';
-import StatusPanel, {UploadAnimation} from './status-panel';
-import {ProviderSelect} from './cloud-components/provider-select';
-import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER, dataTestIds} from '@kepler.gl/constants';
+import ImageModalContainer, { ImageModalContainerProps } from './image-modal-container';
+import { FlexContainer } from '../common/flex-container';
+import StatusPanel, { UploadAnimation } from './status-panel';
+import { ProviderSelect } from './cloud-components/provider-select';
+import { MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER, dataTestIds } from '@kepler.gl/constants';
 
 import {
   StyledModalContent,
@@ -18,12 +18,12 @@ import {
   StyledModalInputFootnote
 } from '../common/styled-components';
 import ImagePreview from '../common/image-preview';
-import {FormattedMessage} from '@kepler.gl/localization';
-import {MapInfo, ExportImage} from '@kepler.gl/types';
-import {Provider} from '@kepler.gl/cloud-providers';
-import {setMapInfo, cleanupExportImage as cleanupExportImageAction} from '@kepler.gl/actions';
-import {ModalFooter} from '../common/modal';
-import {useCloudListProvider} from '../hooks/use-cloud-list-provider';
+import { FormattedMessage } from '@kepler.gl/localization';
+import { MapInfo, ExportImage } from '@kepler.gl/types';
+import { Provider } from '@kepler.gl/cloud-providers';
+import { setMapInfo, cleanupExportImage as cleanupExportImageAction } from '@kepler.gl/actions';
+import { ModalFooter } from '../common/modal';
+import { useCloudListProvider } from '../hooks/use-cloud-list-provider';
 
 const StyledSaveMapModal = styled.div.attrs({
   className: 'save-map-modal'
@@ -63,7 +63,7 @@ const StyledCompactExportSection = styled(StyledExportSection)`
 const nop = () => {
   return;
 };
-const TEXT_AREA_LIGHT_STYLE = {resize: 'none'};
+const TEXT_AREA_LIGHT_STYLE = { resize: 'none' };
 
 type CharacterLimits = {
   title?: number;
@@ -97,7 +97,21 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
   characterLimits,
   onChangeInput
 }) => {
-  const {description = '', title = ''} = mapInfo;
+  const { description = '', title = '' } = mapInfo;
+
+  // Generate default title with current date and time in YYYY-MM-DD HH:mm format
+  const getDefaultTitle = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  };
+
+  const displayTitle = title || getDefaultTitle();
+
   return (
     <div className="selection map-info-panel" data-testid={dataTestIds.providerMapInfoPanel}>
       <StyledModalSection className="save-map-modal-name">
@@ -106,7 +120,7 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
           <InputLight
             id="map-title"
             type="text"
-            value={title}
+            value={displayTitle}
             onChange={e => onChangeInput('title', e)}
             placeholder="Type map title"
           />
@@ -141,7 +155,7 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
   );
 };
 
-const SaveMapHeader = ({cloudProviders}) => {
+const SaveMapHeader = ({ cloudProviders }) => {
   return (
     <StyledExportSection>
       <div className="description">
@@ -157,8 +171,8 @@ const SaveMapHeader = ({cloudProviders}) => {
   );
 };
 
-const STYLED_EXPORT_SECTION_STYLE = {margin: '2px 0'};
-const PROVIDER_MANAGER_URL_STYLE = {textDecoration: 'underline'};
+const STYLED_EXPORT_SECTION_STYLE = { margin: '2px 0' };
+const PROVIDER_MANAGER_URL_STYLE = { textDecoration: 'underline' };
 
 function SaveMapModalFactory() {
   const SaveMapModal: React.FC<SaveMapModalProps> = ({
@@ -173,13 +187,13 @@ function SaveMapModalFactory() {
     onCancel,
     onConfirm
   }) => {
-    const {provider, cloudProviders} = useCloudListProvider();
+    const { provider, cloudProviders } = useCloudListProvider();
 
     const onChangeInput = (
       key: string,
-      {target: {value}}: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+      { target: { value } }: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
     ) => {
-      onSetMapInfo({[key]: value});
+      onSetMapInfo({ [key]: value });
     };
 
     const confirmButton = useMemo(
