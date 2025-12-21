@@ -308,7 +308,7 @@ var _default = exports["default"] = {
     },
     saveMap: {
       title: 'クラウドストレージ',
-      subtitle: '地図を個人用クラウドストレージに保存するためにログインする'
+      subtitle: ' '
     },
     exportMap: {
       formatTitle: '地図の形式',

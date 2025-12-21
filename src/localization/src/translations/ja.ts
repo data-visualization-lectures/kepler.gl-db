@@ -307,7 +307,7 @@ export default {
     },
     saveMap: {
       title: 'クラウドストレージ',
-      subtitle: ''
+      subtitle: ' '
     },
     exportMap: {
       formatTitle: '地図の形式',
