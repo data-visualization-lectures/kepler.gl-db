@@ -4,7 +4,6 @@
 import React, { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import ImageModalContainer, { ImageModalContainerProps } from './image-modal-container';
-import { FlexContainer } from '../common/flex-container';
 import StatusPanel, { UploadAnimation } from './status-panel';
 import { ProviderSelect } from './cloud-components/provider-select';
 import { MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER, dataTestIds } from '@kepler.gl/constants';
@@ -12,10 +11,8 @@ import { MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER, dataTestIds } from '@keple
 import {
   StyledModalContent,
   InputLight,
-  TextAreaLight,
   StyledExportSection,
-  StyledModalSection,
-  StyledModalInputFootnote
+  StyledModalSection
 } from '../common/styled-components';
 import ImagePreview from '../common/image-preview';
 import { FormattedMessage } from '@kepler.gl/localization';
@@ -63,7 +60,6 @@ const StyledCompactExportSection = styled(StyledExportSection)`
 const nop = () => {
   return;
 };
-const TEXT_AREA_LIGHT_STYLE = { resize: 'none' };
 
 type CharacterLimits = {
   title?: number;
@@ -97,7 +93,7 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
   characterLimits,
   onChangeInput
 }) => {
-  const { description = '', title = '' } = mapInfo;
+  const { title = '' } = mapInfo;
 
   // Generate default title with current date and time in YYYY-MM-DD HH:mm format
   const getDefaultTitle = () => {
@@ -125,31 +121,6 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
             placeholder="Type map title"
           />
         </div>
-      </StyledModalSection>
-      <StyledModalSection>
-        <FlexContainer className="save-map-modal-description">
-          <div className="modal-section-title">Description</div>
-          <div className="modal-section-subtitle">(optional)</div>
-        </FlexContainer>
-        <div>
-          <TextAreaLight
-            rows={3}
-            id="map-description"
-            style={TEXT_AREA_LIGHT_STYLE as React.CSSProperties}
-            value={description}
-            onChange={e => onChangeInput('description', e)}
-            placeholder="Type map description"
-          />
-        </div>
-        <StyledModalInputFootnote
-          error={
-            Boolean(characterLimits?.description) &&
-            description.length > Number(characterLimits?.description)
-          }
-        >
-          {description.length}/{characterLimits?.description || MAP_INFO_CHARACTER.description}{' '}
-          characters
-        </StyledModalInputFootnote>
       </StyledModalSection>
     </div>
   );
