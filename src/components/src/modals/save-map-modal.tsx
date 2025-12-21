@@ -193,17 +193,17 @@ function SaveMapModalFactory() {
             <SaveMapHeader cloudProviders={cloudProviders} />
             {provider && (
               <>
-                {provider.getManagementUrl ? (
+                {provider && provider.name === 'dataviz' ? (
                   <StyledExportSection style={STYLED_EXPORT_SECTION_STYLE}>
                     <div className="selection">
                       <a
                         key={1}
-                        href={provider.getManagementUrl()}
+                        href="https://auth.dataviz.jp/?tool=kepler-gl"
                         target="_blank"
                         rel="noopener noreferrer"
                         style={PROVIDER_MANAGER_URL_STYLE}
                       >
-                        Go to your Kepler.gl {provider.displayName} page
+                        保存済みプロジェクト一覧
                       </a>
                     </div>
                   </StyledExportSection>
