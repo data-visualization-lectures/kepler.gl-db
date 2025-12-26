@@ -12,6 +12,20 @@ const API_URL = '/api/dataviz';
 // Module-level cache to persist ID across provider re-instantiations
 let cachedProjectId = null;
 
+/**
+ * Convert Blob to Base64 Data URI
+ * @param {Blob} blob - The blob to convert
+ * @returns {Promise<string>} Base64 Data URI string
+ */
+function blobToDataURI(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
 export default class DatavizProvider extends Provider {
     constructor() {
         super({ name: NAME, displayName: DISPLAY_NAME, icon: DatavizIcon });
@@ -119,6 +133,8 @@ export default class DatavizProvider extends Provider {
             description: p.app_name, // or any description if available
             updatedAt: new Date(p.updated_at).getTime(),
             privateMap: true,
+            // Add thumbnail URL if thumbnail_path exists
+            thumbnail: p.thumbnail_path ? `${API_URL}/projects/${p.id}/thumbnail` : null,
             loadParams: {
                 id: p.id
             }
@@ -143,93 +159,24 @@ export default class DatavizProvider extends Provider {
             return { map: {}, format: 'keplergl' };
         }
 
-        // Ensure Supabase is loaded
-        await this._waitForSupabase();
-
-        // 1. Auth & Config
-        const globalAuthClient = window.supabase;
-        if (!globalAuthClient || !globalAuthClient.auth) {
-            throw new Error('Auth client not found. Please reload.');
+        // Get access token
+        const token = await this.getAccessToken();
+        if (!token) {
+            throw new Error('Not logged in');
         }
 
-        const { data: { session }, error: sessionError } = await globalAuthClient.auth.getSession();
-        if (sessionError || !session || !session.user) {
-            throw new Error('Please log in.');
-        }
-
-        const FALLBACK_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlYmhvZWlsdHhzcHN1cnFveHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNTY4MjMsImV4cCI6MjA4MDYzMjgyM30.5uf-D07Hb0JxL39X9yQ20P-5gFc1CRMdKWhDySrNZ0E";
-        const supabaseUrl = globalAuthClient.supabaseUrl || "https://vebhoeiltxspsurqoxvl.supabase.co";
-        // Force use of FALLBACK_KEY for consistency
-        let supabaseKey = FALLBACK_KEY;
-        if (supabaseKey) supabaseKey = supabaseKey.trim();
-
-        const accessToken = session.access_token;
-        const BUCKET_NAME = 'user_projects';
-
-        // 2. Get Metadata from DB
-        // Using 'apikey' in Header + Authorization Header (same as uploadMap success pattern)
-        const dbEndpoint = `${supabaseUrl}/rest/v1/projects?id=eq.${id}&select=*`;
-        const dbResponse = await fetch(dbEndpoint, {
-            method: 'GET',
+        // Fetch project data from API
+        const response = await fetch(`${API_URL}/projects/${id}`, {
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'apikey': supabaseKey,
-                'Content-Type': 'application/json'
+                Authorization: `Bearer ${token}`
             }
         });
 
-        if (!dbResponse.ok) {
-            const errorText = await dbResponse.text();
-            throw new Error(`Failed to fetch project metadata: ${dbResponse.status} ${errorText}`);
+        if (!response.ok) {
+            throw new Error(`Failed to download map: ${response.statusText}`);
         }
 
-        const projects = await dbResponse.json();
-        if (!projects || projects.length === 0) {
-            throw new Error('Project not found');
-        }
-        const project = projects[0];
-
-        // 3. Download JSON from Storage
-        // storage_path is like "userid/uuid.json"
-        if (!project.storage_path) {
-            throw new Error('Project has no storage path');
-        }
-
-        const storageEndpoint = `${supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${project.storage_path}`;
-        const jsonResponse = await fetch(storageEndpoint, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'apikey': supabaseKey
-            }
-        });
-
-        if (!jsonResponse.ok) {
-            const errorText = await jsonResponse.text();
-            throw new Error(`Failed to download map properties: ${jsonResponse.status} ${errorText}`);
-        }
-
-        const mapData = await jsonResponse.json();
-
-        // Inject metadata into the map configuration
-        if (!mapData.info) {
-            mapData.info = {};
-        }
-
-        // HACK: Force Kepler.gl to treat this as a NEW map
-        // By incorrectly setting the ID or title, we force the "New Save" flow.
-        // Actually, if we set the ID, it thinks it is saved.
-        // If we want "Save as New" behavior every time, we should NOT provide the ID here.
-        // mapData.info.id = id;  <-- REMOVE THIS to force "Save as New" behavior
-
-        // However, we want the title to be pre-filled if possible, but Kepler might ignore it without ID?
-        // Let's set title, but skip ID.
-        mapData.info.title = project.name;
-        mapData.info.description = project.description;
-
-        // Clear user/owner info so it doesn't think we own it (which might trigger overwrite if ID was present)
-        // mapData.info.userId = project.user_id;
-        // mapData.info.owner = project.user_id;
+        const mapData = await response.json();
 
         return {
             map: mapData,
@@ -238,115 +185,63 @@ export default class DatavizProvider extends Provider {
     }
 
     async uploadMap({ mapData, options = {} }) {
-        // Direct Supabase implementation modeled after cloudApi.js from rawgraphs-app-db
-
-        // 1. Get Supabase Config & Session
-        const globalAuthClient = window.supabase;
-        if (!globalAuthClient || !globalAuthClient.auth) {
-            throw new Error('Auth client not found. Please reload.');
+        // Get access token
+        const token = await this.getAccessToken();
+        if (!token) {
+            throw new Error('Not logged in');
         }
 
-        const { data: { session }, error: sessionError } = await globalAuthClient.auth.getSession();
-        if (sessionError || !session || !session.user) {
-            throw new Error('Please log in.');
-        }
-
-        // Fallback key from RawGraphs implementation just in case window.supabase.supabaseKey is missing
-        const FALLBACK_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlYmhvZWlsdHhzcHN1cnFveHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNTY4MjMsImV4cCI6MjA4MDYzMjgyM30.5uf-D07Hb0JxL39X9yQ20P-5gFc1CRMdKWhDySrNZ0E";
-
-        const supabaseUrl = globalAuthClient.supabaseUrl || "https://vebhoeiltxspsurqoxvl.supabase.co";
-        // Force use of FALLBACK_KEY (Source of Truth from RawGraphs .env)
-        // The key in globalAuthClient.supabaseKey (suffix ...c4) is INVALID for REST API.
-        let supabaseKey = FALLBACK_KEY;
-
-        // Trim key to remove any potential accidental whitespace/newline
-        if (supabaseKey) supabaseKey = supabaseKey.trim();
-
-        const accessToken = session.access_token;
-        const user = session.user;
-
-        if (!supabaseKey) {
-            throw new Error('Supabase API Key is missing');
-        }
-
-        const BUCKET_NAME = 'user_projects';
-        const APP_NAME = 'kepler-gl'; // Use specific app name
-
-        // 2. Prepare Data
-        const { isPublic } = options;
+        // Prepare data
         const { map, thumbnail } = mapData;
         const name = (map.info && map.info.title) || 'Untitled Map';
         const thumbnailBlob = thumbnail || options.thumbnail;
 
-        // Determine ID: ALWAYS generate new ID to implement "Save as New" behavior
-        // logic: Even if overwrite is requested, we ignore it and create a new project.
-        const id = crypto.randomUUID();
-
-        const now = new Date().toISOString();
-        const jsonFilePath = `${user.id}/${id}.json`;
-        const thumbFilePath = `${user.id}/${id}.png`;
-
-        console.log('[DatavizProvider] Saving as NEW project (ID generated):', id);
-
-        // 3. Upload JSON to Storage (New File)
-        const { error: jsonError } = await globalAuthClient.storage
-            .from(BUCKET_NAME)
-            .upload(jsonFilePath, JSON.stringify(map), {
-                contentType: 'application/json',
-                upsert: false
-            });
-
-        if (jsonError) {
-            console.error('[DatavizProvider] JSON Upload Error:', jsonError);
-            throw new Error(`Failed to upload map data: ${jsonError.message}`);
-        }
-
-        // 4. Upload Thumbnail to Storage (if provided)
+        // Convert thumbnail Blob to Base64 Data URI if provided
+        let thumbnailDataURI = null;
         if (thumbnailBlob) {
-            await globalAuthClient.storage
-                .from(BUCKET_NAME)
-                .upload(thumbFilePath, thumbnailBlob, {
-                    contentType: 'image/png',
-                    upsert: false
-                });
+            try {
+                thumbnailDataURI = await blobToDataURI(thumbnailBlob);
+            } catch (error) {
+                console.warn('[DatavizProvider] Failed to convert thumbnail:', error);
+                // Continue without thumbnail
+            }
         }
 
-        // 5. Insert Metadata into DB
-        const payload = {
-            id,
-            user_id: user.id,
+        // Prepare request body according to API specification
+        const requestBody = {
             name,
-            storage_path: jsonFilePath,
-            thumbnail_path: thumbnailBlob ? thumbFilePath : null,
-            app_name: APP_NAME,
-            created_at: now,
-            updated_at: now
+            app_name: 'keplergl',
+            data: map
         };
 
-        const dbEndpoint = `${supabaseUrl}/rest/v1/projects`;
-
-        const dbResponse = await fetch(dbEndpoint, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`, // Keep this!
-                'Content-Type': 'application/json',
-                'Prefer': 'resolution=merge-duplicates,return=representation',
-                'apikey': supabaseKey
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (!dbResponse.ok) {
-            const errorText = await dbResponse.text();
-            throw new Error(`Failed to save project metadata: ${dbResponse.status} ${errorText}`);
+        // Add thumbnail if available
+        if (thumbnailDataURI) {
+            requestBody.thumbnail = thumbnailDataURI;
         }
 
-        const resultData = await dbResponse.json();
-        const savedProject = resultData && resultData.length > 0 ? resultData[0] : { id };
+        // Send to API
+        const response = await fetch(`${API_URL}/projects`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to save project: ${response.status} ${errorText}`);
+        }
+
+        const result = await response.json();
+        const project = result.project || result;
+
+        console.log('[DatavizProvider] Project saved successfully:', project.id);
 
         return {
-            id: savedProject.id,
-            // shareUrl: ... (not implemented)
+            id: project.id
+            // shareUrl not implemented
         };
     }
 
