@@ -46,24 +46,24 @@ export default class DatavizProvider extends Provider {
     }
 
     async getAccessToken() {
-        if (Window.supabase?.auth?.getSession) {
+        if (Window.datavizSupabase?.auth?.getSession) {
             // Supabase v2
-            const { data } = await Window.supabase.auth.getSession();
+            const { data } = await Window.datavizSupabase.auth.getSession();
             return data.session?.access_token || null;
         }
-        if (Window.supabase?.auth?.session) {
+        if (Window.datavizSupabase?.auth?.session) {
             // Supabase v1
-            return Window.supabase.auth.session()?.access_token || null;
+            return Window.datavizSupabase.auth.session()?.access_token || null;
         }
         return null;
     }
 
     async getUser() {
-        if (Window.supabase?.auth?.getSession) {
+        if (Window.datavizSupabase?.auth?.getSession) {
             // Supabase v2
             // Use getSession() instead of getUser() to rely on the local session
             // managed by the shared auth client.
-            const { data } = await Window.supabase.auth.getSession();
+            const { data } = await Window.datavizSupabase.auth.getSession();
             const user = data.session?.user;
             if (user) {
                 return {
@@ -72,9 +72,9 @@ export default class DatavizProvider extends Provider {
                     id: user.id
                 };
             }
-        } else if (Window.supabase?.auth?.user) {
+        } else if (Window.datavizSupabase?.auth?.user) {
             // Supabase v1 (auth.user() returns the user from local session)
-            const user = Window.supabase.auth.user();
+            const user = Window.datavizSupabase.auth.user();
             if (user) {
                 return {
                     name: user.email,
@@ -88,7 +88,7 @@ export default class DatavizProvider extends Provider {
 
     async _waitForSupabase() {
         let retries = 0;
-        while (!Window.supabase && retries < 25) {
+        while (!Window.datavizSupabase && retries < 25) {
             await new Promise(resolve => setTimeout(resolve, 200));
             retries++;
         }
