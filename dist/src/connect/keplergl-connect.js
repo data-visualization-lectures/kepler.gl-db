@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.connect = void 0;
-var _lib = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/react-redux/lib");
+var _lib = require("/Users/yuichiyazaki/Documents/GitHubRepository/_app_fork/kepler.gl-db/node_modules/react-redux/lib");
 var _withLocalSelector = _interopRequireDefault(require("./with-local-selector"));
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project

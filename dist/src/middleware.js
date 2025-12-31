@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.enhanceReduxMiddleware = enhanceReduxMiddleware;
 var _toConsumableArray2 = _interopRequireDefault(require("@babel/runtime/helpers/toConsumableArray"));
-var _tasks = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/node_modules/react-palm/tasks");
+var _tasks = require("/Users/yuichiyazaki/Documents/GitHubRepository/_app_fork/kepler.gl-db/node_modules/react-palm/tasks");
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 

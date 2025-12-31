@@ -8,7 +8,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.mapStyleReducerFactory = exports["default"] = void 0;
 var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
 var _reduxActions = require("redux-actions");
-var _src = require("/Users/yuichiyazaki/Library/CloudStorage/Dropbox/Projects_\u8B1B\u7FA9/c_DataVizLectures/_app_fork/kepler.gl-db/src/actions/src");
+var _src = require("/Users/yuichiyazaki/Documents/GitHubRepository/_app_fork/kepler.gl-db/src/actions/src");
 var mapStyleUpdaters = _interopRequireWildcard(require("./map-style-updaters"));
 var _actionHandler; // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
