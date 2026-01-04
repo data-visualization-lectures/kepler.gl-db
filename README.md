@@ -18,12 +18,14 @@ corepack prepare yarn@4.4.0 --activate
 
 ```
 corepack yarn install
+
+cd examples/demo-app
+corepack yarn install
 ```
 
 3. デモアプリをローカル起動（Mapbox等の環境変数を .env に入れてから）
 
 ```
-cd examples/demo-app
 NODE_OPTIONS=--openssl-legacy-provider corepack yarn start:local
 ```
 
