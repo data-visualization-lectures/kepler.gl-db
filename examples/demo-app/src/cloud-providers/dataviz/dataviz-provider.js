@@ -7,7 +7,14 @@ import Window from 'global/window';
 
 const NAME = 'dataviz';
 const DISPLAY_NAME = 'Dataviz Cloud';
-const API_URL = '/api/dataviz';
+
+// Use dynamic API URL from the auth client if available
+function getApiUrl() {
+    if (Window.datavizApiUrl) {
+        return `${Window.datavizApiUrl}/api`;
+    }
+    return '/api/dataviz';
+}
 
 // Module-level cache to persist ID across provider re-instantiations
 let cachedProjectId = null;
@@ -113,7 +120,7 @@ export default class DatavizProvider extends Provider {
             throw new Error('Not logged in');
         }
 
-        const response = await fetch(`${API_URL}/projects?app=keplergl`, {
+        const response = await fetch(`${getApiUrl()}/projects?app=keplergl`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -134,7 +141,7 @@ export default class DatavizProvider extends Provider {
             updatedAt: new Date(p.updated_at).getTime(),
             privateMap: true,
             // Add thumbnail URL if thumbnail_path exists
-            thumbnail: p.thumbnail_path ? `${API_URL}/projects/${p.id}/thumbnail` : null,
+            thumbnail: p.thumbnail_path ? `${getApiUrl()}/projects/${p.id}/thumbnail` : null,
             loadParams: {
                 id: p.id
             }
@@ -166,7 +173,7 @@ export default class DatavizProvider extends Provider {
         }
 
         // Fetch project data from API
-        const response = await fetch(`${API_URL}/projects/${id}`, {
+        const response = await fetch(`${getApiUrl()}/projects/${id}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -220,7 +227,7 @@ export default class DatavizProvider extends Provider {
         }
 
         // Send to API
-        const response = await fetch(`${API_URL}/projects`, {
+        const response = await fetch(`${getApiUrl()}/projects`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
