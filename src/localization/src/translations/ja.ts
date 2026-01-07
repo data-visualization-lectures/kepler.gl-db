@@ -424,6 +424,11 @@ export default {
     customPalette: 'カスタムパレット',
     steps: '分類数',
     type: 'タイプ',
+    sequential: '順序的 (Sequential)',
+    qualitative: '定性的 (Qualitative)',
+    diverging: '分岐的 (Diverging)',
+    cyclical: '循環的 (Cyclical)',
+    all: '全て',
     colorBlindSafe: '色覚バリアフリー',
     reversed: '反転'
   },
@@ -431,7 +436,17 @@ export default {
     colorScale: 'カラースケール',
     sizeScale: 'サイズのスケール',
     strokeScale: '線のスケール',
-    scale: 'スケール'
+    scale: 'スケール',
+    ordinal: '順序',
+    quantile: '等量 (Quantile)',
+    quantize: '等間隔 (Quantize)',
+    linear: '線形',
+    sqrt: '平方根',
+    log: '対数',
+    point: '点',
+    threshold: 'しきい値',
+    custom: 'カスタム区分',
+    customOrdinal: 'カスタム順序'
   },
   fileUploader: {
     message: 'ここにファイルをドロップ（複数可）',

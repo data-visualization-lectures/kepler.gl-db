@@ -1,26 +1,26 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {MouseEvent, useCallback, useMemo} from 'react';
+import React, { MouseEvent, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import {KEPLER_COLOR_PALETTES, PALETTE_TYPES, ColorPalette} from '@kepler.gl/constants';
-import {FormattedMessage} from '@kepler.gl/localization';
-import {ColorRange, ColorUI, NestedPartial} from '@kepler.gl/types';
+import { KEPLER_COLOR_PALETTES, PALETTE_TYPES, ColorPalette } from '@kepler.gl/constants';
+import { useIntl } from 'react-intl';
+import { FormattedMessage } from '@kepler.gl/localization';
+import { ColorRange, ColorUI, NestedPartial } from '@kepler.gl/types';
 import {
   hasColorMap,
   updateColorRangeBySelectedPalette,
   paletteIsSteps,
   paletteIsType,
-  paletteIsColorBlindSafe
+  paletteIsColorBlindSafe,
+  capitalizeFirstLetter
 } from '@kepler.gl/utils';
 import ItemSelector from '../../common/item-selector/item-selector';
-import {PanelLabel, Tooltip} from '../../common/styled-components';
+import { PanelLabel, Tooltip } from '../../common/styled-components';
 import Switch from '../../common/switch';
 import ColorPalettePanel from './color-palette';
 import CustomPaletteFactory from './custom-palette';
-
-import {capitalizeFirstLetter} from '@kepler.gl/utils';
-import {range} from 'd3-array';
+import { range } from 'd3-array';
 
 type ColorRangeSelectorProps = {
   colorPalettes?: ColorPalette[];
@@ -103,7 +103,6 @@ const CONFIG_SETTINGS = {
     options: [true, false]
   }
 };
-const displayOption = d => capitalizeFirstLetter(d);
 const getOptionValue = d => d;
 const noop = () => {
   // do nothing
@@ -120,8 +119,8 @@ function ColorRangeSelectorFactory(
     onSelectColorRange = noop,
     selectedColorRange
   }) => {
-    const {customPalette, showSketcher, colorRangeConfig} = colorPaletteUI;
-    const {type, steps, colorBlindSafe, reversed} = colorRangeConfig;
+    const { customPalette, showSketcher, colorRangeConfig } = colorPaletteUI;
+    const { type, steps, colorBlindSafe, reversed } = colorRangeConfig;
 
     const filteredColorPalettes = useMemo(() => {
       return (
@@ -135,8 +134,8 @@ function ColorRangeSelectorFactory(
     }, [colorPalettes, colorBlindSafe, steps, type]);
 
     const _updateConfig = useCallback(
-      ({key, value}) => {
-        setColorPaletteUI({colorRangeConfig: {[key]: value}});
+      ({ key, value }) => {
+        setColorPaletteUI({ colorRangeConfig: { [key]: value } });
       },
       [setColorPaletteUI]
     );
@@ -144,7 +143,7 @@ function ColorRangeSelectorFactory(
     const _onCustomPaletteCancel = useCallback(() => {
       setColorPaletteUI({
         showSketcher: false,
-        colorRangeConfig: {custom: false}
+        colorRangeConfig: { custom: false }
       });
     }, [setColorPaletteUI]);
 
@@ -169,6 +168,7 @@ function ColorRangeSelectorFactory(
         <StyledColorConfig>
           {(colorRangeConfig.custom ? ['custom'] : Object.keys(colorRangeConfig)).map(key =>
             CONFIG_SETTINGS[key] ? (
+              // @ts-ignore
               <PaletteConfig
                 key={key}
                 prop={key}
@@ -224,16 +224,18 @@ export const PaletteConfig: React.FC<PaletteConfigProps> = ({
   prop,
   label,
   value,
-  config: {type, options},
+  config: { type, options },
   onChange,
   disabled,
   reason
 }) => {
-  const updateSelect = useCallback(val => onChange({key: prop, value: val}), [onChange, prop]);
+  const intl = useIntl();
+  const updateSelect = useCallback(val => onChange({ key: prop, value: val }), [onChange, prop]);
   const updateSwitch = useCallback(
-    () => onChange({key: prop, value: !value}),
+    () => onChange({ key: prop, value: !value }),
     [onChange, prop, value]
   );
+  const displayOption = useCallback(d => intl.formatMessage({ id: `color.${d}`, defaultMessage: capitalizeFirstLetter(d) }), [intl]);
 
   return (
     <StyledPaletteConfig className="color-palette__config" onClick={e => e.stopPropagation()}>
@@ -271,7 +273,7 @@ export const PaletteConfig: React.FC<PaletteConfigProps> = ({
         )}
         {disabled && reason ? (
           <Tooltip id={`color-range-config-${prop}`} place="right">
-            <div style={{maxWidth: '214px'}}>
+            <div style={{ maxWidth: '214px' }}>
               <FormattedMessage id={reason} />
             </div>
           </Tooltip>

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {LOCALES} from '../locales';
+import { LOCALES } from '../locales';
 
 export default {
   property: {
@@ -589,6 +589,11 @@ ${'```'}
     customPalette: 'Custom Palette',
     steps: 'Steps',
     type: 'Type',
+    sequential: 'Sequential',
+    qualitative: 'Qualitative',
+    diverging: 'Diverging',
+    cyclical: 'Cyclical',
+    all: 'All',
     colorBlindSafe: 'Colorblind Safe',
     reversed: 'Reversed',
     disableStepReason: `Can't change number of steps with custom color breaks, use custom palette to edit steps`,
@@ -600,7 +605,17 @@ ${'```'}
     sizeScale: 'Size Scale',
     strokeScale: 'Stroke Scale',
     strokeColorScale: 'Stroke Color Scale',
-    scale: 'Scale'
+    scale: 'Scale',
+    ordinal: 'Ordinal',
+    quantile: 'Quantile',
+    quantize: 'Quantize',
+    linear: 'Linear',
+    sqrt: 'Sqrt',
+    log: 'Log',
+    point: 'Point',
+    threshold: 'Threshold',
+    custom: 'Custom Breaks',
+    customOrdinal: 'Custom Ordinal'
   },
   fileUploader: {
     message: 'Drag & Drop Your File(s) Here',
