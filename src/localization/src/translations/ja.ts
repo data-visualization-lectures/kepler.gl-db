@@ -422,8 +422,8 @@ export default {
   },
   color: {
     customPalette: 'カスタムパレット',
-    steps: '分類数',
-    type: 'タイプ',
+    steps: '階級分類数',
+    type: '階級分類法',
     sequential: '順序的',
     qualitative: '定性的',
     diverging: '分岐的',
