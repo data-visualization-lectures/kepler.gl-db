@@ -29,6 +29,8 @@ corepack yarn install
 NODE_OPTIONS=--openssl-legacy-provider corepack yarn start:local
 ```
 
+http://localhost:8080/?auth_debug
+
 4. ローカルビルド（成果物は examples/demo-app/dist/）
 
 ```
