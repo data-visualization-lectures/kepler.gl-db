@@ -413,10 +413,10 @@ export default {
       lng1: '到着 経度'
     },
     grid: {
-      worldUnitSize: 'グリッドサイズ (km)'
+      worldUnitSize: 'グリッドサイズ（km）'
     },
     hexagon: {
-      worldUnitSize: '六角形の半径 (km)'
+      worldUnitSize: '六角形の半径（km）'
     },
     hex_id: 'hex id'
   },
@@ -424,10 +424,10 @@ export default {
     customPalette: 'カスタムパレット',
     steps: '分類数',
     type: 'タイプ',
-    sequential: '順序的 (Sequential)',
-    qualitative: '定性的 (Qualitative)',
-    diverging: '分岐的 (Diverging)',
-    cyclical: '循環的 (Cyclical)',
+    sequential: '順序的',
+    qualitative: '定性的',
+    diverging: '分岐的',
+    cyclical: '循環的',
     all: '全て',
     colorBlindSafe: '色覚バリアフリー',
     reversed: '反転'
@@ -438,8 +438,8 @@ export default {
     strokeScale: '線のスケール',
     scale: 'スケール',
     ordinal: '順序',
-    quantile: '等量 (Quantile)',
-    quantize: '等間隔 (Quantize)',
+    quantile: '等量（Quantile）',
+    quantize: '等間隔（Quantize）',
     linear: '線形',
     sqrt: '平方根',
     log: '対数',

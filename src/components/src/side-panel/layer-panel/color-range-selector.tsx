@@ -235,7 +235,12 @@ export const PaletteConfig: React.FC<PaletteConfigProps> = ({
     () => onChange({ key: prop, value: !value }),
     [onChange, prop, value]
   );
-  const displayOption = useCallback(d => intl.formatMessage({ id: `color.${d}`, defaultMessage: capitalizeFirstLetter(d) }), [intl]);
+  const displayOption = useCallback(d => {
+    if (typeof d === 'string') {
+      return intl.formatMessage({ id: `color.${d}`, defaultMessage: capitalizeFirstLetter(d) });
+    }
+    return String(d);
+  }, [intl]);
 
   return (
     <StyledPaletteConfig className="color-palette__config" onClick={e => e.stopPropagation()}>
