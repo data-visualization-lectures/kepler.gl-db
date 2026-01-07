@@ -600,6 +600,11 @@ ${'```'}
     preset: 'Preset Colors',
     picker: 'Color Picker'
   },
+  columnStats: {
+    min: 'Min',
+    mean: 'Mean',
+    max: 'Max'
+  },
   scale: {
     colorScale: 'Color Scale',
     sizeScale: 'Size Scale',

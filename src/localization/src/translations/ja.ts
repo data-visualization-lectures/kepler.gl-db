@@ -10,7 +10,7 @@ export default {
     fillColor: '塗りつぶしの色',
     color: '色',
     coverage: 'カバー率',
-    strokeColor: '線の色',
+    strokeColor: '輪郭線の色',
     radius: '半径',
     outline: '輪郭線',
     stroke: '線の太さ',
@@ -76,8 +76,8 @@ export default {
     propertyBasedOn: '{property}の基準',
     coverage: 'カバー率',
     stroke: '線',
-    strokeWidth: '線の太さ',
-    strokeColor: '線の色',
+    strokeWidth: '輪郭線の太さ',
+    strokeColor: '輪郭線の色',
     basic: '基本設定',
     trailLength: '痕跡の長さ',
     trailLengthDescription: '痕跡が完全に消えるまでの秒数',
@@ -123,8 +123,8 @@ export default {
     outline: '輪郭線',
     colorRange: '色の範囲',
     stroke: '線',
-    strokeColor: '線の色',
-    strokeColorRange: '線の色の範囲',
+    strokeColor: '輪郭線の色',
+    strokeColorRange: '輪郭線の色の範囲',
     targetColor: 'Targetの色',
     colorAggregation: '色の集計',
     heightAggregation: '高さの集計',
@@ -207,7 +207,8 @@ export default {
     speed: '速度',
     play: '再生',
     pause: '一時停止',
-    reset: 'リセット'
+    reset: 'リセット',
+    zoomToLayer: 'レイヤ全体を表示'
   },
   toolbar: {
     exportImage: '画像を出力',
@@ -394,9 +395,16 @@ export default {
   },
   layerBlending: {
     title: 'レイヤのブレンド',
-    additive: 'additive',
-    normal: 'normal',
-    subtractive: 'subtractive'
+    additive: '加算（Additive）',
+    normal: '通常（Normal）',
+    subtractive: '減算（Subtractive）'
+  },
+  overlayBlending: {
+    title: '地図オーバーレイのブレンド',
+    description: 'ベースマップとレイヤをブレンドして、両方が見えるようにします。',
+    screen: '暗い背景用（Screen）',
+    normal: '通常（Normal）',
+    darken: '明るい背景用 （Darken）'
   },
   columns: {
     title: '列',
@@ -406,6 +414,7 @@ export default {
     icon: 'アイコン',
     geojson: 'geojson',
     token: 'トークン',
+    sortBy: '並べ替え順',
     arc: {
       lat0: '出発 緯度',
       lng0: '出発 経度',
@@ -432,10 +441,16 @@ export default {
     colorBlindSafe: '色覚バリアフリー',
     reversed: '反転'
   },
+  columnStats: {
+    min: '最小値',
+    mean: '平均値',
+    max: '最大値'
+  },
   scale: {
     colorScale: 'カラースケール',
     sizeScale: 'サイズのスケール',
     strokeScale: '線のスケール',
+    strokeColorScale: '輪郭線のカラースケール',
     scale: 'スケール',
     ordinal: '順序',
     quantile: '等量（Quantile）',

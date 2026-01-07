@@ -21,18 +21,19 @@ import {
   useSensors,
   DragEndEvent
 } from '@dnd-kit/core';
-import {SortableContext, useSortable, verticalListSortingStrategy} from '@dnd-kit/sortable';
-import {CSS} from '@dnd-kit/utilities';
-import styled, {css} from 'styled-components';
+import { FormattedMessage } from 'react-intl';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import styled, { css } from 'styled-components';
 import Portaled from '../../common/portaled';
-import {Tooltip} from '../../common/styled-components';
+import { Tooltip } from '../../common/styled-components';
 import Typeahead from '../../common/item-selector/typeahead';
 import ChickletedInput from '../../common/item-selector/chickleted-input';
-import DropdownList, {ListItem} from '../../common/item-selector/dropdown-list';
-import {shouldForwardProp} from '../../common/styled-components';
-import {toArray} from '@kepler.gl/common-utils';
-import {KeyEvent} from '@kepler.gl/constants';
-import {ColorMap, ColorUI, HexColor, NestedPartial} from '@kepler.gl/types';
+import DropdownList, { ListItem } from '../../common/item-selector/dropdown-list';
+import { shouldForwardProp } from '../../common/styled-components';
+import { toArray } from '@kepler.gl/common-utils';
+import { KeyEvent } from '@kepler.gl/constants';
+import { ColorMap, ColorUI, HexColor, NestedPartial } from '@kepler.gl/types';
 import {
   addCategoricalValuesToColorMap,
   addCustomPaletteColor,
@@ -46,9 +47,9 @@ import {
   sortCustomPaletteColor,
   updateCustomPaletteColor
 } from '@kepler.gl/utils';
-import {ColorBreak, ColorBreakOrdinal} from '@kepler.gl/utils';
-import {Add, Trash, VertDots} from '../../common/icons';
-import {Button, Input} from '../../common/styled-components';
+import { ColorBreak, ColorBreakOrdinal } from '@kepler.gl/utils';
+import { Add, Trash, VertDots } from '../../common/icons';
+import { Button, Input } from '../../common/styled-components';
 import CustomPicker from './custom-picker';
 
 export type ActionIcons = {
@@ -201,7 +202,7 @@ const StyledAddStepContainer = styled.div`
   }
 `;
 
-const StyledInput = styled(Input).withConfig({shouldForwardProp})<{
+const StyledInput = styled(Input).withConfig({ shouldForwardProp }) <{
   width: string;
   textAlign: string;
 }>`
@@ -210,7 +211,7 @@ const StyledInput = styled(Input).withConfig({shouldForwardProp})<{
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
 `;
 
-const InputText = styled.div.withConfig({shouldForwardProp})<{width: string; textAlign: string}>`
+const InputText = styled.div.withConfig({ shouldForwardProp }) <{ width: string; textAlign: string }>`
   ${props => props.theme.input};
   background-color: transparent;
   border-color: transparent;
@@ -231,8 +232,8 @@ type SortableItemProps = {
   isSorting: boolean;
 };
 
-const SortableItem = ({id, children, isSorting}: SortableItemProps) => {
-  const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({id});
+const SortableItem = ({ id, children, isSorting }: SortableItemProps) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -242,7 +243,7 @@ const SortableItem = ({id, children, isSorting}: SortableItemProps) => {
     <ColorPaletteItem
       ref={setNodeRef}
       style={style}
-      className={classnames('custom-palette__sortable-items', {sorting: isSorting || isDragging})}
+      className={classnames('custom-palette__sortable-items', { sorting: isSorting || isDragging })}
       {...attributes}
     >
       {children(listeners)}
@@ -281,8 +282,8 @@ const WrappedSortableContainer = ({
   );
 };
 
-type DragHandleProps = PropsWithChildren<{className?: string}>;
-const DragHandle = ({className, children, ...listeners}: DragHandleProps) => (
+type DragHandleProps = PropsWithChildren<{ className?: string }>;
+const DragHandle = ({ className, children, ...listeners }: DragHandleProps) => (
   <StyledDragHandle className={className} {...listeners}>
     {children}
   </StyledDragHandle>
@@ -418,13 +419,13 @@ export const EditableColorRange: React.FC<EditableColorRangeProps> = ({
   );
 };
 
-export const AddColorStop = ({onColorAdd, IconComponent}) => (
+export const AddColorStop = ({ onColorAdd, IconComponent }) => (
   <StyledAction onClick={onColorAdd} className="addcolor">
     <IconComponent height="14px" />
   </StyledAction>
 );
 
-export const DeleteColorStop = ({onColorDelete, IconComponent}) => (
+export const DeleteColorStop = ({ onColorDelete, IconComponent }) => (
   <StyledAction onClick={onColorDelete} className="trashbin">
     <IconComponent height="14px" />
   </StyledAction>
@@ -508,7 +509,7 @@ const StyledCategoricalValuePickerWrapper = styled.div.attrs({
   cursor: pointer;
 `;
 
-type StyledCategoricalValuePickerProps = {noBorder: boolean};
+type StyledCategoricalValuePickerProps = { noBorder: boolean };
 const StyledCategoricalValuePicker = styled.div<StyledCategoricalValuePickerProps>`
   width: fit-content;
   font-size: 11px;
@@ -520,7 +521,7 @@ const StyledCategoricalValuePicker = styled.div<StyledCategoricalValuePickerProp
   max-width: 100px;
 `;
 
-type DropdownValuesWrapperProps = {width: number};
+type DropdownValuesWrapperProps = { width: number };
 const DropdownValuesWrapper = styled.div<DropdownValuesWrapperProps>`
   border: 0;
   width: 100%;
@@ -529,8 +530,8 @@ const DropdownValuesWrapper = styled.div<DropdownValuesWrapperProps>`
   width: ${props => props.width}px;
 `;
 
-type SelectedValuesWrapperProps = {width: number; height: number};
-const SelectedValuesWrapper = styled(DropdownValuesWrapper)<SelectedValuesWrapperProps>`
+type SelectedValuesWrapperProps = { width: number; height: number };
+const SelectedValuesWrapper = styled(DropdownValuesWrapper) <SelectedValuesWrapperProps>`
   width: ${props => props.width}px;
   max-height: ${props => props.height}px;
   overflow: auto;
@@ -679,8 +680,8 @@ export const CategoricalSelector: React.FC<CategoricalSelectorProps> = ({
         {selectedValues.length === 0
           ? 'Add Value'
           : selectedValues.length === 1
-          ? selectedValues[0]
-          : `${selectedValues.length} selected`}
+            ? selectedValues[0]
+            : `${selectedValues.length} selected`}
         {selectedValues.length > 1 && (
           <Tooltip id={`category-values-${index}`} place="top" interactive={true}>
             <StyledTooltipContent>
@@ -707,7 +708,7 @@ export const CategoricalSelector: React.FC<CategoricalSelectorProps> = ({
             </SelectedValuesWrapper>
           )}
           <DropdownValuesWrapper width={250}>
-            <div style={{position: 'relative'}}>
+            <div style={{ position: 'relative' }}>
               <CategoricalSelectorContext.Provider
                 value={{
                   onReset,
@@ -816,13 +817,13 @@ export const CategoricalCustomPaletteInput: React.FC<CategoricalCustomPaletteInp
   );
 };
 
-export const BottomAction = ({onCancel, onConfirm}) => (
+export const BottomAction = ({ onCancel, onConfirm }) => (
   <StyledButtonContainer>
     <Button className="confirm-apply__button" small onClick={onConfirm}>
-      Confirm
+      <FormattedMessage id="modal.button.defaultConfirm" defaultMessage="Confirm" />
     </Button>
     <Button link small onClick={onCancel}>
-      Cancel
+      <FormattedMessage id="modal.button.defaultCancel" defaultMessage="Cancel" />
     </Button>
   </StyledButtonContainer>
 );
@@ -844,7 +845,7 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
     onApply
   }) => {
     const [isSorting, setIsSorting] = useState(false);
-    const {colors, colorMap} = customPalette;
+    const { colors, colorMap } = customPalette;
     const colorBreaks = useMemo(
       () =>
         colorMap
@@ -919,7 +920,7 @@ function CustomPaletteFactory(): React.FC<CustomPaletteProps> {
 
     const onSortEnd = useCallback(
       (event: DragEndEvent) => {
-        const {active, over} = event;
+        const { active, over } = event;
         if (over && active.id !== over.id) {
           const oldIndex = colors.findIndex((_, index) => `${index}` === active.id);
           const newIndex = colors.findIndex((_, index) => `${index}` === over.id);

@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {format as d3Format} from 'd3-format';
-import {scaleLinear} from 'd3-scale';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import { format as d3Format } from 'd3-format';
+import { scaleLinear } from 'd3-scale';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
+import { FormattedMessage } from '@kepler.gl/localization';
 
-import {KeplerTable} from '@kepler.gl/table';
-import {Bin, Field} from '@kepler.gl/types';
+import { KeplerTable } from '@kepler.gl/table';
+import { Bin, Field } from '@kepler.gl/types';
 import {
   ColorBreak,
   ColorBreakOrdinal,
@@ -17,12 +18,12 @@ import {
 } from '@kepler.gl/utils';
 
 import ColorPalette from '../side-panel/layer-panel/color-palette';
-import HistogramPlotFactory, {HISTOGRAM_MASK_MODE} from './histogram-plot';
+import HistogramPlotFactory, { HISTOGRAM_MASK_MODE } from './histogram-plot';
 import LoadingSpinner from './loading-spinner';
 
 export const HISTOGRAM_WIDTH = 210;
 export const HISTOGRAM_HEIGHT = 80;
-const HISTOGRAM_MARGIN = {top: 10, bottom: 8, left: 10, right: 20};
+const HISTOGRAM_MARGIN = { top: 10, bottom: 8, left: 10, right: 20 };
 const COLOR_CHART_TICK_WRAPPER_HEIGHT = 10;
 const COLOR_CHART_TICK_HEIGHT = 8;
 const COLOR_CHART_TICK_WIDTH = 4;
@@ -89,13 +90,17 @@ const ColorChartTickContainer = styled.div.attrs({
   margin-right: ${HISTOGRAM_MARGIN.right}px;
 `;
 
-export const ColorChartHeader = ({minVal, meanVal, maxVal}) => {
+export const ColorChartHeader = ({ minVal, meanVal, maxVal }) => {
   return (
     <ColorChartHeaderWrapper>
-      <ColorChartHeaderItem title={minVal}>MIN: {minVal}</ColorChartHeaderItem>
-      <ColorChartHeaderItem title={meanVal}>MEAN: {d3Format('.4~r')(meanVal)}</ColorChartHeaderItem>
-      <ColorChartHeaderItem title={maxVal} style={{textAlign: 'right'}}>
-        MAX: {maxVal}
+      <ColorChartHeaderItem title={minVal}>
+        <FormattedMessage id="columnStats.min" />: {minVal}
+      </ColorChartHeaderItem>
+      <ColorChartHeaderItem title={meanVal}>
+        <FormattedMessage id="columnStats.mean" />: {d3Format('.4~r')(meanVal)}
+      </ColorChartHeaderItem>
+      <ColorChartHeaderItem title={maxVal} style={{ textAlign: 'right' }}>
+        <FormattedMessage id="columnStats.max" />: {maxVal}
       </ColorChartHeaderItem>
     </ColorChartHeaderWrapper>
   );
