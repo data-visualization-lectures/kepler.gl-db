@@ -352,12 +352,89 @@ export default {
     },
     tripInfo: {
       title: '移動アニメーションを有効にする方法',
-      description1:
-        '経路をアニメーション化するには、geoJSONデータはfeatureのgeometryとして `LineString` を含む必要があります。また、LineStringの座標は4つの要素を',
-      code: ' [経度, 緯度, 標高, timestamp] ',
-      description2:
-        'という形式（最後にタイムスタンプを含む）で保持する必要があります。タイムスタンプの形式は、 UNIX時間の秒単位（例: `1564184363`）またはミリ秒単位（例: `1564184363000`）が有効です。',
-      example: '例：'
+      titleTable: 'ポイントのリストから移動アニメーション',
+      description1: `経路をアニメーション化するには、geoJSONデータはfeatureのgeometryとして \`LineString\` を含む必要があります。また、LineStringの座標は4つの要素を
+${'```json'}
+[経度, 緯度, 標高, timestamp]
+${'```'}
+という形式（3つ目が標高、4つ目がタイムスタンプ）で保持する必要があります。タイムスタンプの形式は、 UNIX時間の秒単位（例: \`1564184363\`）またはミリ秒単位（例: \`1564184363000\`）が有効です。`,
+      descriptionTable1:
+        '移動アニメーション（Trips）は、緯度、経度、タイムスタンプ（ソート用）、ID（グループ化用）を含むポイントリストから作成できます。',
+      example: 'GeoJSONの例',
+      exampleTable: 'CSVの例'
+    },
+    polygonInfo: {
+      title: 'GeoJSONからポリゴンレイヤを作成',
+      titleTable: 'ポイントからパス（線）を作成',
+      description: `ポリゴンは以下の方法で作成できます：
+__1. GeoJSON__
+__2. ジオメトリ列を含むCSV__
+
+### 1. GeoJSONファイルからポリゴンを作成
+
+FeatureCollectionを含むGeoJSONファイルをアップロードすると、ポリゴンレイヤが自動的に作成されます。
+
+GeoJSONの例
+${'```json'}
+{
+  "type": "FeatureCollection",
+  "features": [{
+      "type": "Feature",
+      "geometry": {
+          "type": "Point",
+          "coordinates": [102.0, 0.5]
+      },
+      "properties": {
+          "prop0": "value0"
+      }
+  }, {
+      "type": "Feature",
+      "geometry": {
+          "type": "LineString",
+          "coordinates": [
+              [102.0, 0.0],
+              [103.0, 1.0],
+              [104.0, 0.0],
+              [105.0, 1.0]
+          ]
+      },
+      "properties": {
+        "prop0": "value0"
+      }
+  }]
+}
+${'```'}
+
+### 2. CSVテーブル内のジオメトリ列からポリゴンを作成
+ジオメトリ（ポリゴン、ポイント、LineStringなど）は、\`GeoJSON\` または \`WKT\` 形式の文字列としてCSVに埋め込むことができます。
+
+#### 2.1 \`GeoJSON\` 文字列
+\`GeoJSON\` 文字列を含む data.csv の例
+${'```txt'}
+id,_geojson
+1,"{""type"":""Polygon"",""coordinates"":[[[-74.158491,40.835947],[-74.157914,40.83902]]]}"
+${'```'}
+
+#### 2.2 \`WKT\` 文字列
+\`WKT\` 文字列を含む data.csv の例
+[Well-Known Text (WKT)](https://dev.mysql.com/doc/refman/5.7/en/gis-data-formats.html#gis-wkt-format) は、ジオメトリデータをASCII形式で交換するために設計された表現形式です。
+
+WKTを含む data.csv の例
+${'```txt'}
+id,_geojson
+1,"POLYGON((0 0,10 0,10 10,0 10,0 0),(5 5,7 5,7 7,5 7, 5 5))"
+${'```'}
+`,
+      descriptionTable: `パス（線）は、緯度経度のポイントリストを結合することで作成されます。インデックスフィールド（例：タイムスタンプ）でソートし、ユニークIDでグループ化します。
+
+  ### レイヤの列設定:
+  - **id**: - *必須*&nbsp;- ポイントをグループ化するために使用される \`id\` 列。同じIDを持つポイントが結合されて1つのパスになります。
+  - **lat**: - *必須*&nbsp;- ポイントの緯度
+  - **lon**: - *必須*&nbsp;- ポイントの経度
+  - **alt**: - *任意*&nbsp;- ポイントの標高
+  - **sort by**: - *任意*&nbsp;- ポイントをソートするために使用される \`sort by\` 列。指定がない場合、ポイントは行のインデックス順にソートされます。
+`,
+      exampleTable: 'Example CSV'
     },
     iconInfo: {
       title: 'アイコンの描画方法',
