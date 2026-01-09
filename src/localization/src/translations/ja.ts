@@ -576,5 +576,6 @@ ${'```'}
   'Bug Report': 'バグを報告',
   'User Guide': 'ユーザーガイド',
   Save: '保存',
-  Share: '共有'
+  Share: '共有',
+  'Update color': '色を変更'
 };

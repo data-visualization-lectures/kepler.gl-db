@@ -664,6 +664,7 @@ ${'```'}
   'User Guide': 'User Guide',
   Save: 'Save',
   Share: 'Share',
+  'Update color': 'Update color',
   mapLegend: {
     layers: {
       line: {
