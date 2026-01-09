@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Buffer} from 'buffer';
-import {Feature, Position, BBox} from 'geojson';
+import { Buffer } from 'buffer';
+import { Feature, Position, BBox } from 'geojson';
 import normalize from '@mapbox/geojson-normalize';
 import bbox from '@turf/bbox';
-import {ascending} from 'd3-array';
+import { ascending } from 'd3-array';
 import center from '@turf/center';
-import {AllGeoJSON} from '@turf/helpers';
-import {parseSync} from '@loaders.gl/core';
-import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
-import {binaryToGeometry} from '@loaders.gl/gis';
-import {BinaryFeatureCollection} from '@loaders.gl/schema';
-import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {LayerColumns, ProtoDatasetField} from '@kepler.gl/types';
-import {KeplerTable} from '@kepler.gl/table';
+import { AllGeoJSON } from '@turf/helpers';
+import { parseSync } from '@loaders.gl/core';
+import { WKBLoader, WKTLoader } from '@loaders.gl/wkt';
+import { binaryToGeometry } from '@loaders.gl/gis';
+import { BinaryFeatureCollection } from '@loaders.gl/schema';
+import { DataContainerInterface, getSampleData } from '@kepler.gl/utils';
+import { ALL_FIELD_TYPES } from '@kepler.gl/constants';
+import { LayerColumns, ProtoDatasetField } from '@kepler.gl/types';
+import { KeplerTable } from '@kepler.gl/table';
 
-import {GeojsonLayerMetaProps, assignPointPairToLayerColumn} from '../layer-utils';
-import {LayerBaseConfig} from '../base-layer';
+import { GeojsonLayerMetaProps, assignPointPairToLayerColumn } from '../layer-utils';
+import { LayerBaseConfig } from '../base-layer';
 
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = (Feature | BinaryFeatureCollection | null)[];
@@ -53,6 +53,36 @@ export function fieldIsGeoArrow(geoField?: ProtoDatasetField | null): boolean {
   return Boolean(geoField?.metadata?.get('ARROW:extension:name'));
 }
 
+
+function validateInputFeature(feature: Feature | null): boolean {
+  if (!feature || !feature.geometry) {
+    return false;
+  }
+
+  const validateCoord = (c: any): boolean =>
+    Array.isArray(c) &&
+    c.length >= 2 &&
+    Number.isFinite(c[0]) &&
+    Number.isFinite(c[1]);
+
+  const validateCoords = (coords: any): boolean => {
+    if (!Array.isArray(coords)) return false;
+    if (coords.length === 0) return true;
+    if (typeof coords[0] === 'number') {
+      return validateCoord(coords);
+    }
+    return coords.every(validateCoords);
+  };
+
+  if (feature.geometry.type === 'GeometryCollection') {
+    // @ts-ignore
+    return feature.geometry.geometries.every(g => validateInputFeature({ geometry: g }));
+  }
+
+  // @ts-ignore
+  return validateCoords(feature.geometry.coordinates);
+}
+
 export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
   const properties = null; // help ensure that properties is present on the returned geojson feature
   // Support WKB geometry provided as binary (e.g., from Parquet/GeoParquet)
@@ -62,9 +92,9 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
         rawFeature instanceof ArrayBuffer
           ? rawFeature
           : (rawFeature as Uint8Array).buffer.slice(
-              (rawFeature as Uint8Array).byteOffset,
-              (rawFeature as Uint8Array).byteOffset + (rawFeature as Uint8Array).byteLength
-            );
+            (rawFeature as Uint8Array).byteOffset,
+            (rawFeature as Uint8Array).byteOffset + (rawFeature as Uint8Array).byteLength
+          );
       const binaryGeo = parseSync(binaryInput as ArrayBuffer, WKBLoader);
       // @ts-expect-error loaders.gl binary type to GeoJSON geometry
       const parsedGeo = binaryToGeometry(binaryGeo);
@@ -72,7 +102,7 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
       if (!normalized || !Array.isArray(normalized.features) || !normalized.features.length) {
         return null;
       }
-      return {properties, ...normalized.features[0]};
+      return { properties, ...normalized.features[0] };
     } catch (e) {
       return null;
     }
@@ -86,12 +116,12 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
       return null;
     }
 
-    return {properties, ...normalized.features[0]};
+    return { properties, ...normalized.features[0] };
   } else if (typeof rawFeature === 'string') {
     const parsedGeometry = parseGeometryFromString(rawFeature);
     if (!parsedGeometry) return null;
     // @ts-expect-error verify whether parsedGeometry always contains properties
-    return {properties, ...parsedGeometry};
+    return { properties, ...parsedGeometry };
   } else if (Array.isArray(rawFeature)) {
     // Support GeoJson  LineString as an array of points
     return {
@@ -121,7 +151,7 @@ export function getGeojsonLayerMeta({
     config.columnMode === COLUMN_MODE_GEOJSON
       ? getGeojsonDataMaps(dataContainer, getFeature)
       : // COLUMN_MODE_TABLE
-        groupColumnsAsGeoJson(dataContainer, config.columns, 'sortBy');
+      groupColumnsAsGeoJson(dataContainer, config.columns, 'sortBy');
 
   // get bounds from features
   const bounds = getGeojsonBounds(dataToFeature);
@@ -176,9 +206,14 @@ export function getGeojsonDataMaps(
   const dataToFeature: GeojsonDataMaps = [];
 
   for (let index = 0; index < dataContainer.numRows(); index++) {
-    const feature = parseGeoJsonRawFeature(getFeature({index}));
+    const feature = parseGeoJsonRawFeature(getFeature({ index }));
 
-    if (feature && feature.geometry && acceptableTypes.includes(feature.geometry.type)) {
+    if (
+      feature &&
+      feature.geometry &&
+      acceptableTypes.includes(feature.geometry.type) &&
+      validateInputFeature(feature)
+    ) {
       const cleaned = {
         ...feature,
         // store index of the data in feature properties
@@ -211,20 +246,25 @@ export function getGeojsonPointDataMaps(
   for (let index = 0; index < dataContainer.numRows(); index++) {
     const feature = parseGeoJsonRawFeature(getFeature(dataContainer.rowAsArray(index)));
 
-    if (feature && feature.geometry && acceptableTypes.includes(feature.geometry.type)) {
+    if (
+      feature &&
+      feature.geometry &&
+      acceptableTypes.includes(feature.geometry.type) &&
+      validateInputFeature(feature)
+    ) {
       dataToFeature[index] =
         feature.geometry.type === 'Point' || feature.geometry.type === 'MultiPoint'
           ? feature.geometry.coordinates
           : // @ts-expect-error Property 'geometries' does not exist on type 'LineString'
-            (feature.geometry.geometries || []).reduce((accu, f) => {
-              if (f.type === 'Point') {
-                accu.push(f.coordinates);
-              } else if (f.type === 'MultiPoint') {
-                accu.push(...f.coordinates);
-              }
+          (feature.geometry.geometries || []).reduce((accu, f) => {
+            if (f.type === 'Point') {
+              accu.push(f.coordinates);
+            } else if (f.type === 'MultiPoint') {
+              accu.push(...f.coordinates);
+            }
 
-              return accu;
-            }, []);
+            return accu;
+          }, []);
     } else {
       dataToFeature[index] = null;
     }
@@ -354,7 +394,7 @@ export function groupColumnsAsGeoJson(
   columns: LayerColumns,
   sortByColumn = 'timestamp'
 ): Feature[] {
-  const groupedById: {[key: string]: CoordsType[]} = {};
+  const groupedById: { [key: string]: CoordsType[] } = {};
   const sortByFieldIdx = columns[sortByColumn].fieldIdx;
   const sortByRequired = !columns[sortByColumn].optional;
   for (let index = 0; index < dataContainer.numRows(); index++) {
@@ -413,7 +453,7 @@ export function detectTableColumns(
   layerColumns: LayerColumns,
   sortBy = 'timestamp'
 ) {
-  const {fields, fieldPairs} = dataset;
+  const { fields, fieldPairs } = dataset;
   if (!fieldPairs.length || !fields.length) {
     return null;
   }
@@ -460,7 +500,7 @@ export function applyFiltersToTableColumns(
   dataset: KeplerTable,
   dataToFeature: GeojsonDataMaps
 ): GeojsonDataMaps {
-  const {dataContainer, filteredIndex} = dataset;
+  const { dataContainer, filteredIndex } = dataset;
   if (filteredIndex.length === dataContainer.numRows()) {
     // Only apply the filtering when something is to be filtered out
     return dataToFeature;
