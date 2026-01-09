@@ -187,6 +187,7 @@ function addAliases(externals, args) {
     resolveAlias['@openassistant/osm'] = join(LIB_DIR, '../openassistant/packages/tools/osm/src');
     resolveAlias['@openassistant/utils'] = join(LIB_DIR, '../openassistant/packages/utils/src');
     resolveAlias['@kepler.gl/ai-assistant'] = join(SRC_DIR, 'ai-assistant/src');
+    resolveAlias['@kepler.gl/localization'] = join(SRC_DIR, 'localization/src');
   }
 
   // resolve deck.gl from local dir
