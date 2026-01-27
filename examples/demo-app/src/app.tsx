@@ -31,6 +31,8 @@ import { replaceOverwriteMapModal } from './factories/overwrite-map-modal';
 
 import { CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS } from './constants/default-settings';
 import { messages } from './constants/localization';
+// Import logo
+import logoPng from './assets/logo.png';
 
 import {
   loadRemoteMap,
@@ -175,6 +177,80 @@ const App = props => {
 
 
   useEffect(() => {
+    // Configure dataviz-tool-header with local logo
+    const configureHeader = () => {
+      const header = document.querySelector('dataviz-tool-header');
+      if (header) {
+        // Resolve logo path to absolute URL just in case
+        const logoUrl = new URL(logoPng, window.location.href).href;
+
+        console.log('[App] Found dataviz-tool-header, setting config...');
+        console.log('[App] Logo raw import:', logoPng);
+        console.log('[App] Logo absolute URL:', logoUrl);
+
+        // Use setConfig method to trigger render
+        if (typeof (header as any).setConfig === 'function') {
+          (header as any).setConfig({
+            logo: {
+              type: 'image',
+              src: logoUrl,
+              href: '/'
+            },
+            buttons: [
+              {
+                id: 'load-data-btn',
+                label: 'データファイルの読込',
+                action: () => {
+                  console.log('[App] Loading data file modal...');
+                  dispatch(toggleModal('addData'));
+                },
+                align: 'left'
+              },
+              {
+                id: 'load-sample-btn',
+                label: 'サンプルプロジェクトの読込',
+                action: () => {
+                  console.log('[App] Loading sample project modal...');
+                  dispatch(toggleModal('addData'));
+                  // Simulate user mechanism: wait for modal and click the "Sample Data" tab
+                  setTimeout(() => {
+                    const trySampleBtn = document.querySelector('.demo-map-action') as HTMLElement;
+                    if (trySampleBtn) {
+                      console.log('[App] Found .demo-map-action, clicking...');
+                      trySampleBtn.click();
+                    } else {
+                      console.warn('[App] .demo-map-action not found in modal');
+                    }
+                  }, 500); // 500ms delay to allow modal render
+                },
+                align: 'left'
+              }
+            ]
+          });
+          console.log('[App] setConfig called successfully');
+        } else {
+          // Fallback if setConfig is missing (unexpected)
+          console.warn('[App] setConfig method not found on header, trying property assignment');
+          (header as any).config = {
+            logo: {
+              type: 'image',
+              src: logoUrl,
+              href: '/'
+            },
+            buttons: []
+          };
+        }
+      } else {
+        console.warn('[App] dataviz-tool-header not found in DOM');
+      }
+    };
+
+    if (customElements.get('dataviz-tool-header')) {
+      configureHeader();
+    } else {
+      customElements.whenDefined('dataviz-tool-header').then(configureHeader);
+    }
+
     // if we pass an id as part of the url
     // we try to fetch along map configurations
     const cloudProvider = CLOUD_PROVIDERS.find(c => c.name === provider);

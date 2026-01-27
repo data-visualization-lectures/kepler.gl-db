@@ -90,7 +90,8 @@ const config = {
     '.css': 'css',
     '.ttf': 'file',
     '.woff': 'file',
-    '.woff2': 'file'
+    '.woff2': 'file',
+    '.png': 'file'
   },
   entryPoints: ['src/main.js'],
   outfile: 'dist/bundle.js',
