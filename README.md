@@ -4,8 +4,7 @@
 0. Node を 20 に切り替え（nvm を使う場合）
 
 ```
-nvm install 20
-nvm use 20
+nvm install 20 & nvm use 20
 ```
 
 1. Yarn 4 を有効化（1回だけでOK）
