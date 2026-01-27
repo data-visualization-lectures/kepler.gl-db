@@ -81,7 +81,7 @@ const smallModalCss = css`
 `;
 
 const LoadDataModalStyle = css`
-  top: 60px;
+  top: 110px;
 `;
 
 const DefaultStyle = css`
