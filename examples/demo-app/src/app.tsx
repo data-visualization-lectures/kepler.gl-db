@@ -138,21 +138,7 @@ const CONTAINER_STYLE = {
   backgroundColor: '#333'
 };
 
-// ... (skipping lines to get to KeplerGl)
 
-<KeplerGl
-  mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-  id="map"
-  getState={keplerGlGetState}
-  width={width}
-  height={height}
-  cloudProviders={CLOUD_PROVIDERS}
-  localeMessages={messages}
-  onExportToCloudSuccess={onExportFileSuccess}
-  onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-  featureFlags={DEFAULT_FEATURE_FLAGS}
-  onViewStateChange={onViewStateChange}
-/>
 
 const StyledResizeHandle = styled(PanelResizeHandle)`
   background-color: ${panelBorderColor};
