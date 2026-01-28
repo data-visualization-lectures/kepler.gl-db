@@ -11,18 +11,17 @@ export function CustomPanelHeaderFactory(...deps) {
     ...PanelHeader.defaultProps,
     actionItems: [
       {
-        id: 'docs',
-        iconComponent: Icons.Docs2,
-        href: USER_GUIDE_DOC,
-        blank: true,
-        tooltip: 'User Guide',
-        onClick: () => { }
-      },
-
-      {
         ...defaultActionItems.find(item => item.id === 'save'),
         label: null,
         tooltip: 'Share'
+      },
+      {
+        id: 'help',
+        iconComponent: Icons.Docs2,
+        href: 'https://docs.kepler.gl/docs/user-guides',
+        blank: true,
+        tooltip: 'ヘルプ',
+        onClick: () => { }
       }
     ]
   };
