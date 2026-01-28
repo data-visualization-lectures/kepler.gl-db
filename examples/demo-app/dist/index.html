@@ -43,7 +43,21 @@
 <body>
   <dataviz-tool-header></dataviz-tool-header>
   <div id="root"></div>
-  <script src="https://auth.dataviz.jp/lib/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Initialize Supabase client with environment variables
+    (function() {
+      const SUPABASE_URL = 'https://vebhoeiltxspsurqoxvl.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlYmhvZWlsdHhzcHN1cnFveHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNTY4MjMsImV4cCI6MjA4MDYzMjgyM30.5uf-D07Hb0JxL39X9yQ20P-5gFc1CRMdKWhDySrNZ0E';
+      
+      if (typeof supabase !== 'undefined' && supabase.createClient) {
+        window.datavizSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('[Supabase] Client initialized successfully');
+      } else {
+        console.error('[Supabase] Failed to load Supabase library');
+      }
+    })();
+  </script>
   <script src="https://auth.dataviz.jp/lib/dataviz-auth-client.js"></script>
   <script src="https://auth.dataviz.jp/lib/dataviz-tool-header.js" defer></script>
   <script src="bundle.js"></script>
