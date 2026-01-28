@@ -214,7 +214,7 @@ const App = props => {
                 // Hack: Simulate click on "Storage" tab after modal opens
                 setTimeout(() => {
                   // Try to find the tab by text content
-                  const validLabels = ['Storage', 'ストレージ', 'Cloud Storage'];
+                  const validLabels = ['Storage', 'ストレージ', 'Cloud Storage', 'ストレージからロード'];
                   const allDivs = Array.from(document.querySelectorAll('div'));
                   const storageTab = allDivs.find(div => {
                     // Check strict equality to avoid matching container divs

@@ -188,7 +188,21 @@ export default class DatavizProvider extends Provider {
                 throw new Error(errorMessage);
             }
 
-            const projects = await response.json();
+            const responseData = await response.json();
+            console.log('[DatavizProvider] listMaps response:', responseData);
+
+            let projects = [];
+            if (Array.isArray(responseData)) {
+                projects = responseData;
+            } else if (responseData && Array.isArray(responseData.data)) {
+                projects = responseData.data;
+            } else if (responseData && Array.isArray(responseData.projects)) {
+                projects = responseData.projects;
+            } else {
+                console.warn('[DatavizProvider] Unexpected response format for listMaps:', responseData);
+                // Fallback to empty array to avoid crash
+                projects = [];
+            }
 
             // Map to Kepler.gl MapListItem format
             const mapList = projects.map(p => ({
