@@ -863,6 +863,9 @@ const App = props => {
                             onExportToCloudSuccess={onExportFileSuccess}
                             onLoadCloudMapSuccess={onLoadCloudMapSuccess}
                             featureFlags={DEFAULT_FEATURE_FLAGS}
+                            appName="Dataviz"
+                            version="v1.0"
+                            logoSrc={logoPng}
                             onViewStateChange={onViewStateChange}
                           />
                         )}
