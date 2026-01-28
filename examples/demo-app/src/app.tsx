@@ -301,6 +301,14 @@ const App = props => {
                 setTimeout(() => configureHeader(), 100);
               },
               align: 'right'
+            },
+            {
+              id: 'help-btn',
+              label: 'ヘルプ',
+              action: () => {
+                window.open('https://docs.kepler.gl/docs/user-guides', '_blank');
+              },
+              align: 'right'
             }
           ]
         });

@@ -14,14 +14,6 @@ export function CustomPanelHeaderFactory(...deps) {
         ...defaultActionItems.find(item => item.id === 'save'),
         label: null,
         tooltip: 'Share'
-      },
-      {
-        id: 'help',
-        iconComponent: Icons.Docs2,
-        href: 'https://docs.kepler.gl/docs/user-guides',
-        blank: true,
-        tooltip: 'ヘルプ',
-        onClick: () => { }
       }
     ]
   };
