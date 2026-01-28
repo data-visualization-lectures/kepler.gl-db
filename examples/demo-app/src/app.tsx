@@ -27,7 +27,7 @@ import Announcement, { FormLink } from './components/announcement';
 import { replaceLoadDataModal } from './factories/load-data-modal';
 import { replaceMapControl } from './factories/map-control';
 import { replacePanelHeader } from './factories/panel-header';
-import { replaceOverwriteMapModal } from './factories/overwrite-map-modal';
+import { replaceSaveMapModal } from './factories/save-map-modal';
 
 import { CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS } from './constants/default-settings';
 import { messages } from './constants/localization';
@@ -46,7 +46,8 @@ import {
   addDataToMap,
   replaceDataInMap,
   toggleMapControl,
-  toggleModal
+  toggleModal,
+  setMapInfo
 } from '@kepler.gl/actions';
 import { CLOUD_PROVIDERS } from './cloud-providers';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
@@ -55,7 +56,8 @@ const KeplerGl = require('@kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
   replaceMapControl(),
   replacePanelHeader(),
-  replaceOverwriteMapModal()
+  replaceOverwriteMapModal(),
+  replaceSaveMapModal()
 ]);
 
 // Sample data
@@ -172,13 +174,23 @@ const App = props => {
     state => state?.demo?.keplerGl?.map?.uiState.mapControls.aiAssistant?.active
   );
 
+  // Get map info to check availability for saving
+  const mapInfo = useSelector(state => state?.demo?.keplerGl?.map?.visState?.mapInfo);
+  // Use explicit ref to access current mapInfo in callbacks without re-triggering effects
+  const mapInfoRef = useRef(mapInfo);
+
+  useEffect(() => {
+    mapInfoRef.current = mapInfo;
+  }, [mapInfo]);
+
   const prevQueryRef = useRef<number>(null);
 
   const configureHeader = useCallback(() => {
     const header = document.querySelector('dataviz-tool-header');
     if (header) {
       // Resolve logo path to absolute URL just in case
-      const logoUrl = new URL(logoPng, window.location.href).href;
+      // Ensure we resolve against the origin (root) to avoid issues when in sub-routes like /demo/map/
+      const logoUrl = new URL(logoPng, window.location.origin + '/').href;
 
       console.log('[App] Found dataviz-tool-header, setting config...');
       console.log('[App] Logo raw import:', logoPng);
@@ -203,6 +215,57 @@ const App = props => {
                 setTimeout(() => configureHeader(), 100);
               },
               align: 'left'
+            },
+            {
+              id: 'load-sample-btn',
+              label: 'サンプルプロジェクトの読込',
+              action: () => {
+                console.log('[App] Loading sample project modal...');
+                dispatch(toggleModal('addData'));
+                // Simulate user mechanism: wait for modal and click the "Sample Data" tab
+                setTimeout(() => {
+                  const trySampleBtn = document.querySelector('.demo-map-action') as HTMLElement;
+                  if (trySampleBtn) {
+                    console.log('[App] Found .demo-map-action, clicking...');
+                    trySampleBtn.click();
+                  } else {
+                    console.warn('[App] .demo-map-action not found in modal');
+                  }
+                }, 500); // 500ms delay to allow modal render
+
+                // Re-apply header config to ensure logo stays visible
+                setTimeout(() => {
+                  configureHeader();
+                }, 100);
+              },
+              align: 'left'
+            },
+            {
+              id: 'save-project-btn',
+              label: 'プロジェクトの保存',
+              action: () => {
+                console.log('[App] Saving project modal...');
+
+                // Set default title if empty to enable the save button immediately
+                const currentMapInfo = mapInfoRef.current;
+                if (!currentMapInfo || !currentMapInfo.title) {
+                  const now = new Date();
+                  const year = now.getFullYear();
+                  const month = String(now.getMonth() + 1).padStart(2, '0');
+                  const day = String(now.getDate()).padStart(2, '0');
+                  const hours = String(now.getHours()).padStart(2, '0');
+                  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+                  const defaultTitle = `Dataviz_Project_${year}-${month}-${day}_${hours}:${minutes}`;
+                  console.log('[App] Setting default project title:', defaultTitle);
+                  dispatch(setMapInfo({ title: defaultTitle }));
+                }
+
+                dispatch(toggleModal('saveMap'));
+                // Re-apply header config
+                setTimeout(() => configureHeader(), 100);
+              },
+              align: 'right'
             },
             {
               id: 'load-project-btn',
@@ -234,42 +297,7 @@ const App = props => {
                 // Re-apply header config
                 setTimeout(() => configureHeader(), 100);
               },
-              align: 'left'
-            },
-            {
-              id: 'save-project-btn',
-              label: 'プロジェクトの保存',
-              action: () => {
-                console.log('[App] Saving project modal...');
-                dispatch(toggleModal('saveMap'));
-                // Re-apply header config
-                setTimeout(() => configureHeader(), 100);
-              },
-              align: 'left'
-            },
-            {
-              id: 'load-sample-btn',
-              label: 'サンプルプロジェクトの読込',
-              action: () => {
-                console.log('[App] Loading sample project modal...');
-                dispatch(toggleModal('addData'));
-                // Simulate user mechanism: wait for modal and click the "Sample Data" tab
-                setTimeout(() => {
-                  const trySampleBtn = document.querySelector('.demo-map-action') as HTMLElement;
-                  if (trySampleBtn) {
-                    console.log('[App] Found .demo-map-action, clicking...');
-                    trySampleBtn.click();
-                  } else {
-                    console.warn('[App] .demo-map-action not found in modal');
-                  }
-                }, 500); // 500ms delay to allow modal render
-
-                // Re-apply header config to ensure logo stays visible
-                setTimeout(() => {
-                  configureHeader();
-                }, 100);
-              },
-              align: 'left'
+              align: 'right'
             }
           ]
         });
