@@ -333,11 +333,17 @@ export default class DatavizProvider extends Provider {
             console.log('[DatavizProvider] Creating new project');
         }
 
+        console.log(`[DatavizProvider] Target URL: ${url}`);
+        console.log(`[DatavizProvider] Request keys: ${Object.keys(requestBody).join(', ')}`);
+        if (requestBody.thumbnail) {
+            console.log(`[DatavizProvider] Thumbnail size: ${requestBody.thumbnail.length} chars`);
+        }
+
         // Send to API
-        const payloadString = JSON.stringify(requestBody);
+        let payloadString = JSON.stringify(requestBody);
         console.log(`[DatavizProvider] Uploading project (Payload size: ${(payloadString.length / 1024 / 1024).toFixed(2)} MB)`);
 
-        const response = await fetch(url, {
+        let response = await fetch(url, {
             method,
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -346,21 +352,47 @@ export default class DatavizProvider extends Provider {
             body: payloadString
         });
 
+        // Retry without thumbnail if 413 Payload Too Large
+        if (response.status === 413 && requestBody.thumbnail) {
+            console.warn('[DatavizProvider] 413 Error. Retrying without thumbnail...');
+            delete requestBody.thumbnail;
+            payloadString = JSON.stringify(requestBody);
+            console.log(`[DatavizProvider] Retry Payload size: ${(payloadString.length / 1024 / 1024).toFixed(2)} MB`);
+
+            response = await fetch(url, {
+                method,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: payloadString
+            });
+        }
+
         if (!response.ok) {
             let errorMessage = `Failed to ${shouldUpdate ? 'update' : 'save'} project: ${response.status}`;
-            try {
-                const errorData = await response.json();
-                if (errorData.error) {
-                    errorMessage += ` - ${errorData.error}`;
-                    if (errorData.detail) {
-                        errorMessage += `: ${errorData.detail}`;
+
+            if (response.status === 413) {
+                errorMessage = `The map data is too large to save (exceeds server limit). Please reduce the dataset size or number of layers.`;
+            } else {
+                try {
+                    const errorData = await response.json();
+                    console.error('[DatavizProvider] Error response JSON:', errorData); // Log full error object
+                    if (errorData.error) {
+                        errorMessage += ` - ${errorData.error}`;
+                        if (errorData.detail) {
+                            errorMessage += `: ${errorData.detail}`;
+                        } else if (errorData.message) {
+                            errorMessage += `: ${errorData.message}`;
+                        }
                     }
-                }
-            } catch (e) {
-                // If JSON parsing fails, try to get text
-                const errorText = await response.text();
-                if (errorText) {
-                    errorMessage += ` - ${errorText}`;
+                } catch (e) {
+                    console.warn('[DatavizProvider] Failed to parse error JSON', e);
+                    // If JSON parsing fails, try to get text
+                    const errorText = await response.text();
+                    if (errorText) {
+                        errorMessage += ` - ${errorText.substring(0, 200)}`; // Limit length
+                    }
                 }
             }
             console.error('[DatavizProvider]', errorMessage);
