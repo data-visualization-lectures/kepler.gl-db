@@ -20,14 +20,48 @@ function getApiUrl() {
 let cachedProjectId = null;
 
 /**
- * Convert Blob to Base64 Data URI
+ * Convert Blob to Base64 Data URI with resizing
  * @param {Blob} blob - The blob to convert
+ * @param {number} maxWidth - Maximum width (default 300)
+ * @param {number} maxHeight - Maximum height (default 300)
  * @returns {Promise<string>} Base64 Data URI string
  */
-function blobToDataURI(blob) {
+function blobToDataURI(blob, maxWidth = 300, maxHeight = 300) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
+        reader.onload = (readerEvent) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                // Calculate new dimensions
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Export as JPEG with 0.7 quality to reduce size further
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                resolve(dataUrl);
+            };
+            img.onerror = reject;
+            img.src = readerEvent.target.result;
+        };
         reader.onerror = reject;
         reader.readAsDataURL(blob);
     });
@@ -300,13 +334,16 @@ export default class DatavizProvider extends Provider {
         }
 
         // Send to API
+        const payloadString = JSON.stringify(requestBody);
+        console.log(`[DatavizProvider] Uploading project (Payload size: ${(payloadString.length / 1024 / 1024).toFixed(2)} MB)`);
+
         const response = await fetch(url, {
             method,
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(requestBody)
+            body: payloadString
         });
 
         if (!response.ok) {
