@@ -132,7 +132,7 @@ const CONTAINER_STYLE = {
   width: '100%',
   height: '100%',
   left: 0,
-  top: 0,
+  top: '96px',
   display: 'flex',
   flexDirection: 'column',
   backgroundColor: '#333'
