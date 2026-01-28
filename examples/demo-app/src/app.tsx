@@ -132,11 +132,27 @@ const CONTAINER_STYLE = {
   width: '100%',
   height: '100%',
   left: 0,
-  top: '96px',
+  top: 0,
   display: 'flex',
   flexDirection: 'column',
   backgroundColor: '#333'
 };
+
+// ... (skipping lines to get to KeplerGl)
+
+<KeplerGl
+  mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+  id="map"
+  getState={keplerGlGetState}
+  width={width}
+  height={height}
+  cloudProviders={CLOUD_PROVIDERS}
+  localeMessages={messages}
+  onExportToCloudSuccess={onExportFileSuccess}
+  onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+  featureFlags={DEFAULT_FEATURE_FLAGS}
+  onViewStateChange={onViewStateChange}
+/>
 
 const StyledResizeHandle = styled(PanelResizeHandle)`
   background-color: ${panelBorderColor};
@@ -863,9 +879,6 @@ const App = props => {
                             onExportToCloudSuccess={onExportFileSuccess}
                             onLoadCloudMapSuccess={onLoadCloudMapSuccess}
                             featureFlags={DEFAULT_FEATURE_FLAGS}
-                            appName="Dataviz"
-                            version="v1.0"
-                            logoSrc={logoPng}
                             onViewStateChange={onViewStateChange}
                           />
                         )}
