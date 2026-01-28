@@ -4,7 +4,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import LoadingSpinner from './loading-spinner';
-import {ExportImage} from '@kepler.gl/types';
+import { ExportImage } from '@kepler.gl/types';
 
 const StyledImagePreview = styled.div.attrs({
   className: 'image-preview'
@@ -83,19 +83,19 @@ interface ImagePreviewProps {
  * @param {number} [props.width]
  * @param {boolean} [props.showDimension]
  */
-const ImagePreview = ({exportImage, showDimension = false}: ImagePreviewProps) => {
+const ImagePreview = ({ exportImage, showDimension = false }: ImagePreviewProps) => {
   const {
     error,
     imageDataUri,
     processing,
-    imageSize: {imageW = 0, imageH = 0} = {}
+    imageSize: { imageW = 0, imageH = 0 } = {}
   } = exportImage || {};
 
   // Calculate aspect ratio percentage for padding-bottom trick
   const aspectRatio = imageW && imageH ? (imageH / imageW) * 100 : 75; // default to 4:3 if no dimensions
 
   return (
-    <StyledImagePreview style={{'--aspect-ratio': `${aspectRatio}%`} as React.CSSProperties}>
+    <StyledImagePreview style={{ '--aspect-ratio': `${aspectRatio}%` } as React.CSSProperties}>
       {showDimension ? (
         <div className="dimension">
           {imageW} pixel x {imageH} pixel
@@ -108,9 +108,8 @@ const ImagePreview = ({exportImage, showDimension = false}: ImagePreviewProps) =
               <LoadingSpinner />
             </div>
           ) : error ? (
-            <div className="preview-image--error">
-              <span>{error.message || 'Generate map image failed!'}</span>
-            </div>
+            // Hide error message - allow save to proceed without thumbnail
+            <div className="preview-image-placeholder" />
           ) : (
             <img className="preview-image-placeholder" src={imageDataUri} alt="Map preview" />
           )}

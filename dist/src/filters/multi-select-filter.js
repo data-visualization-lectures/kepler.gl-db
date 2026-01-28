@@ -5,10 +5,10 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports["default"] = MultiSelectFilterFactory;
-var _react = _interopRequireDefault(require("/Users/yuichiyazaki/Documents/GitHubRepository/_app_fork/kepler.gl-db/node_modules/react"));
+var _react = _interopRequireDefault(require("/Users/yuichiyazaki/Documents/GitHubRepository/Prj_DatavizJP/_app_fork/kepler.gl-db/node_modules/react"));
 var _itemSelector = _interopRequireDefault(require("../common/item-selector/item-selector"));
 var _styledComponents = require("../common/styled-components");
-var _src = require("/Users/yuichiyazaki/Documents/GitHubRepository/_app_fork/kepler.gl-db/src/localization/src");
+var _src = require("/Users/yuichiyazaki/Documents/GitHubRepository/Prj_DatavizJP/_app_fork/kepler.gl-db/src/localization/src");
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 

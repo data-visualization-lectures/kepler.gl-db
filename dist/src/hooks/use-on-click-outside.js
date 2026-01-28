@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports["default"] = useOnClickOutside;
 var _document = _interopRequireDefault(require("global/document"));
-var _react = require("/Users/yuichiyazaki/Documents/GitHubRepository/_app_fork/kepler.gl-db/node_modules/react");
+var _react = require("/Users/yuichiyazaki/Documents/GitHubRepository/Prj_DatavizJP/_app_fork/kepler.gl-db/node_modules/react");
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 

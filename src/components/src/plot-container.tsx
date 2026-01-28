@@ -2,9 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 // libraries
-import React, {useRef, useEffect, useState, useCallback, useMemo} from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import {Map} from 'react-map-gl';
+import { Map } from 'react-map-gl';
 import debounce from 'lodash/debounce';
 import {
   exportImageError,
@@ -13,13 +13,13 @@ import {
   convertToPng,
   getScaleFromImageSize
 } from '@kepler.gl/utils';
-import {findMapBounds} from '@kepler.gl/reducers';
+import { findMapBounds } from '@kepler.gl/reducers';
 import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
-import {MapViewStateContextProvider} from './map-view-state-context';
+import { MapViewStateContextProvider } from './map-view-state-context';
 
-import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
-import {Effect, SplitMap, ExportImage} from '@kepler.gl/types';
+import { GEOCODER_LAYER_ID } from '@kepler.gl/constants';
+import { Effect, SplitMap, ExportImage } from '@kepler.gl/types';
 import {
   ActionHandler,
   addNotification,
@@ -27,7 +27,7 @@ import {
   setExportImageError,
   setExportImageSetting
 } from '@kepler.gl/actions';
-import {mapFieldsSelector} from './kepler-gl';
+import { mapFieldsSelector } from './kepler-gl';
 
 const CLASS_FILTER = [
   'maplibregl-control-container',
@@ -36,13 +36,24 @@ const CLASS_FILTER = [
   'attrition-logo',
   'map-control__panel-split-viewport-tools'
 ];
-const DOM_FILTER_FUNC = node => !CLASS_FILTER.includes(node.className);
+const DOM_FILTER_FUNC = node => {
+  // Exclude elements with filtered class names
+  if (CLASS_FILTER.includes(node.className)) {
+    return false;
+  }
+  // Exclude dataviz-tool-header custom element
+  if (node.tagName && node.tagName.toLowerCase() === 'dataviz-tool-header') {
+    return false;
+  }
+  return true;
+};
 const OUT_OF_SCREEN_POSITION = -9999;
 
 PlotContainerFactory.deps = [MapContainerFactory, MapsLayoutFactory];
 
 // Remove mapbox logo in exported map, because it contains non-ascii characters
 // Remove split viewport UI controls from exported images when the legend is shown
+// Hide dataviz-tool-header during screenshot generation
 const StyledPlotContainer = styled.div`
   .maplibregl-ctrl-bottom-left,
   .maplibregl-ctrl-bottom-right,
@@ -52,6 +63,10 @@ const StyledPlotContainer = styled.div`
   .mapbox-attribution-container,
   .map-control__panel-split-viewport-tools {
     display: none;
+  }
+
+  dataviz-tool-header {
+    display: none !important;
   }
 
   position: absolute;
@@ -128,7 +143,7 @@ export default function PlotContainerFactory(
       mapFields.visState.effects.map(effect => effect.clone())
     );
 
-    const {mapState} = mapFields;
+    const { mapState } = mapFields;
 
     // Memoize the scale calculation
     const scale = useMemo(() => {
@@ -178,7 +193,7 @@ export default function PlotContainerFactory(
               .catch(err => {
                 setExportImageError(err);
                 if (enableErrorNotification) {
-                  addNotification(exportImageError({err}));
+                  addNotification(exportImageError({ err }));
                 }
               });
           }
@@ -211,19 +226,19 @@ export default function PlotContainerFactory(
 
     // Initial setup effect
     useEffect(() => {
-      setExportImageSetting({processing: true});
+      setExportImageSetting({ processing: true });
     }, [setExportImageSetting]);
 
     // Screenshot update effect
     useEffect(() => {
       if (ratio !== undefined || resolution !== undefined || legend !== undefined) {
-        setExportImageSetting({processing: true});
+        setExportImageSetting({ processing: true });
         retrieveNewScreenshot();
       }
     }, [ratio, resolution, legend, setExportImageSetting, retrieveNewScreenshot]);
 
     // Memoize size calculations
-    const {size, width, height} = useMemo(() => {
+    const { size, width, height } = useMemo(() => {
       const size = {
         width: imageSize.imageW || 1,
         height: imageSize.imageH || 1
@@ -252,7 +267,7 @@ export default function PlotContainerFactory(
             layer.shouldRenderLayer(mapFields.visState.layerData[idx])
         );
         const bounds = findMapBounds(renderedLayers);
-        const centerAndZoom = getCenterAndZoomFromBounds(bounds, {width, height});
+        const centerAndZoom = getCenterAndZoomFromBounds(bounds, { width, height });
         if (centerAndZoom) {
           const zoom = Number.isFinite(centerAndZoom.zoom) ? centerAndZoom.zoom : mapState.zoom;
           return {

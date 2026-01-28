@@ -177,8 +177,12 @@ function SaveMapModalFactory() {
     );
 
     const confirm = useCallback(() => {
+      console.log('[SaveMapModal] Confirm button clicked, provider:', provider);
       if (provider) {
+        console.log('[SaveMapModal] Calling onConfirm with provider:', provider.name);
         onConfirm(provider);
+      } else {
+        console.error('[SaveMapModal] Provider is null or undefined!');
       }
     }, [onConfirm, provider]);
 

@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports["default"] = EffectControlFactory;
-var _react = _interopRequireWildcard(require("/Users/yuichiyazaki/Documents/GitHubRepository/_app_fork/kepler.gl-db/node_modules/react"));
+var _react = _interopRequireWildcard(require("/Users/yuichiyazaki/Documents/GitHubRepository/Prj_DatavizJP/_app_fork/kepler.gl-db/node_modules/react"));
 var _icons = require("../../common/icons");
 var _styledComponents = require("../../common/styled-components");
 var _mapControlTooltip = _interopRequireDefault(require("../map-control-tooltip"));
