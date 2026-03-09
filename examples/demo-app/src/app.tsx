@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, { ThemeProvider, StyleSheetManager } from 'styled-components';
 import Window from 'global/window';
@@ -22,8 +22,6 @@ import { panelBorderColor, theme } from '@kepler.gl/styles';
 import { ParsedConfig } from '@kepler.gl/types';
 import { getApplicationConfig } from '@kepler.gl/utils';
 import { SqlPanel } from '@kepler.gl/duckdb';
-import Banner from './components/banner';
-import Announcement, { FormLink } from './components/announcement';
 import { replaceLoadDataModal } from './factories/load-data-modal';
 import { replaceMapControl } from './factories/map-control';
 import { replacePanelHeader } from './factories/panel-header';
@@ -93,8 +91,6 @@ function shouldForwardProp(propName, target) {
   return true;
 }
 
-const BannerHeight = 48;
-const BannerKey = `banner-${FormLink}`;
 const keplerGlGetState = state => state.demo.keplerGl;
 
 const GlobalStyle = styled.div`
@@ -162,7 +158,6 @@ const StyledVerticalResizeHandle = styled(PanelResizeHandle)`
 `;
 
 const App = props => {
-  const [showBanner, toggleShowBanner] = useState(false);
   const { params: { id, provider } = {}, location: { query = {} } = {} } = props;
   const dispatch = useDispatch();
 
@@ -413,10 +408,6 @@ const App = props => {
       dispatch(toggleModal(null));
     }
 
-    // delay zs to show the banner
-    // if (!window.localStorage.getItem(BannerKey)) {
-    //   window.setTimeout(_showBanner, 3000);
-    // }
     // load sample data
     _loadSampleData();
 
@@ -453,21 +444,6 @@ const App = props => {
     },
     [dispatch]
   );
-
-  /*
-  const _showBanner = useCallback(() => {
-    toggleShowBanner(true);
-  }, [toggleShowBanner]);
-  */
-
-  const hideBanner = useCallback(() => {
-    toggleShowBanner(false);
-  }, [toggleShowBanner]);
-
-  const _disableBanner = useCallback(() => {
-    hideBanner();
-    Window.localStorage.setItem(BannerKey, 'true');
-  }, [hideBanner]);
 
   const _loadRowData = useCallback(() => {
     dispatch(
@@ -852,9 +828,6 @@ const App = props => {
             setStartScreenCapture={_setStartScreenCapture}
             className="h-screen"
           >
-            <Banner show={showBanner} height={BannerHeight} bgColor="#2E7CF6" onClose={hideBanner}>
-              <Announcement onDisable={_disableBanner} />
-            </Banner>
             <div style={CONTAINER_STYLE}>
               <PanelGroup direction="horizontal">
                 <Panel defaultSize={isAiAssistantPanelOpen ? 70 : 100}>
