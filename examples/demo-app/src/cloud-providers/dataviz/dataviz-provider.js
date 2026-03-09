@@ -19,6 +19,13 @@ function getApiUrl() {
 // Module-level cache to persist ID across provider re-instantiations
 let cachedProjectId = null;
 
+function showToast(message, type = 'success', duration) {
+    const toolHeader = document.querySelector('dataviz-tool-header');
+    if (toolHeader && toolHeader.showMessage) {
+        toolHeader.showMessage(message, type, duration);
+    }
+}
+
 /**
  * Convert Blob to Base64 Data URI with resizing
  * @param {Blob} blob - The blob to convert
@@ -242,8 +249,6 @@ export default class DatavizProvider extends Provider {
 
         if (!id || id === 'undefined') {
             console.warn('[DatavizProvider] No project ID available, returning empty map');
-            // If we really don't have an ID, return empty to avoid crash,
-            // but likely the Save button will be disabled.
             return { map: {}, format: 'keplergl' };
         }
 
@@ -253,6 +258,8 @@ export default class DatavizProvider extends Provider {
             console.error('[DatavizProvider] Cannot download map: Not logged in');
             throw new Error('Not logged in');
         }
+
+        showToast('プロジェクトを読み込んでいます...', 'info');
 
         try {
             // Fetch project data from API
@@ -280,11 +287,13 @@ export default class DatavizProvider extends Provider {
                     }
                 }
                 console.error('[DatavizProvider]', errorMessage);
+                showToast('プロジェクトの読み込みに失敗しました', 'error');
                 throw new Error(errorMessage);
             }
 
             const mapData = await response.json();
             console.log('[DatavizProvider] Successfully downloaded map:', id);
+            showToast('プロジェクトを読み込みました', 'success');
 
             return {
                 map: mapData,
@@ -292,6 +301,7 @@ export default class DatavizProvider extends Provider {
             };
         } catch (error) {
             console.error('[DatavizProvider] Error downloading map:', error);
+            showToast('プロジェクトの読み込みに失敗しました', 'error');
             throw error;
         }
     }
@@ -321,13 +331,21 @@ export default class DatavizProvider extends Provider {
         // Determine if we should update an existing project
         const shouldUpdate = options.overwrite && cachedProjectId && cachedProjectId !== 'undefined';
 
-        // Always use signed URL flow to avoid Vercel 4.5MB body size limit
-        const dataString = JSON.stringify(map);
-        const result = await this._uploadViaSignedUrl(token, name, map, dataString, thumbnailDataURI, shouldUpdate);
+        showToast('プロジェクトを保存しています...', 'info');
 
-        const project = result.project || result;
-        cachedProjectId = project.id;
-        return { id: project.id };
+        try {
+            // Always use signed URL flow to avoid Vercel 4.5MB body size limit
+            const dataString = JSON.stringify(map);
+            const result = await this._uploadViaSignedUrl(token, name, map, dataString, thumbnailDataURI, shouldUpdate);
+
+            const project = result.project || result;
+            cachedProjectId = project.id;
+            showToast('プロジェクトを保存しました', 'success');
+            return { id: project.id };
+        } catch (error) {
+            showToast('プロジェクトの保存に失敗しました', 'error');
+            throw error;
+        }
     }
 
     /**
