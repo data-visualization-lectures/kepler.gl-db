@@ -321,72 +321,13 @@ export default class DatavizProvider extends Provider {
         // Determine if we should update an existing project
         const shouldUpdate = options.overwrite && cachedProjectId && cachedProjectId !== 'undefined';
 
-        // Check payload size to decide upload strategy
+        // Always use signed URL flow to avoid Vercel 4.5MB body size limit
         const dataString = JSON.stringify(map);
-        const estimatedSize = dataString.length;
-        const SIZE_THRESHOLD = 4 * 1024 * 1024; // 4MB
-
-        let result;
-        if (estimatedSize > SIZE_THRESHOLD) {
-            result = await this._uploadViaSignedUrl(token, name, map, dataString, thumbnailDataURI, shouldUpdate);
-        } else {
-            result = await this._uploadDirect(token, name, map, thumbnailDataURI, shouldUpdate);
-        }
+        const result = await this._uploadViaSignedUrl(token, name, map, dataString, thumbnailDataURI, shouldUpdate);
 
         const project = result.project || result;
         cachedProjectId = project.id;
         return { id: project.id };
-    }
-
-    /**
-     * Direct upload: send data as JSON body to API (for payloads ≤ 4MB)
-     */
-    async _uploadDirect(token, name, map, thumbnailDataURI, shouldUpdate) {
-        const requestBody = {
-            name,
-            app_name: 'keplergl',
-            data: map
-        };
-        if (thumbnailDataURI) {
-            requestBody.thumbnail = thumbnailDataURI;
-        }
-
-        const { url, method } = this._getProjectEndpoint(shouldUpdate);
-        let payloadString = JSON.stringify(requestBody);
-
-        let response = await fetch(url, {
-            method,
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: payloadString
-        });
-
-        // Retry without thumbnail if 413
-        if (response.status === 413 && requestBody.thumbnail) {
-            delete requestBody.thumbnail;
-            payloadString = JSON.stringify(requestBody);
-            response = await fetch(url, {
-                method,
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: payloadString
-            });
-        }
-
-        // If still 413 on direct upload, fall back to signed URL flow
-        if (response.status === 413) {
-            return this._uploadViaSignedUrl(token, name, map, JSON.stringify(map), thumbnailDataURI, shouldUpdate);
-        }
-
-        if (!response.ok) {
-            throw new Error(await this._parseErrorResponse(response, shouldUpdate));
-        }
-
-        return response.json();
     }
 
     /**

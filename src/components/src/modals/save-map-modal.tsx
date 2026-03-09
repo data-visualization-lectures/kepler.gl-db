@@ -209,6 +209,9 @@ function SaveMapModalFactory() {
                       >
                         保存済みプロジェクト一覧
                       </a>
+                      <span style={{fontSize: '11px', color: '#999', marginLeft: '12px'}}>
+                        ※ファイルサイズは最大50MBまで
+                      </span>
                     </div>
                   </StyledExportSection>
                 ) : null}
