@@ -98,7 +98,15 @@ const config = {
   bundle: true,
   define: {
     NODE_ENV,
-    'process.env': JSON.stringify(process.env)
+    'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken || ''),
+    'process.env.MapboxExportToken': JSON.stringify(process.env.MapboxExportToken || ''),
+    'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId || ''),
+    'process.env.CartoClientId': JSON.stringify(process.env.CartoClientId || ''),
+    'process.env.FoursquareClientId': JSON.stringify(process.env.FoursquareClientId || ''),
+    'process.env.FoursquareDomain': JSON.stringify(process.env.FoursquareDomain || ''),
+    'process.env.FoursquareAPIURL': JSON.stringify(process.env.FoursquareAPIURL || ''),
+    'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL || ''),
+    'process.env.NODE_ENV': NODE_ENV
   },
   plugins: [
     dotenvRun({
