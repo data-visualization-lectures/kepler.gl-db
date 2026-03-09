@@ -13,7 +13,7 @@ function getApiUrl() {
     if (Window.datavizApiUrl) {
         return `${Window.datavizApiUrl}/api`;
     }
-    return '/api/dataviz';
+    return 'https://api.dataviz.jp/api';
 }
 
 // Module-level cache to persist ID across provider re-instantiations
