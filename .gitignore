@@ -40,6 +40,9 @@ npm-debug.log
 !.yarn/sdks
 !.yarn/versions
 
+# Netlify環境変数から生成されるファイル
+examples/demo-app/dist/env-config.js
+
 # Local Netlify folder
 .netlify
 meta.json

@@ -43,13 +43,16 @@ export const DEFAULT_FEATURE_FLAGS = {
   cloudStorage: true
 };
 
+// Netlify環境変数（env-config.js経由）またはローカル開発時のprocess.envから参照
+const ENV = (typeof window !== 'undefined' && window.__ENV__) || {}; // eslint-disable-line
+
 export const CLOUD_PROVIDERS_CONFIGURATION = {
-  MAPBOX_TOKEN: process.env.MapboxAccessToken, // eslint-disable-line
-  DROPBOX_CLIENT_ID: process.env.DropboxClientId, // eslint-disable-line
-  EXPORT_MAPBOX_TOKEN: process.env.MapboxExportToken, // eslint-disable-line
-  CARTO_CLIENT_ID: process.env.CartoClientId, // eslint-disable-line
-  FOURSQUARE_CLIENT_ID: process.env.FoursquareClientId, // eslint-disable-line
-  FOURSQUARE_DOMAIN: process.env.FoursquareDomain, // eslint-disable-line
-  FOURSQUARE_API_URL: process.env.FoursquareAPIURL, // eslint-disable-line
-  FOURSQUARE_USER_MAPS_URL: process.env.FoursquareUserMapsURL // eslint-disable-line
+  MAPBOX_TOKEN: ENV.MapboxAccessToken || process.env.MapboxAccessToken, // eslint-disable-line
+  DROPBOX_CLIENT_ID: ENV.DropboxClientId || process.env.DropboxClientId, // eslint-disable-line
+  EXPORT_MAPBOX_TOKEN: ENV.MapboxExportToken || process.env.MapboxExportToken, // eslint-disable-line
+  CARTO_CLIENT_ID: ENV.CartoClientId || process.env.CartoClientId, // eslint-disable-line
+  FOURSQUARE_CLIENT_ID: ENV.FoursquareClientId || process.env.FoursquareClientId, // eslint-disable-line
+  FOURSQUARE_DOMAIN: ENV.FoursquareDomain || process.env.FoursquareDomain, // eslint-disable-line
+  FOURSQUARE_API_URL: ENV.FoursquareAPIURL || process.env.FoursquareAPIURL, // eslint-disable-line
+  FOURSQUARE_USER_MAPS_URL: ENV.FoursquareUserMapsURL || process.env.FoursquareUserMapsURL // eslint-disable-line
 };

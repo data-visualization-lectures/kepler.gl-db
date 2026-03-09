@@ -14,6 +14,7 @@ const require = createRequire(import.meta.url);
 const KeplerPackage = require('../../package.json');
 
 const args = process.argv;
+const isProductionBuild = args.includes('--build');
 
 const BASE_NODE_MODULES_DIR = './node_modules';
 
@@ -98,14 +99,16 @@ const config = {
   bundle: true,
   define: {
     NODE_ENV,
-    'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken || ''),
-    'process.env.MapboxExportToken': JSON.stringify(process.env.MapboxExportToken || ''),
-    'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId || ''),
-    'process.env.CartoClientId': JSON.stringify(process.env.CartoClientId || ''),
-    'process.env.FoursquareClientId': JSON.stringify(process.env.FoursquareClientId || ''),
-    'process.env.FoursquareDomain': JSON.stringify(process.env.FoursquareDomain || ''),
-    'process.env.FoursquareAPIURL': JSON.stringify(process.env.FoursquareAPIURL || ''),
-    'process.env.FoursquareUserMapsURL': JSON.stringify(process.env.FoursquareUserMapsURL || ''),
+    // ビルドモードではトークンを空にする（Netlifyのenv-config.jsから実行時に注入）
+    // 開発モードではローカルの.envから読み込む
+    'process.env.MapboxAccessToken': JSON.stringify(isProductionBuild ? '' : (process.env.MapboxAccessToken || '')),
+    'process.env.MapboxExportToken': JSON.stringify(isProductionBuild ? '' : (process.env.MapboxExportToken || '')),
+    'process.env.DropboxClientId': JSON.stringify(isProductionBuild ? '' : (process.env.DropboxClientId || '')),
+    'process.env.CartoClientId': JSON.stringify(isProductionBuild ? '' : (process.env.CartoClientId || '')),
+    'process.env.FoursquareClientId': JSON.stringify(isProductionBuild ? '' : (process.env.FoursquareClientId || '')),
+    'process.env.FoursquareDomain': JSON.stringify(isProductionBuild ? '' : (process.env.FoursquareDomain || '')),
+    'process.env.FoursquareAPIURL': JSON.stringify(isProductionBuild ? '' : (process.env.FoursquareAPIURL || '')),
+    'process.env.FoursquareUserMapsURL': JSON.stringify(isProductionBuild ? '' : (process.env.FoursquareUserMapsURL || '')),
     'process.env.NODE_ENV': NODE_ENV
   },
   plugins: [

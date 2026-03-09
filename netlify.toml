@@ -1,7 +1,14 @@
 [build]
 base = "examples/demo-app"
 publish = "dist"
-command = "echo 'Using committed artifacts'"
+command = """
+cat > dist/env-config.js << ENVEOF
+window.__ENV__ = {
+  MapboxAccessToken: "$MapboxAccessToken",
+  MapboxExportToken: "$MapboxExportToken"
+};
+ENVEOF
+"""
 
 [build.environment]
   YARN_ENABLE_SCRIPTS = "false"
