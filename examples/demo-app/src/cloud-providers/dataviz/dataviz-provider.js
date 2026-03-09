@@ -315,47 +315,44 @@ export default class DatavizProvider extends Provider {
                 thumbnailDataURI = await blobToDataURI(thumbnailBlob);
             } catch (error) {
                 console.warn('[DatavizProvider] Failed to convert thumbnail:', error);
-                // Continue without thumbnail
             }
-        }
-
-        // Prepare request body according to API specification
-        const requestBody = {
-            name,
-            app_name: 'keplergl',
-            data: map
-        };
-
-        // Add thumbnail if available
-        if (thumbnailDataURI) {
-            requestBody.thumbnail = thumbnailDataURI;
         }
 
         // Determine if we should update an existing project
         const shouldUpdate = options.overwrite && cachedProjectId && cachedProjectId !== 'undefined';
 
-        let url, method;
-        if (shouldUpdate) {
-            // Update existing project
-            url = `${getApiUrl()}/projects/${cachedProjectId}`;
-            method = 'PUT';
-            console.log('[DatavizProvider] Updating existing project:', cachedProjectId);
+        // Check payload size to decide upload strategy
+        const dataString = JSON.stringify(map);
+        const estimatedSize = dataString.length;
+        const SIZE_THRESHOLD = 4 * 1024 * 1024; // 4MB
+
+        let result;
+        if (estimatedSize > SIZE_THRESHOLD) {
+            result = await this._uploadViaSignedUrl(token, name, map, dataString, thumbnailDataURI, shouldUpdate);
         } else {
-            // Create new project
-            url = `${getApiUrl()}/projects`;
-            method = 'POST';
-            console.log('[DatavizProvider] Creating new project');
+            result = await this._uploadDirect(token, name, map, thumbnailDataURI, shouldUpdate);
         }
 
-        console.log(`[DatavizProvider] Target URL: ${url}`);
-        console.log(`[DatavizProvider] Request keys: ${Object.keys(requestBody).join(', ')}`);
-        if (requestBody.thumbnail) {
-            console.log(`[DatavizProvider] Thumbnail size: ${requestBody.thumbnail.length} chars`);
+        const project = result.project || result;
+        cachedProjectId = project.id;
+        return { id: project.id };
+    }
+
+    /**
+     * Direct upload: send data as JSON body to API (for payloads ≤ 4MB)
+     */
+    async _uploadDirect(token, name, map, thumbnailDataURI, shouldUpdate) {
+        const requestBody = {
+            name,
+            app_name: 'keplergl',
+            data: map
+        };
+        if (thumbnailDataURI) {
+            requestBody.thumbnail = thumbnailDataURI;
         }
 
-        // Send to API
+        const { url, method } = this._getProjectEndpoint(shouldUpdate);
         let payloadString = JSON.stringify(requestBody);
-        console.log(`[DatavizProvider] Uploading project (Payload size: ${(payloadString.length / 1024 / 1024).toFixed(2)} MB)`);
 
         let response = await fetch(url, {
             method,
@@ -366,13 +363,10 @@ export default class DatavizProvider extends Provider {
             body: payloadString
         });
 
-        // Retry without thumbnail if 413 Payload Too Large
+        // Retry without thumbnail if 413
         if (response.status === 413 && requestBody.thumbnail) {
-            console.warn('[DatavizProvider] 413 Error. Retrying without thumbnail...');
             delete requestBody.thumbnail;
             payloadString = JSON.stringify(requestBody);
-            console.log(`[DatavizProvider] Retry Payload size: ${(payloadString.length / 1024 / 1024).toFixed(2)} MB`);
-
             response = await fetch(url, {
                 method,
                 headers: {
@@ -383,48 +377,113 @@ export default class DatavizProvider extends Provider {
             });
         }
 
-        if (!response.ok) {
-            let errorMessage = `Failed to ${shouldUpdate ? 'update' : 'save'} project: ${response.status}`;
-
-            if (response.status === 413) {
-                errorMessage = `The map data is too large to save (exceeds server limit). Please reduce the dataset size or number of layers.`;
-            } else {
-                try {
-                    const errorData = await response.json();
-                    console.error('[DatavizProvider] Error response JSON:', errorData); // Log full error object
-                    if (errorData.error) {
-                        errorMessage += ` - ${errorData.error}`;
-                        if (errorData.detail) {
-                            errorMessage += `: ${errorData.detail}`;
-                        } else if (errorData.message) {
-                            errorMessage += `: ${errorData.message}`;
-                        }
-                    }
-                } catch (e) {
-                    console.warn('[DatavizProvider] Failed to parse error JSON', e);
-                    // If JSON parsing fails, try to get text
-                    const errorText = await response.text();
-                    if (errorText) {
-                        errorMessage += ` - ${errorText.substring(0, 200)}`; // Limit length
-                    }
-                }
-            }
-            console.error('[DatavizProvider]', errorMessage);
-            throw new Error(errorMessage);
+        // If still 413 on direct upload, fall back to signed URL flow
+        if (response.status === 413) {
+            return this._uploadViaSignedUrl(token, name, map, JSON.stringify(map), thumbnailDataURI, shouldUpdate);
         }
 
-        const result = await response.json();
-        const project = result.project || result;
+        if (!response.ok) {
+            throw new Error(await this._parseErrorResponse(response, shouldUpdate));
+        }
 
-        // Update cache with the project ID
-        cachedProjectId = project.id;
+        return response.json();
+    }
 
-        console.log('[DatavizProvider] Project saved successfully:', project.id);
+    /**
+     * Signed URL upload: upload data directly to Supabase Storage (for payloads > 4MB)
+     */
+    async _uploadViaSignedUrl(token, name, map, dataString, thumbnailDataURI, shouldUpdate) {
+        const apiUrl = getApiUrl();
 
-        return {
-            id: project.id
-            // shareUrl not implemented
-        };
+        // Step 1: Get signed upload URL
+        const uploadUrlBody = { type: 'data' };
+        if (shouldUpdate) {
+            uploadUrlBody.project_id = cachedProjectId;
+        }
+
+        const urlResponse = await fetch(`${apiUrl}/projects-upload-url`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(uploadUrlBody)
+        });
+
+        if (!urlResponse.ok) {
+            throw new Error(await this._parseErrorResponse(urlResponse, shouldUpdate));
+        }
+
+        const { upload_url, storage_path, project_id } = await urlResponse.json();
+
+        // Step 2: Upload data directly to Storage
+        const storageResponse = await fetch(upload_url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: dataString
+        });
+
+        if (!storageResponse.ok) {
+            throw new Error(`Failed to upload data to storage: ${storageResponse.status}`);
+        }
+
+        // Step 3: Send metadata to API
+        const { url, method } = this._getProjectEndpoint(shouldUpdate);
+        const metadataBody = shouldUpdate
+            ? { name, storage_uploaded: true }
+            : { name, app_name: 'keplergl', storage_path, project_id, storage_uploaded: true };
+
+        if (thumbnailDataURI) {
+            metadataBody.thumbnail = thumbnailDataURI;
+        }
+
+        const metaResponse = await fetch(url, {
+            method,
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(metadataBody)
+        });
+
+        if (!metaResponse.ok) {
+            throw new Error(await this._parseErrorResponse(metaResponse, shouldUpdate));
+        }
+
+        return metaResponse.json();
+    }
+
+    _getProjectEndpoint(shouldUpdate) {
+        if (shouldUpdate) {
+            return { url: `${getApiUrl()}/projects/${cachedProjectId}`, method: 'PUT' };
+        }
+        return { url: `${getApiUrl()}/projects`, method: 'POST' };
+    }
+
+    async _parseErrorResponse(response, shouldUpdate) {
+        let errorMessage = `Failed to ${shouldUpdate ? 'update' : 'save'} project: ${response.status}`;
+        if (response.status === 413) {
+            return 'The map data is too large to save (exceeds server limit). Please reduce the dataset size or number of layers.';
+        }
+        try {
+            const errorData = await response.json();
+            if (errorData.error) {
+                errorMessage += ` - ${errorData.error}`;
+                if (errorData.detail) {
+                    errorMessage += `: ${errorData.detail}`;
+                } else if (errorData.message) {
+                    errorMessage += `: ${errorData.message}`;
+                }
+            }
+        } catch (e) {
+            try {
+                const errorText = await response.text();
+                if (errorText) {
+                    errorMessage += ` - ${errorText.substring(0, 200)}`;
+                }
+            } catch (_) {}
+        }
+        return errorMessage;
     }
 
 
