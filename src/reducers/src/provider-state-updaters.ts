@@ -94,13 +94,17 @@ function createGlobalNotificationTasks({
   // Display notification via dataviz-tool-header toast UI
   const toastType = type === 'error' ? 'error' : 'success';
   const duration = delayClose ? 3000 : undefined;
-  if (typeof document !== 'undefined') {
-    const toolHeader = document.querySelector('dataviz-tool-header');
-    if (toolHeader && (toolHeader as any).showMessage) {
-      (toolHeader as any).showMessage(message, toastType, duration);
-    }
-  }
-  return [];
+  return [
+    ACTION_TASK().map(() => {
+      if (typeof document !== 'undefined') {
+        const toolHeader = document.querySelector('dataviz-tool-header');
+        if (toolHeader && (toolHeader as any).showMessage) {
+          (toolHeader as any).showMessage(message, toastType, duration);
+        }
+      }
+      return resetProviderStatus();
+    })
+  ];
 }
 
 /**
