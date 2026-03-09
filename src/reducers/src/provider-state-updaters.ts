@@ -91,20 +91,20 @@ function createGlobalNotificationTasks({
   message: string;
   delayClose?: boolean;
 }) {
-  // Display notification via dataviz-tool-header toast UI
+  // Dispatch a custom event to notify dataviz-tool-header toast UI.
+  // Using window event + setTimeout to decouple from Redux dispatch cycle.
   const toastType = type === 'error' ? 'error' : 'success';
   const duration = delayClose ? 3000 : undefined;
-  return [
-    ACTION_TASK().map(() => {
-      if (typeof document !== 'undefined') {
-        const toolHeader = document.querySelector('dataviz-tool-header');
-        if (toolHeader && (toolHeader as any).showMessage) {
-          (toolHeader as any).showMessage(message, toastType, duration);
-        }
-      }
-      return resetProviderStatus();
-    })
-  ];
+  if (typeof window !== 'undefined') {
+    window.setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent('kepler-notification', {
+          detail: {message, type: toastType, duration}
+        })
+      );
+    }, 0);
+  }
+  return [];
 }
 
 /**

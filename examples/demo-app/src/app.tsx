@@ -417,6 +417,21 @@ const App = props => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, provider, query, dispatch, configureHeader]);
 
+  // Bridge kepler.gl notification events to dataviz-tool-header toast UI
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      const {message, type: toastType, duration} = e.detail || {};
+      const toolHeader = document.querySelector('dataviz-tool-header');
+      if (toolHeader && (toolHeader as any).showMessage) {
+        (toolHeader as any).showMessage(message, toastType, duration);
+      }
+    };
+    window.addEventListener('kepler-notification', handler as EventListener);
+    return () => {
+      window.removeEventListener('kepler-notification', handler as EventListener);
+    };
+  }, []);
+
   /**
    * Update map boundary when view state changes, used by ai-assistant to
    * get data from vector tiles when map boundary changes
