@@ -165,7 +165,7 @@ export const exportFileSuccessUpdater = (
   const tasks = [
     createActionTask(onSuccess, {response, provider, options}),
     closeModal &&
-      ACTION_TASK().map(() => postSaveLoadSuccess(`Map saved to ${state.currentProvider}!`))
+      ACTION_TASK().map(() => postSaveLoadSuccess('プロジェクトを保存しました'))
   ].filter(d => d);
 
   return tasks.length ? withTask(newState, tasks) : newState;
@@ -178,7 +178,7 @@ export const postSaveLoadSuccessUpdater = (
   state: ProviderState,
   action: ActionPayload<ProviderActions.PostSaveLoadSuccessPayload>
 ): ProviderState => {
-  const message = action.payload || `Saved / Load to ${state.currentProvider} Success`;
+  const message = action.payload || 'プロジェクトの保存・読込が完了しました';
 
   const tasks = [
     ACTION_TASK().map(() => toggleModal(null)),
@@ -406,7 +406,7 @@ export const loadCloudMapSuccess2Updater = (
   const tasks = [
     ACTION_TASK().map(() => addDataToMap(datasetsPayload)),
     createActionTask(onSuccess, {response, loadParams, provider}),
-    ACTION_TASK().map(() => postSaveLoadSuccess(`Map from ${provider.name} loaded`))
+    ACTION_TASK().map(() => postSaveLoadSuccess('プロジェクトを読み込みました'))
   ].filter(d => d);
 
   return tasks.length ? withTask(newState, tasks) : newState;
@@ -416,7 +416,7 @@ export const loadCloudMapErrorUpdater = (
   state: ProviderState,
   action: ActionPayload<ProviderActions.LoadCloudMapErrorPayload>
 ): ProviderState => {
-  const message = getError(action.payload.error) || `Error loading saved map`;
+  const message = getError(action.payload.error) || 'プロジェクトの読み込みに失敗しました';
 
   Console.warn(message);
 
