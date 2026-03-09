@@ -8,7 +8,6 @@ import {generateHashId, toArray} from '@kepler.gl/common-utils';
 import {
   EXPORT_FILE_TO_CLOUD_TASK,
   ACTION_TASK,
-  DELAY_TASK,
   LOAD_CLOUD_MAP_TASK
 } from '@kepler.gl/tasks';
 import {
@@ -19,15 +18,11 @@ import {
   loadCloudMapSuccess2,
   loadCloudMapError,
   resetProviderStatus,
-  removeNotification,
   toggleModal,
-  addNotification,
   addDataToMap,
   ProviderActions
 } from '@kepler.gl/actions';
 import {
-  DEFAULT_NOTIFICATION_TYPES,
-  DEFAULT_NOTIFICATION_TOPICS,
   DATASET_FORMATS,
   OVERWRITE_MAP_ID
 } from '@kepler.gl/constants';
@@ -96,15 +91,16 @@ function createGlobalNotificationTasks({
   message: string;
   delayClose?: boolean;
 }) {
-  const id = generateHashId();
-  const successNote = {
-    id,
-    type: DEFAULT_NOTIFICATION_TYPES[type || ''] || DEFAULT_NOTIFICATION_TYPES.success,
-    topic: DEFAULT_NOTIFICATION_TOPICS.global,
-    message
-  };
-  const task = ACTION_TASK().map(() => addNotification(successNote));
-  return delayClose ? [task, DELAY_TASK(3000).map(() => removeNotification(id))] : [task];
+  // Display notification via dataviz-tool-header toast UI
+  const toastType = type === 'error' ? 'error' : 'success';
+  const duration = delayClose ? 3000 : undefined;
+  if (typeof document !== 'undefined') {
+    const toolHeader = document.querySelector('dataviz-tool-header');
+    if (toolHeader && (toolHeader as any).showMessage) {
+      (toolHeader as any).showMessage(message, toastType, duration);
+    }
+  }
+  return [];
 }
 
 /**
