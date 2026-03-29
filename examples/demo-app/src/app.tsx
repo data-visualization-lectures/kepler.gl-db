@@ -306,7 +306,6 @@ const App = props => {
         if (typeof (header as any).setProjectConfig === 'function') {
           (header as any).setProjectConfig({
             appName: 'keplergl',
-            apiBaseUrl: '/api',
             onProjectLoad: (projectData) => {
               const file = new File(
                 [JSON.stringify(projectData)],
