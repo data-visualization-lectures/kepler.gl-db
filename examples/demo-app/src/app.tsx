@@ -368,13 +368,29 @@ const App = props => {
           console.error('[App] Error saving large project:', err);
         });
     } else {
+      console.log('[App] Attempting to call showSaveModal');
+      console.log('[App] header:', header);
+      console.log('[App] typeof header:', typeof header);
+      console.log('[App] header?.showSaveModal:', header?.showSaveModal);
+      console.log('[App] typeof header?.showSaveModal:', typeof header?.showSaveModal);
+      console.log('[App] currentProjectIdRef.current:', currentProjectIdRef.current);
+
       if (typeof header?.showSaveModal === 'function') {
+        console.log('[App] Calling showSaveModal with:', {
+          name,
+          dataKeys: Object.keys(projectData || {}),
+          hasThumbnail: !!exportImageDataUri,
+          existingProjectId: currentProjectIdRef.current,
+        });
         header.showSaveModal({
           name,
           data: projectData,
           thumbnailDataUri: exportImageDataUri,
           existingProjectId: currentProjectIdRef.current,
         });
+        console.log('[App] showSaveModal called successfully');
+      } else {
+        console.warn('[App] showSaveModal is not available');
       }
     }
   }, [exportImageDataUri, dispatch]);
@@ -516,14 +532,18 @@ const App = props => {
               // URL update is handled by onLoadCloudMapSuccess in actions.js via loadParams.id
             },
             onProjectSave: (meta) => {
+              console.log('[App] onProjectSave called with meta:', meta);
               if (meta?.id) {
                 currentProjectIdRef.current = meta.id;
+                console.log('[App] Stored currentProjectIdRef:', currentProjectIdRef.current);
                 // Update URL with project_id query parameter for permalink (path should be / only)
                 const url = new URL(window.location);
                 url.pathname = '/';  // Ensure path is just /
                 url.searchParams.set('project_id', meta.id);
                 window.history.replaceState({}, '', url);
                 console.log('[App] Updated URL with project_id:', meta.id);
+              } else {
+                console.warn('[App] onProjectSave: meta.id is missing', meta);
               }
             }
           });
