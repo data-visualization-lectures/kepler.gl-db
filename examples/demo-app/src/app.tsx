@@ -154,6 +154,81 @@ const StyledVerticalResizeHandle = styled(PanelResizeHandle)`
   }
 `;
 
+// ========================================
+// 大容量プロジェクト保存関連ヘルパー関数
+// ========================================
+
+async function getAccessToken(): Promise<string | null> {
+  const supabase = (window as any).datavizSupabase;
+  if (supabase?.auth?.getSession) {
+    // Supabase v2
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token || null;
+  }
+  if (supabase?.auth?.session) {
+    // Supabase v1
+    return supabase.auth.session()?.access_token || null;
+  }
+  return null;
+}
+
+async function uploadLargeProject({
+  name,
+  projectData,
+  existingProjectId,
+  thumbnailDataUri,
+}: {
+  name: string;
+  projectData: object;
+  existingProjectId: string | null;
+  thumbnailDataUri: string | null;
+}): Promise<{ id: string; name: string }> {
+  const token = await getAccessToken();
+  if (!token) throw new Error('ログインが必要です');
+
+  const API_BASE = 'https://api.dataviz.jp/api';
+  const dataString = JSON.stringify(projectData);
+  const shouldUpdate = !!existingProjectId;
+
+  // Step 1: 署名付きURL取得
+  const uploadUrlBody: any = { type: 'data' };
+  if (shouldUpdate) uploadUrlBody.project_id = existingProjectId;
+
+  const urlRes = await fetch(`${API_BASE}/projects-upload-url`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(uploadUrlBody),
+  });
+  if (!urlRes.ok) throw new Error(`署名付きURL取得失敗: ${urlRes.status}`);
+  const { upload_url, storage_path, project_id } = await urlRes.json();
+
+  // Step 2: Storage に直接アップロード
+  const storageRes = await fetch(upload_url, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: dataString,
+  });
+  if (!storageRes.ok) throw new Error(`Storageアップロード失敗: ${storageRes.status}`);
+
+  // Step 3: メタデータを API に送信
+  const metaUrl = shouldUpdate ? `${API_BASE}/projects/${existingProjectId}` : `${API_BASE}/projects`;
+  const metaMethod = shouldUpdate ? 'PUT' : 'POST';
+  const metaBody: any = shouldUpdate
+    ? { name, storage_uploaded: true }
+    : { name, app_name: 'keplergl', storage_path, project_id, storage_uploaded: true };
+  if (thumbnailDataUri) metaBody.thumbnail = thumbnailDataUri;
+
+  const metaRes = await fetch(metaUrl, {
+    method: metaMethod,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(metaBody),
+  });
+  if (!metaRes.ok) throw new Error(`メタデータ保存失敗: ${metaRes.status}`);
+
+  const result = await metaRes.json();
+  return result.project || result;
+}
+
 const App = props => {
   const { params: { id, provider } = {}, location: { query = {} } = {} } = props;
   const dispatch = useDispatch();
@@ -250,9 +325,9 @@ const App = props => {
               id: 'save-project-btn',
               label: 'プロジェクトの保存',
               action: () => {
-                const header = document.querySelector('dataviz-tool-header');
-                if (!header || typeof (header as any).showSaveModal !== 'function') {
-                  console.warn('[App] showSaveModal not available');
+                const header = document.querySelector('dataviz-tool-header') as any;
+                if (!header) {
+                  console.warn('[App] dataviz-tool-header not found');
                   return;
                 }
 
@@ -270,12 +345,44 @@ const App = props => {
                   name = `Dataviz_Project_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}:${pad(now.getMinutes())}`;
                 }
 
-                (header as any).showSaveModal({
-                  name,
-                  data: projectData,
-                  thumbnailDataUri: null,
-                  existingProjectId: currentProjectIdRef.current
-                });
+                // Calculate data size for large file detection
+                const dataSize = new Blob([JSON.stringify(projectData)]).size;
+                const LARGE_THRESHOLD = 4.5 * 1024 * 1024; // 4.5MB
+
+                if (dataSize >= LARGE_THRESHOLD) {
+                  // 大容量：自前の署名付きURL方式で保存
+                  console.log('[App] Saving large project (>4.5MB) via signed URL...');
+                  header.showMessage?.('プロジェクトを保存しています...', 'info');
+
+                  uploadLargeProject({
+                    name,
+                    projectData,
+                    existingProjectId: currentProjectIdRef.current,
+                    thumbnailDataUri: null,
+                  })
+                    .then((meta) => {
+                      currentProjectIdRef.current = meta.id;
+                      header.showMessage?.('プロジェクトを保存しました', 'success');
+                      console.log('[App] Large project saved successfully:', meta.id);
+                    })
+                    .catch((err) => {
+                      header.showMessage?.(`保存に失敗しました: ${err.message}`, 'error');
+                      console.error('[App] Error saving large project:', err);
+                    });
+                } else {
+                  // 小容量：tool-header の showSaveModal に任せる
+                  console.log('[App] Saving small project (<4.5MB) via tool-header...');
+                  if (typeof header.showSaveModal === 'function') {
+                    (header as any).showSaveModal({
+                      name,
+                      data: projectData,
+                      thumbnailDataUri: null,
+                      existingProjectId: currentProjectIdRef.current,
+                    });
+                  } else {
+                    console.warn('[App] showSaveModal not available');
+                  }
+                }
               },
               align: 'right'
             },
