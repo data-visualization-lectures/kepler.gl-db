@@ -306,6 +306,7 @@ const App = props => {
         if (typeof (header as any).setProjectConfig === 'function') {
           (header as any).setProjectConfig({
             appName: 'keplergl',
+            apiBaseUrl: '/api/dataviz',
             onProjectLoad: (projectData) => {
               const file = new File(
                 [JSON.stringify(projectData)],
