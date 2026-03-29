@@ -356,6 +356,11 @@ const App = props => {
       })
         .then((meta) => {
           currentProjectIdRef.current = meta.id;
+          // Update URL with project_id query parameter for permalink
+          const url = new URL(window.location);
+          url.searchParams.set('project_id', meta.id);
+          window.history.replaceState({}, '', url);
+          console.log('[App] Updated URL with project_id:', meta.id);
           header?.showMessage?.('プロジェクトを保存しました', 'success');
         })
         .catch((err) => {
@@ -508,13 +513,36 @@ const App = props => {
                 { type: 'application/json' }
               );
               dispatch(loadFiles([file]));
+              // Note: onProjectLoad receives only projectData, not metadata with ID
+              // URL update happens automatically via loadCloudMap when project_id is in URL
             },
             onProjectSave: (meta) => {
               if (meta?.id) {
                 currentProjectIdRef.current = meta.id;
+                // Update URL with project_id query parameter for permalink
+                const url = new URL(window.location);
+                url.searchParams.set('project_id', meta.id);
+                window.history.replaceState({}, '', url);
+                console.log('[App] Updated URL with project_id:', meta.id);
               }
             }
           });
+
+          // Wrap tool-header's loadProject to update URL when loading from modal
+          const originalLoadProject = (header as any).loadProject?.bind(header);
+          if (typeof originalLoadProject === 'function') {
+            (header as any).loadProject = async function(projectId: string) {
+              const result = await originalLoadProject(projectId);
+              if (projectId) {
+                currentProjectIdRef.current = projectId;
+                const url = new URL(window.location);
+                url.searchParams.set('project_id', projectId);
+                window.history.replaceState({}, '', url);
+                console.log('[App] Updated URL with project_id from loadProject:', projectId);
+              }
+              return result;
+            };
+          }
         }
       } else {
         // Fallback if setConfig is missing (unexpected)
