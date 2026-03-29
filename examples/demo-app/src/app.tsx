@@ -22,11 +22,10 @@ import { panelBorderColor, theme } from '@kepler.gl/styles';
 import { ParsedConfig } from '@kepler.gl/types';
 import { getApplicationConfig } from '@kepler.gl/utils';
 import { SqlPanel } from '@kepler.gl/duckdb';
+import KeplerGlSchema from '@kepler.gl/schemas';
 import { replaceLoadDataModal } from './factories/load-data-modal';
 import { replaceMapControl } from './factories/map-control';
 import { replacePanelHeader } from './factories/panel-header';
-import { replaceOverwriteMapModal } from './factories/overwrite-map-modal';
-import { replaceSaveMapModal } from './factories/save-map-modal';
 
 import { CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS } from './constants/default-settings';
 import { messages } from './constants/localization';
@@ -46,7 +45,7 @@ import {
   replaceDataInMap,
   toggleMapControl,
   toggleModal,
-  setMapInfo
+  loadFiles
 } from '@kepler.gl/actions';
 import { CLOUD_PROVIDERS } from './cloud-providers';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
@@ -54,9 +53,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 const KeplerGl = require('@kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
   replaceMapControl(),
-  replacePanelHeader(),
-  replaceOverwriteMapModal(),
-  replaceSaveMapModal()
+  replacePanelHeader()
 ]);
 
 // Sample data
@@ -181,6 +178,17 @@ const App = props => {
     mapInfoRef.current = mapInfo;
   }, [mapInfo]);
 
+  // Track current project ID for save/update operations
+  const currentProjectIdRef = useRef<string | null>(null);
+
+  // Get kepler.gl map state for serialization
+  const keplerMapState = useSelector((state: any) => state?.demo?.keplerGl?.map);
+  const keplerMapStateRef = useRef(keplerMapState);
+
+  useEffect(() => {
+    keplerMapStateRef.current = keplerMapState;
+  }, [keplerMapState]);
+
   const prevQueryRef = useRef<number>(null);
 
   const configureHeader = useCallback(() => {
@@ -242,26 +250,32 @@ const App = props => {
               id: 'save-project-btn',
               label: 'プロジェクトの保存',
               action: () => {
-                console.log('[App] Saving project modal...');
-
-                // Set default title if empty to enable the save button immediately
-                const currentMapInfo = mapInfoRef.current;
-                if (!currentMapInfo || !currentMapInfo.title) {
-                  const now = new Date();
-                  const year = now.getFullYear();
-                  const month = String(now.getMonth() + 1).padStart(2, '0');
-                  const day = String(now.getDate()).padStart(2, '0');
-                  const hours = String(now.getHours()).padStart(2, '0');
-                  const minutes = String(now.getMinutes()).padStart(2, '0');
-
-                  const defaultTitle = `Dataviz_Project_${year}-${month}-${day}_${hours}:${minutes}`;
-                  console.log('[App] Setting default project title:', defaultTitle);
-                  dispatch(setMapInfo({ title: defaultTitle }));
+                const header = document.querySelector('dataviz-tool-header');
+                if (!header || typeof (header as any).showSaveModal !== 'function') {
+                  console.warn('[App] showSaveModal not available');
+                  return;
                 }
 
-                dispatch(toggleModal('saveMap'));
-                // Re-apply header config
-                setTimeout(() => configureHeader(), 100);
+                // Serialize current kepler.gl state
+                const projectData = keplerMapStateRef.current
+                  ? KeplerGlSchema.save(keplerMapStateRef.current)
+                  : {};
+
+                // Get project name from map info or generate default
+                const currentMapInfo = mapInfoRef.current;
+                let name = currentMapInfo?.title;
+                if (!name) {
+                  const now = new Date();
+                  const pad = (n: number) => String(n).padStart(2, '0');
+                  name = `Dataviz_Project_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}:${pad(now.getMinutes())}`;
+                }
+
+                (header as any).showSaveModal({
+                  name,
+                  data: projectData,
+                  thumbnailDataUri: null,
+                  existingProjectId: currentProjectIdRef.current
+                });
               },
               align: 'right'
             },
@@ -269,31 +283,10 @@ const App = props => {
               id: 'load-project-btn',
               label: 'プロジェクトの読込',
               action: () => {
-                console.log('[App] Loading project modal...');
-                dispatch(toggleModal('addData'));
-
-                // Hack: Simulate click on "Storage" tab after modal opens
-                setTimeout(() => {
-                  // Try to find the tab by text content
-                  const validLabels = ['Storage', 'ストレージ', 'Cloud Storage', 'ストレージからロード'];
-                  const allDivs = Array.from(document.querySelectorAll('div'));
-                  const storageTab = allDivs.find(div => {
-                    // Check strict equality to avoid matching container divs
-                    return validLabels.includes(div.textContent);
-                  });
-
-                  if (storageTab) {
-                    console.log('[App] Found Storage tab, clicking...', storageTab);
-                    storageTab.click();
-                  } else {
-                    console.warn('[App] Storage tab not found by text content. Checking specific class...');
-                    // Fallback to structure if possible (assuming index 3 or 4)
-                    // This part is hard without class names, hoping text works.
-                  }
-                }, 200);
-
-                // Re-apply header config
-                setTimeout(() => configureHeader(), 100);
+                const header = document.querySelector('dataviz-tool-header');
+                if (header && typeof (header as any).showLoadModal === 'function') {
+                  (header as any).showLoadModal();
+                }
               },
               align: 'right'
             },
@@ -308,6 +301,26 @@ const App = props => {
           ]
         });
         console.log('[App] setConfig called successfully');
+
+        // Set up project management with new API
+        if (typeof (header as any).setProjectConfig === 'function') {
+          (header as any).setProjectConfig({
+            appName: 'keplergl',
+            onProjectLoad: (projectData) => {
+              const file = new File(
+                [JSON.stringify(projectData)],
+                'project.json',
+                { type: 'application/json' }
+              );
+              dispatch(loadFiles([file]));
+            },
+            onProjectSave: (meta) => {
+              if (meta?.id) {
+                currentProjectIdRef.current = meta.id;
+              }
+            }
+          });
+        }
       } else {
         // Fallback if setConfig is missing (unexpected)
         console.warn('[App] setConfig method not found on header, trying property assignment');
@@ -352,17 +365,6 @@ const App = props => {
       return;
     }
 
-    // Hack: Hide "Save As" button in OverwriteMapModal
-    // Because OverwriteMapModalFactory is not exported, we cannot override the component.
-    // DOM manipulation is the only way to hide specific buttons inside the modal.
-    const observer = new MutationObserver(() => {
-      const saveAsBtn = document.getElementById('saveAs');
-      if (saveAsBtn) {
-        saveAsBtn.style.display = 'none';
-      }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-
     // Handle project_id query param (for Dataviz Cloud)
     // Use window.location.search directly to ensure we catch it regardless of router props
     const searchParams = new URLSearchParams(window.location.search);
@@ -378,7 +380,7 @@ const App = props => {
           return;
         }
 
-
+        currentProjectIdRef.current = projectId;
 
         dispatch(
           loadCloudMap({
