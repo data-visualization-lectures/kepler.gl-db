@@ -190,25 +190,58 @@ async function uploadLargeProject({
   const dataString = JSON.stringify(projectData);
   const shouldUpdate = !!existingProjectId;
 
+  console.log('[uploadLargeProject] Starting upload...', {
+    projectName: name,
+    dataSize: dataString.length,
+    shouldUpdate,
+    existingProjectId
+  });
+
   // Step 1: 署名付きURL取得
   const uploadUrlBody: any = { type: 'data' };
   if (shouldUpdate) uploadUrlBody.project_id = existingProjectId;
+
+  console.log('[uploadLargeProject] Step 1: Fetching signed URL with body:', uploadUrlBody);
 
   const urlRes = await fetch(`${API_BASE}/projects-upload-url`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(uploadUrlBody),
   });
-  if (!urlRes.ok) throw new Error(`署名付きURL取得失敗: ${urlRes.status}`);
+
+  if (!urlRes.ok) {
+    const errorText = await urlRes.text();
+    console.error('[uploadLargeProject] Step 1 failed:', {
+      status: urlRes.status,
+      statusText: urlRes.statusText,
+      errorBody: errorText
+    });
+    throw new Error(`署名付きURL取得失敗: ${urlRes.status}`);
+  }
+
   const { upload_url, storage_path, project_id } = await urlRes.json();
+  console.log('[uploadLargeProject] Step 1 succeeded:', { storage_path, project_id });
 
   // Step 2: Storage に直接アップロード
+  console.log('[uploadLargeProject] Step 2: Uploading data to Storage...');
+
   const storageRes = await fetch(upload_url, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: dataString,
   });
-  if (!storageRes.ok) throw new Error(`Storageアップロード失敗: ${storageRes.status}`);
+
+  if (!storageRes.ok) {
+    const errorText = await storageRes.text();
+    console.error('[uploadLargeProject] Step 2 failed:', {
+      status: storageRes.status,
+      statusText: storageRes.statusText,
+      errorBody: errorText
+    });
+    throw new Error(`Storageアップロード失敗: ${storageRes.status}`);
+  }
+
+  console.log('[uploadLargeProject] Step 2 succeeded');
 
   // Step 3: メタデータを API に送信
   const metaUrl = shouldUpdate ? `${API_BASE}/projects/${existingProjectId}` : `${API_BASE}/projects`;
@@ -218,14 +251,30 @@ async function uploadLargeProject({
     : { name, app_name: 'keplergl', storage_path, project_id, storage_uploaded: true };
   if (thumbnailDataUri) metaBody.thumbnail = thumbnailDataUri;
 
+  console.log('[uploadLargeProject] Step 3: Saving metadata...', {
+    url: metaUrl,
+    method: metaMethod,
+    body: metaBody
+  });
+
   const metaRes = await fetch(metaUrl, {
     method: metaMethod,
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(metaBody),
   });
-  if (!metaRes.ok) throw new Error(`メタデータ保存失敗: ${metaRes.status}`);
+
+  if (!metaRes.ok) {
+    const errorText = await metaRes.text();
+    console.error('[uploadLargeProject] Step 3 failed:', {
+      status: metaRes.status,
+      statusText: metaRes.statusText,
+      errorBody: errorText
+    });
+    throw new Error(`メタデータ保存失敗: ${metaRes.status}`);
+  }
 
   const result = await metaRes.json();
+  console.log('[uploadLargeProject] All steps completed successfully:', result);
   return result.project || result;
 }
 
@@ -263,6 +312,11 @@ const App = props => {
   useEffect(() => {
     keplerMapStateRef.current = keplerMapState;
   }, [keplerMapState]);
+
+  // Get screenshot thumbnail from aiAssistant redux state
+  const screenshotDataUrl = useSelector(
+    (state: any) => state?.demo?.aiAssistant?.screenshotToAsk?.screenCaptured || null
+  );
 
   const prevQueryRef = useRef<number>(null);
 
@@ -350,15 +404,23 @@ const App = props => {
                 const LARGE_THRESHOLD = 4.5 * 1024 * 1024; // 4.5MB
 
                 if (dataSize >= LARGE_THRESHOLD) {
-                  // 大容量：自前の署名付きURL方式で保存
+                  // 大容量：ユーザーがプロジェクト名を確認・変更できるようにプロンプトを表示
                   console.log('[App] Saving large project (>4.5MB) via signed URL...');
+                  const confirmedName = prompt('プロジェクト名を入力してください:', name);
+
+                  if (confirmedName === null) {
+                    // ユーザーがキャンセルした場合
+                    console.log('[App] Large project save cancelled by user');
+                    return;
+                  }
+
                   header.showMessage?.('プロジェクトを保存しています...', 'info');
 
                   uploadLargeProject({
-                    name,
+                    name: confirmedName,
                     projectData,
                     existingProjectId: currentProjectIdRef.current,
-                    thumbnailDataUri: null,
+                    thumbnailDataUri: screenshotDataUrl,
                   })
                     .then((meta) => {
                       currentProjectIdRef.current = meta.id;
@@ -376,7 +438,7 @@ const App = props => {
                     (header as any).showSaveModal({
                       name,
                       data: projectData,
-                      thumbnailDataUri: null,
+                      thumbnailDataUri: screenshotDataUrl,
                       existingProjectId: currentProjectIdRef.current,
                     });
                   } else {
