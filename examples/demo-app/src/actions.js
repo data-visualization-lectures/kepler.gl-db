@@ -101,8 +101,9 @@ export function onLoadCloudMapSuccess({provider, loadParams}) {
     if (provider?.name === 'dataviz') {
       const projectId = loadParams?.id;
       if (projectId) {
-        // URL を ?project_id=xxx 形式で更新
+        // URL を ?project_id=xxx 形式で更新（パスは/ のままに保つ）
         const url = new URL(window.location);
+        url.pathname = '/';  // パスをリセット
         url.searchParams.set('project_id', projectId);
         window.history.replaceState({}, '', url);
         console.log('[onLoadCloudMapSuccess] Updated URL with project_id:', projectId);

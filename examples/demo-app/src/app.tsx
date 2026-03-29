@@ -518,8 +518,9 @@ const App = props => {
             onProjectSave: (meta) => {
               if (meta?.id) {
                 currentProjectIdRef.current = meta.id;
-                // Update URL with project_id query parameter for permalink
+                // Update URL with project_id query parameter for permalink (path should be / only)
                 const url = new URL(window.location);
+                url.pathname = '/';  // Ensure path is just /
                 url.searchParams.set('project_id', meta.id);
                 window.history.replaceState({}, '', url);
                 console.log('[App] Updated URL with project_id:', meta.id);
