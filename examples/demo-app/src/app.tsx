@@ -45,7 +45,9 @@ import {
   replaceDataInMap,
   toggleMapControl,
   toggleModal,
-  loadFiles
+  loadFiles,
+  startExportingImage,
+  cleanupExportImage
 } from '@kepler.gl/actions';
 import { CLOUD_PROVIDERS } from './cloud-providers';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
@@ -319,10 +321,57 @@ const App = props => {
     keplerMapStateRef.current = keplerMapState;
   }, [keplerMapState]);
 
-  // Get screenshot thumbnail from aiAssistant redux state
-  const screenshotDataUrl = useSelector(
-    (state: any) => state?.demo?.aiAssistant?.screenshotToAsk?.screenCaptured || null
+  // kepler.gl の ExportImage 機能で生成されたサムネイル dataUri を取得
+  const exportImageDataUri = useSelector(
+    (state: any) => state?.demo?.keplerGl?.map?.uiState?.exportImage?.imageDataUri || null
   );
+
+  // 保存を保留中の情報（exportImage 完了後に保存処理を実行するため）
+  const pendingSaveRef = useRef<{
+    name: string;
+    projectData: object;
+    isLarge: boolean;
+  } | null>(null);
+
+  // exportImageDataUri が更新されたとき、保留中の保存処理を実行
+  useEffect(() => {
+    if (!pendingSaveRef.current || !exportImageDataUri) return;
+
+    const { name, projectData, isLarge } = pendingSaveRef.current;
+    pendingSaveRef.current = null;
+
+    const header = document.querySelector('dataviz-tool-header') as any;
+
+    // 使い終わったら ExportImage 状態をリセット
+    dispatch(cleanupExportImage());
+
+    if (isLarge) {
+      header?.showMessage?.('プロジェクトを保存しています...', 'info');
+      uploadLargeProject({
+        name,
+        projectData,
+        existingProjectId: currentProjectIdRef.current,
+        thumbnailDataUri: exportImageDataUri,
+      })
+        .then((meta) => {
+          currentProjectIdRef.current = meta.id;
+          header?.showMessage?.('プロジェクトを保存しました', 'success');
+        })
+        .catch((err) => {
+          header?.showMessage?.(`保存に失敗しました: ${err.message}`, 'error');
+          console.error('[App] Error saving large project:', err);
+        });
+    } else {
+      if (typeof header?.showSaveModal === 'function') {
+        header.showSaveModal({
+          name,
+          data: projectData,
+          thumbnailDataUri: exportImageDataUri,
+          existingProjectId: currentProjectIdRef.current,
+        });
+      }
+    }
+  }, [exportImageDataUri, dispatch]);
 
   const prevQueryRef = useRef<number>(null);
 
@@ -385,12 +434,6 @@ const App = props => {
               id: 'save-project-btn',
               label: 'プロジェクトの保存',
               action: () => {
-                const header = document.querySelector('dataviz-tool-header') as any;
-                if (!header) {
-                  console.warn('[App] dataviz-tool-header not found');
-                  return;
-                }
-
                 // Serialize current kepler.gl state
                 const projectData = keplerMapStateRef.current
                   ? KeplerGlSchema.save(keplerMapStateRef.current)
@@ -405,59 +448,21 @@ const App = props => {
                   name = `Dataviz_Project_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}:${pad(now.getMinutes())}`;
                 }
 
-                // Calculate data size for large file detection
+                // 大容量の場合はプロジェクト名を確認
                 const dataSize = new Blob([JSON.stringify(projectData)]).size;
                 const LARGE_THRESHOLD = 4.5 * 1024 * 1024; // 4.5MB
+                const isLarge = dataSize >= LARGE_THRESHOLD;
 
-                if (dataSize >= LARGE_THRESHOLD) {
-                  // 大容量：ユーザーがプロジェクト名を確認・変更できるようにプロンプトを表示
-                  console.log('[App] Saving large project (>4.5MB) via signed URL...');
-                  console.log('[App] screenshotDataUrl status:', {
-                    exists: !!screenshotDataUrl,
-                    type: typeof screenshotDataUrl,
-                    length: screenshotDataUrl ? screenshotDataUrl.length : 0,
-                    preview: screenshotDataUrl ? screenshotDataUrl.substring(0, 100) : null
-                  });
-
+                if (isLarge) {
                   const confirmedName = prompt('プロジェクト名を入力してください:', name);
-
-                  if (confirmedName === null) {
-                    // ユーザーがキャンセルした場合
-                    console.log('[App] Large project save cancelled by user');
-                    return;
-                  }
-
-                  header.showMessage?.('プロジェクトを保存しています...', 'info');
-
-                  uploadLargeProject({
-                    name: confirmedName,
-                    projectData,
-                    existingProjectId: currentProjectIdRef.current,
-                    thumbnailDataUri: screenshotDataUrl,
-                  })
-                    .then((meta) => {
-                      currentProjectIdRef.current = meta.id;
-                      header.showMessage?.('プロジェクトを保存しました', 'success');
-                      console.log('[App] Large project saved successfully:', meta.id);
-                    })
-                    .catch((err) => {
-                      header.showMessage?.(`保存に失敗しました: ${err.message}`, 'error');
-                      console.error('[App] Error saving large project:', err);
-                    });
-                } else {
-                  // 小容量：tool-header の showSaveModal に任せる
-                  console.log('[App] Saving small project (<4.5MB) via tool-header...');
-                  if (typeof header.showSaveModal === 'function') {
-                    (header as any).showSaveModal({
-                      name,
-                      data: projectData,
-                      thumbnailDataUri: screenshotDataUrl,
-                      existingProjectId: currentProjectIdRef.current,
-                    });
-                  } else {
-                    console.warn('[App] showSaveModal not available');
-                  }
+                  if (confirmedName === null) return;
+                  name = confirmedName;
                 }
+
+                // サムネイル生成のため startExportingImage を dispatch
+                // → exportImageDataUri が更新されたら useEffect 内で保存処理を実行
+                pendingSaveRef.current = { name, projectData, isLarge };
+                dispatch(startExportingImage());
               },
               align: 'right'
             },
