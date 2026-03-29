@@ -172,6 +172,22 @@ async function getAccessToken(): Promise<string | null> {
   return null;
 }
 
+/**
+ * Data URIをBlobに変換する
+ */
+function dataUriToBlob(dataUri: string): Blob {
+  const parts = dataUri.split(',');
+  const mimeMatch = parts[0].match(/:(.*?);/);
+  const mimeType = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+  const bstr = atob(parts[1]);
+  const n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    u8arr[i] = bstr.charCodeAt(i);
+  }
+  return new Blob([u8arr], { type: mimeType });
+}
+
 async function uploadLargeProject({
   name,
   projectData,
@@ -194,14 +210,15 @@ async function uploadLargeProject({
     projectName: name,
     dataSize: dataString.length,
     shouldUpdate,
-    existingProjectId
+    existingProjectId,
+    hasThumbnail: !!thumbnailDataUri
   });
 
-  // Step 1: 署名付きURL取得
+  // Step 1: 署名付きURL取得（データとサムネイル）
   const uploadUrlBody: any = { type: 'data' };
   if (shouldUpdate) uploadUrlBody.project_id = existingProjectId;
 
-  console.log('[uploadLargeProject] Step 1: Fetching signed URL with body:', uploadUrlBody);
+  console.log('[uploadLargeProject] Step 1: Fetching signed URLs...');
 
   const urlRes = await fetch(`${API_BASE}/projects-upload-url`, {
     method: 'POST',
@@ -211,7 +228,7 @@ async function uploadLargeProject({
 
   if (!urlRes.ok) {
     const errorText = await urlRes.text();
-    console.error('[uploadLargeProject] Step 1 failed:', {
+    console.error('[uploadLargeProject] Step 1 (data URL) failed:', {
       status: urlRes.status,
       statusText: urlRes.statusText,
       errorBody: errorText
@@ -220,25 +237,71 @@ async function uploadLargeProject({
   }
 
   const { upload_url, storage_path, project_id } = await urlRes.json();
-  console.log('[uploadLargeProject] Step 1 succeeded:', { storage_path, project_id });
+  console.log('[uploadLargeProject] Step 1 (data URL) succeeded:', { storage_path, project_id });
 
-  // Step 2: Storage に直接アップロード
-  console.log('[uploadLargeProject] Step 2: Uploading data to Storage...');
+  let thumbnailUploadUrl = null;
+  let thumbnailStoragePath = null;
 
-  const storageRes = await fetch(upload_url, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: dataString,
-  });
+  // サムネイルがある場合、サムネイル用の署名付きURLを取得
+  if (thumbnailDataUri) {
+    const thumbnailUrlBody: any = { type: 'thumbnail' };
+    if (shouldUpdate) thumbnailUrlBody.project_id = existingProjectId;
 
-  if (!storageRes.ok) {
-    const errorText = await storageRes.text();
-    console.error('[uploadLargeProject] Step 2 failed:', {
-      status: storageRes.status,
-      statusText: storageRes.statusText,
-      errorBody: errorText
+    const thumbUrlRes = await fetch(`${API_BASE}/projects-upload-url`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(thumbnailUrlBody),
     });
-    throw new Error(`Storageアップロード失敗: ${storageRes.status}`);
+
+    if (thumbUrlRes.ok) {
+      const thumbUrlData = await thumbUrlRes.json();
+      thumbnailUploadUrl = thumbUrlData.upload_url;
+      thumbnailStoragePath = thumbUrlData.storage_path;
+      console.log('[uploadLargeProject] Step 1 (thumbnail URL) succeeded:', { thumbnailStoragePath });
+    } else {
+      const errorText = await thumbUrlRes.text();
+      console.warn('[uploadLargeProject] Step 1 (thumbnail URL) failed, will continue without thumbnail:', {
+        status: thumbUrlRes.status,
+        statusText: thumbUrlRes.statusText,
+        errorBody: errorText
+      });
+    }
+  }
+
+  // Step 2: データとサムネイルをStorageにアップロード
+  const uploadPromises: Promise<Response>[] = [
+    fetch(upload_url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: dataString,
+    })
+  ];
+
+  if (thumbnailUploadUrl && thumbnailDataUri) {
+    uploadPromises.push(
+      fetch(thumbnailUploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'image/png' },
+        body: dataUriToBlob(thumbnailDataUri),
+      })
+    );
+  }
+
+  console.log('[uploadLargeProject] Step 2: Uploading data and thumbnail to Storage...');
+
+  const uploadResults = await Promise.all(uploadPromises);
+
+  for (let i = 0; i < uploadResults.length; i++) {
+    if (!uploadResults[i].ok) {
+      const errorText = await uploadResults[i].text();
+      const uploadType = i === 0 ? 'data' : 'thumbnail';
+      console.error(`[uploadLargeProject] Step 2 (${uploadType}) failed:`, {
+        status: uploadResults[i].status,
+        statusText: uploadResults[i].statusText,
+        errorBody: errorText
+      });
+      throw new Error(`${uploadType}アップロード失敗: ${uploadResults[i].status}`);
+    }
   }
 
   console.log('[uploadLargeProject] Step 2 succeeded');
@@ -249,7 +312,10 @@ async function uploadLargeProject({
   const metaBody: any = shouldUpdate
     ? { name, storage_uploaded: true }
     : { name, app_name: 'keplergl', storage_path, project_id, storage_uploaded: true };
-  if (thumbnailDataUri) metaBody.thumbnail = thumbnailDataUri;
+
+  if (thumbnailStoragePath) {
+    metaBody.thumbnail_path = thumbnailStoragePath;
+  }
 
   console.log('[uploadLargeProject] Step 3: Saving metadata...', {
     url: metaUrl,
