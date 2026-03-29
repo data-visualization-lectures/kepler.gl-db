@@ -47,7 +47,8 @@ import {
   toggleModal,
   loadFiles,
   startExportingImage,
-  cleanupExportImage
+  cleanupExportImage,
+  setExportImageSetting
 } from '@kepler.gl/actions';
 import { CLOUD_PROVIDERS } from './cloud-providers';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
@@ -462,6 +463,13 @@ const App = props => {
                 // サムネイル生成のため startExportingImage を dispatch
                 // → exportImageDataUri が更新されたら useEffect 内で保存処理を実行
                 pendingSaveRef.current = { name, projectData, isLarge };
+
+                // マップの実寸をセット（デフォルト 0×0 では透明・細長い画像になるため）
+                const mapContainer = document.querySelector('#root') as HTMLElement;
+                const mapW = mapContainer?.clientWidth || window.innerWidth;
+                const mapH = mapContainer?.clientHeight || (window.innerHeight - 96);
+                dispatch(setExportImageSetting({ mapW, mapH }));
+
                 dispatch(startExportingImage());
               },
               align: 'right'
