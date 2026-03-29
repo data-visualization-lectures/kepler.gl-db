@@ -513,8 +513,7 @@ const App = props => {
                 { type: 'application/json' }
               );
               dispatch(loadFiles([file]));
-              // Note: onProjectLoad receives only projectData, not metadata with ID
-              // URL update happens automatically via loadCloudMap when project_id is in URL
+              // URL update is handled by onLoadCloudMapSuccess in actions.js via loadParams.id
             },
             onProjectSave: (meta) => {
               if (meta?.id) {
@@ -638,29 +637,6 @@ const App = props => {
     window.addEventListener('kepler-notification', handler as EventListener);
     return () => {
       window.removeEventListener('kepler-notification', handler as EventListener);
-    };
-  }, []);
-
-  // Listen for tool-header custom events when project is loaded from modal
-  useEffect(() => {
-    const handleProjectLoaded = (e: CustomEvent) => {
-      const projectId = e.detail?.projectId || e.detail?.id;
-      if (projectId) {
-        currentProjectIdRef.current = projectId;
-        const url = new URL(window.location);
-        url.searchParams.set('project_id', projectId);
-        window.history.replaceState({}, '', url);
-        console.log('[App] Updated URL with project_id from tool-header event:', projectId);
-      }
-    };
-
-    // Try multiple event names that tool-header might emit
-    window.addEventListener('dataviz-project-loaded', handleProjectLoaded as EventListener);
-    window.addEventListener('project-loaded', handleProjectLoaded as EventListener);
-
-    return () => {
-      window.removeEventListener('dataviz-project-loaded', handleProjectLoaded as EventListener);
-      window.removeEventListener('project-loaded', handleProjectLoaded as EventListener);
     };
   }, []);
 

@@ -97,8 +97,16 @@ export function onExportFileSuccess({provider, options}) {
 
 export function onLoadCloudMapSuccess({provider, loadParams}) {
   return dispatch => {
-    // dataviz プロバイダーは ?project_id=xxx 形式のURLを使うため、React Router push は行わない
+    // dataviz プロバイダーは ?project_id=xxx 形式のURLを使う
     if (provider?.name === 'dataviz') {
+      const projectId = loadParams?.id;
+      if (projectId) {
+        // URL を ?project_id=xxx 形式で更新
+        const url = new URL(window.location);
+        url.searchParams.set('project_id', projectId);
+        window.history.replaceState({}, '', url);
+        console.log('[onLoadCloudMapSuccess] Updated URL with project_id:', projectId);
+      }
       return;
     }
     const mapUrl = provider?.getMapUrl(loadParams);
