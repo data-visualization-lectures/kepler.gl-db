@@ -388,7 +388,7 @@ const App = props => {
     }, 2000); // サムネイル生成に最大2秒待機
 
     return () => clearTimeout(timeout);
-  }, [dispatch]);
+  }, [dispatch, exportImageDataUri]);
 
   const prevQueryRef = useRef<number>(null);
 
