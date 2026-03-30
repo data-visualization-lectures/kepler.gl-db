@@ -400,7 +400,9 @@ const App = props => {
   const prevQueryRef = useRef<number>(null);
 
   const configureHeader = useCallback(() => {
+    console.log('[App] configureHeader called');
     const header = document.querySelector('dataviz-tool-header');
+    console.log('[App] header element:', header ? 'found' : 'NOT FOUND');
     if (header) {
       // Resolve logo path to absolute URL just in case
       // Ensure we resolve against the origin (root) to avoid issues when in sub-routes like /demo/map/
@@ -577,10 +579,16 @@ const App = props => {
   }, [dispatch]);
 
   useEffect(() => {
+    console.log('[App] Header setup useEffect running');
     if (customElements.get('dataviz-tool-header')) {
+      console.log('[App] dataviz-tool-header already defined');
       configureHeader();
     } else {
-      customElements.whenDefined('dataviz-tool-header').then(configureHeader);
+      console.log('[App] waiting for dataviz-tool-header...');
+      customElements.whenDefined('dataviz-tool-header').then(() => {
+        console.log('[App] dataviz-tool-header defined, calling configureHeader');
+        configureHeader();
+      });
     }
 
     // if we pass an id as part of the url
