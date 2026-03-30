@@ -234,6 +234,9 @@ export default class DatavizProvider extends Provider {
     }
 
     async downloadMap(loadParams) {
+        // Wait for Supabase client to be initialized (timing issue on fresh page load)
+        await this._waitForSupabase();
+
         let { id } = loadParams;
 
         // Update cache if valid ID provided

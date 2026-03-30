@@ -334,66 +334,61 @@ const App = props => {
     isLarge: boolean;
   } | null>(null);
 
-  // exportImageDataUri が更新されたとき、保留中の保存処理を実行
+  // exportImageDataUri が更新されたとき、または pendingSaveRef が設定されてから2秒後に保存処理を実行
+  // サムネイル生成に失敗しても保存を続行するため、タイマーで実行
   useEffect(() => {
-    if (!pendingSaveRef.current || !exportImageDataUri) return;
+    if (!pendingSaveRef.current) return;
 
-    const { name, projectData, isLarge } = pendingSaveRef.current;
-    pendingSaveRef.current = null;
+    const timeout = setTimeout(() => {
+      const pending = pendingSaveRef.current;
+      if (!pending) return;
 
-    const header = document.querySelector('dataviz-tool-header') as any;
+      const { name, projectData, isLarge } = pending;
+      pendingSaveRef.current = null;
 
-    // 使い終わったら ExportImage 状態をリセット
-    dispatch(cleanupExportImage());
+      const header = document.querySelector('dataviz-tool-header') as any;
 
-    if (isLarge) {
-      header?.showMessage?.('プロジェクトを保存しています...', 'info');
-      uploadLargeProject({
-        name,
-        projectData,
-        existingProjectId: currentProjectIdRef.current,
-        thumbnailDataUri: exportImageDataUri,
-      })
-        .then((meta) => {
-          currentProjectIdRef.current = meta.id;
-          // Update URL with project_id query parameter for permalink
-          const url = new URL(window.location);
-          url.searchParams.set('project_id', meta.id);
-          window.history.replaceState({}, '', url);
-          console.log('[App] Updated URL with project_id:', meta.id);
-          header?.showMessage?.('プロジェクトを保存しました', 'success');
-        })
-        .catch((err) => {
-          header?.showMessage?.(`保存に失敗しました: ${err.message}`, 'error');
-          console.error('[App] Error saving large project:', err);
-        });
-    } else {
-      console.log('[App] Attempting to call showSaveModal');
-      console.log('[App] header:', header);
-      console.log('[App] typeof header:', typeof header);
-      console.log('[App] header?.showSaveModal:', header?.showSaveModal);
-      console.log('[App] typeof header?.showSaveModal:', typeof header?.showSaveModal);
-      console.log('[App] currentProjectIdRef.current:', currentProjectIdRef.current);
+      // 使い終わったら ExportImage 状態をリセット
+      dispatch(cleanupExportImage());
 
-      if (typeof header?.showSaveModal === 'function') {
-        console.log('[App] Calling showSaveModal with:', {
+      if (isLarge) {
+        header?.showMessage?.('プロジェクトを保存しています...', 'info');
+        uploadLargeProject({
           name,
-          dataKeys: Object.keys(projectData || {}),
-          hasThumbnail: !!exportImageDataUri,
+          projectData,
           existingProjectId: currentProjectIdRef.current,
-        });
-        header.showSaveModal({
-          name,
-          data: projectData,
           thumbnailDataUri: exportImageDataUri,
-          existingProjectId: currentProjectIdRef.current,
-        });
-        console.log('[App] showSaveModal called successfully');
+        })
+          .then((meta) => {
+            currentProjectIdRef.current = meta.id;
+            // Update URL with project_id query parameter for permalink
+            const url = new URL(window.location);
+            url.pathname = '/';
+            url.searchParams.set('project_id', meta.id);
+            window.history.replaceState({}, '', url);
+            console.log('[App] Updated URL with project_id:', meta.id);
+            header?.showMessage?.('プロジェクトを保存しました', 'success');
+          })
+          .catch((err) => {
+            header?.showMessage?.(`保存に失敗しました: ${err.message}`, 'error');
+            console.error('[App] Error saving large project:', err);
+          });
       } else {
-        console.warn('[App] showSaveModal is not available');
+        if (typeof header?.showSaveModal === 'function') {
+          header.showSaveModal({
+            name,
+            data: projectData,
+            thumbnailDataUri: exportImageDataUri || null,
+            existingProjectId: currentProjectIdRef.current,
+          });
+        } else {
+          console.warn('[App] showSaveModal is not available');
+        }
       }
-    }
-  }, [exportImageDataUri, dispatch]);
+    }, 2000); // サムネイル生成に最大2秒待機
+
+    return () => clearTimeout(timeout);
+  }, [dispatch]);
 
   const prevQueryRef = useRef<number>(null);
 
@@ -593,32 +588,60 @@ const App = props => {
     }
 
     // Handle project_id query param (for Dataviz Cloud)
-    // Use window.location.search directly to ensure we catch it regardless of router props
+    // PROJECT_ID_FLOW.md 仕様: toolHeader.loadProject(id) を使う
     const searchParams = new URLSearchParams(window.location.search);
     const projectId = searchParams.get('project_id');
 
     if (projectId) {
-      const datavizProvider = CLOUD_PROVIDERS.find(c => c.name === 'dataviz');
-      if (datavizProvider) {
-        // Prevent constant reloading
-        // We use a different ref strategy for direct window check
-        const currentRef = { provider: 'dataviz', id: projectId };
-        if (isEqual(prevQueryRef.current, currentRef)) {
-          return;
-        }
-
-        currentProjectIdRef.current = projectId;
-
-        dispatch(
-          loadCloudMap({
-            loadParams: { id: projectId },
-            provider: datavizProvider,
-            onSuccess: onLoadCloudMapSuccess
-          })
-        );
-        prevQueryRef.current = currentRef;
+      const currentRef = { provider: 'dataviz', id: projectId };
+      if (isEqual(prevQueryRef.current, currentRef)) {
         return;
       }
+      prevQueryRef.current = currentRef;
+      currentProjectIdRef.current = projectId;
+
+      const doLoadProject = () => {
+        const header = document.querySelector('dataviz-tool-header') as any;
+        if (header && typeof header.loadProject === 'function') {
+          // PROJECT_ID_FLOW.md 仕様準拠: toolHeader.loadProject(id) でデータ取得
+          header.loadProject(projectId)
+            .then((projectData: any) => {
+              const file = new File(
+                [JSON.stringify(projectData)],
+                'project.json',
+                { type: 'application/json' }
+              );
+              dispatch(loadFiles([file]));
+              // URL を ?project_id=xxx で確定（パスは / のみ）
+              const url = new URL(window.location.href);
+              url.pathname = '/';
+              url.searchParams.set('project_id', projectId);
+              window.history.replaceState({}, '', url.toString());
+            })
+            .catch((err: any) => {
+              console.error('[App] Failed to load project:', err);
+            });
+        } else {
+          // フォールバック: datavizProvider で直接ロード
+          const datavizProvider = CLOUD_PROVIDERS.find(c => c.name === 'dataviz');
+          if (datavizProvider) {
+            dispatch(
+              loadCloudMap({
+                loadParams: { id: projectId },
+                provider: datavizProvider,
+                onSuccess: onLoadCloudMapSuccess
+              })
+            );
+          }
+        }
+      };
+
+      if (customElements.get('dataviz-tool-header')) {
+        doLoadProject();
+      } else {
+        customElements.whenDefined('dataviz-tool-header').then(doLoadProject);
+      }
+      return;
     }
 
     // Load sample using its id
