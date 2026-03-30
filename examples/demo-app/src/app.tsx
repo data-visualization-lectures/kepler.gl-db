@@ -400,7 +400,7 @@ const App = props => {
     return () => clearTimeout(timeout);
   }, [dispatch, exportImageDataUri]);
 
-  const prevQueryRef = useRef<number>(null);
+  const prevQueryRef = useRef<{ provider?: string; id?: string; query?: any } | null>(null);
 
   const configureHeader = useCallback(() => {
     console.log('[App] configureHeader called');
@@ -573,12 +573,10 @@ const App = props => {
               if (projectId) {
                 currentProjectIdRef.current = projectId;
                 console.log('[App] Stored currentProjectIdRef:', currentProjectIdRef.current);
-                // Update URL with project_id query parameter for permalink (path should be / only)
-                const url = new URL(window.location);
-                url.pathname = '/';  // Ensure path is just /
-                url.searchParams.set('project_id', projectId);
-                window.history.replaceState({}, '', url);
-                console.log('[App] Updated URL with project_id:', projectId);
+                // KEPLER_GL_API_MIGRATION.md に従って /projects/{projectId} パーマリンク形式で URL を更新
+                const permalink = `/projects/${projectId}`;
+                window.history.replaceState({ projectId }, projectId, permalink);
+                console.log('[App] Updated URL to permalink:', permalink);
               } else {
                 console.warn('[App] onProjectSave: projectId not found in meta', meta);
               }
@@ -638,10 +636,13 @@ const App = props => {
       return;
     }
 
-    // Handle project_id query param (for Dataviz Cloud)
-    // PROJECT_ID_FLOW.md 仕様: toolHeader.loadProject(id) を使う
-    const searchParams = new URLSearchParams(window.location.search);
-    const projectId = searchParams.get('project_id');
+    // Handle /projects/{projectId} path (KEPLER_GL_API_MIGRATION.md パーマリンク形式)
+    const pathMatch = window.location.pathname.match(/^\/projects\/([a-f0-9\-]+)$/);
+    let projectId: string | null = null;
+
+    if (pathMatch) {
+      projectId = pathMatch[1];
+    }
 
     if (projectId) {
       const currentRef = { provider: 'dataviz', id: projectId };
@@ -654,7 +655,8 @@ const App = props => {
       const doLoadProject = () => {
         const header = document.querySelector('dataviz-tool-header') as any;
         if (header && typeof header.loadProject === 'function') {
-          // PROJECT_ID_FLOW.md 仕様準拠: toolHeader.loadProject(id) でデータ取得
+          // KEPLER_GL_API_MIGRATION.md 仕様準拠: toolHeader.loadProject(id) でデータ取得
+          console.log('[App] Loading project with ID from URL path:', projectId);
           header.loadProject(projectId)
             .then((projectData: any) => {
               const file = new File(
@@ -663,11 +665,7 @@ const App = props => {
                 { type: 'application/json' }
               );
               dispatch(loadFiles([file]));
-              // URL を ?project_id=xxx で確定（パスは / のみ）
-              const url = new URL(window.location.href);
-              url.pathname = '/';
-              url.searchParams.set('project_id', projectId);
-              window.history.replaceState({}, '', url.toString());
+              console.log('[App] Project loaded from path:', projectId);
             })
             .catch((err: any) => {
               console.error('[App] Failed to load project:', err);
