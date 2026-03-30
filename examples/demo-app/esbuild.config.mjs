@@ -317,7 +317,7 @@ function openURL(url) {
           ...config.define,
           'process.env.NODE_ENV': '"production"'
         },
-        drop: ['console', 'debugger'],
+        // drop: ['console', 'debugger'],  // Temporarily disabled for debugging
         treeShaking: true,
         metafile: true,
         // Optionally generate a bundle analysis
