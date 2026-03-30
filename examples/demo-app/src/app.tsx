@@ -534,6 +534,7 @@ const App = props => {
           console.log('[App] Setting up project config with callbacks...');
           (header as any).setProjectConfig({
             appName: 'keplergl',
+            apiBaseUrl: 'https://api.dataviz.jp',  // 新APIを明示的に指定
             onProjectLoad: (projectData) => {
               console.log('[App] onProjectLoad callback called with projectData:', projectData);
 
