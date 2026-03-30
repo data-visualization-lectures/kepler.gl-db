@@ -651,36 +651,25 @@ const App = props => {
       prevQueryRef.current = currentRef;
       currentProjectIdRef.current = projectId;
 
-      const doLoadProject = () => {
-        const header = document.querySelector('dataviz-tool-header') as any;
-        if (header && typeof header.loadProject === 'function') {
-          // KEPLER_GL_API_MIGRATION.md 仕様準拠: toolHeader.loadProject(id) でデータ取得
-          console.log('[App] Loading project with ID from URL path:', projectId);
-          header.loadProject(projectId)
-            .then((projectData: any) => {
-              const file = new File(
-                [JSON.stringify(projectData)],
-                'project.json',
-                { type: 'application/json' }
-              );
-              dispatch(loadFiles([file]));
-              console.log('[App] Project loaded from path:', projectId);
-            })
-            .catch((err: any) => {
-              console.error('[App] Failed to load project:', err);
-            });
-        } else {
-          // フォールバック: datavizProvider で直接ロード
-          const datavizProvider = CLOUD_PROVIDERS.find(c => c.name === 'dataviz');
-          if (datavizProvider) {
-            dispatch(
-              loadCloudMap({
-                loadParams: { id: projectId },
-                provider: datavizProvider,
-                onSuccess: onLoadCloudMapSuccess
-              })
-            );
-          }
+      const doLoadProject = async () => {
+        const datavizProvider = CLOUD_PROVIDERS.find(c => c.name === 'dataviz') as any;
+        if (!datavizProvider) {
+          console.error('[App] dataviz provider not found');
+          return;
+        }
+        try {
+          console.log('[App] Loading project from path via downloadMap:', projectId);
+          const result = await datavizProvider.downloadMap({ id: projectId });
+          const projectData = result.map || result;
+          const file = new File(
+            [JSON.stringify(projectData)],
+            'project.json',
+            { type: 'application/json' }
+          );
+          dispatch(loadFiles([file]));
+          console.log('[App] Project restored from path:', projectId);
+        } catch (err: any) {
+          console.error('[App] Failed to load project from path:', err);
         }
       };
 
