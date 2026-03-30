@@ -47,3 +47,10 @@ examples/demo-app/dist/env-config.js
 .netlify
 meta.json
 .env
+tool-header-project-api.md
+QUICKSTART.md
+PROJECT_JSON_SCHEMA.md
+PROJECT_ID_FLOW.md
+LARGE_UPLOAD_PLAN.md
+KEPLER_GL_PERMALINK_TROUBLESHOOTING.md
+KEPLER_GL_API_MIGRATION.md

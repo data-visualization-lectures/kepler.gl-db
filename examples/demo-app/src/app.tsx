@@ -255,7 +255,7 @@ async function uploadLargeProject({
   const metaMethod = shouldUpdate ? 'PUT' : 'POST';
   const metaBody: any = shouldUpdate
     ? { name, storage_uploaded: true }
-    : { name, app_name: 'keplergl', storage_path, project_id, storage_uploaded: true };
+    : { name, app_name: 'kepler-gl', storage_path, project_id, storage_uploaded: true };
 
   // サムネイルをdata URIのままメタデータに含める
   if (thumbnailDataUri) {
@@ -560,7 +560,7 @@ const App = props => {
         if (typeof (header as any).setProjectConfig === 'function') {
           console.log('[App] Setting up project config with callbacks...');
           (header as any).setProjectConfig({
-            appName: 'keplergl',
+            appName: 'kepler-gl',
             apiBaseUrl: 'https://api.dataviz.jp',  // 新APIを明示的に指定
             onProjectLoad: (projectData) => {
               console.log('[App] onProjectLoad callback called with projectData:', projectData);

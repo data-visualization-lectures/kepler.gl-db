@@ -401,7 +401,7 @@ export default class DatavizProvider extends Provider {
         const { url, method } = this._getProjectEndpoint(shouldUpdate);
         const metadataBody = shouldUpdate
             ? { name, storage_uploaded: true }
-            : { name, app_name: 'keplergl', storage_path, project_id, storage_uploaded: true };
+            : { name, app_name: 'kepler-gl', storage_path, project_id, storage_uploaded: true };
 
         if (thumbnailDataURI) {
             metadataBody.thumbnail = thumbnailDataURI;
