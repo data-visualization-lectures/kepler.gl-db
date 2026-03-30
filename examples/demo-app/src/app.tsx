@@ -381,9 +381,36 @@ const App = props => {
             console.error('[App] Error saving large project:', err);
           });
       } else {
-        console.log('[App] Calling showSaveModal with:', { name, existingProjectId: currentProjectIdRef.current, hasThumbnail: !!exportImageDataUri });
-        console.log('[App] Data being sent via showSaveModal to tool-header:', projectData);
-        if (typeof header?.showSaveModal === 'function') {
+        console.log('[App] Calling saveProject (programmatic API) with:', { name, existingProjectId: currentProjectIdRef.current, hasThumbnail: !!exportImageDataUri });
+        console.log('[App] Data being sent to tool-header:', projectData);
+        if (typeof header?.saveProject === 'function') {
+          header.saveProject({
+            name,
+            data: projectData,
+            thumbnailDataUri: exportImageDataUri || null,
+            existingProjectId: currentProjectIdRef.current,
+          })
+            .then((meta: any) => {
+              console.log('[App] saveProject success, meta:', meta);
+              const projectId = meta?.id;
+              if (projectId) {
+                currentProjectIdRef.current = projectId;
+                const url = new URL(window.location);
+                url.pathname = '/';
+                url.searchParams.set('project_id', projectId);
+                window.history.replaceState({}, '', url);
+                console.log('[App] Updated URL with project_id:', projectId);
+                header?.showMessage?.('プロジェクトを保存しました', 'success');
+              } else {
+                console.warn('[App] saveProject returned meta without id:', meta);
+              }
+            })
+            .catch((error: Error) => {
+              console.error('[App] saveProject error:', error);
+              header?.showMessage?.(`保存に失敗しました: ${error.message}`, 'error');
+            });
+        } else if (typeof header?.showSaveModal === 'function') {
+          console.log('[App] saveProject not available, falling back to showSaveModal');
           header.showSaveModal({
             name,
             data: projectData,
@@ -391,7 +418,7 @@ const App = props => {
             existingProjectId: currentProjectIdRef.current,
           });
         } else {
-          console.warn('[App] showSaveModal is not available on header');
+          console.warn('[App] Neither saveProject nor showSaveModal is available on header');
           console.log('[App] Available header methods:', Object.getOwnPropertyNames(header || {}));
         }
       }
