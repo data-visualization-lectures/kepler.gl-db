@@ -339,11 +339,14 @@ const App = props => {
   useEffect(() => {
     if (!pendingSaveRef.current) return;
 
+    console.log('[App] saveEffect triggered, exportImageDataUri:', exportImageDataUri ? 'set' : 'not set');
+
     const timeout = setTimeout(() => {
       const pending = pendingSaveRef.current;
       if (!pending) return;
 
       const { name, projectData, isLarge } = pending;
+      console.log('[App] Processing pending save: name=', name, 'isLarge=', isLarge, 'existingProjectId=', currentProjectIdRef.current);
       pendingSaveRef.current = null;
 
       const header = document.querySelector('dataviz-tool-header') as any;
@@ -352,6 +355,7 @@ const App = props => {
       dispatch(cleanupExportImage());
 
       if (isLarge) {
+        console.log('[App] Calling uploadLargeProject with:', { name, isLarge, existingProjectId: currentProjectIdRef.current });
         header?.showMessage?.('プロジェクトを保存しています...', 'info');
         uploadLargeProject({
           name,
@@ -360,6 +364,7 @@ const App = props => {
           thumbnailDataUri: exportImageDataUri,
         })
           .then((meta) => {
+            console.log('[App] uploadLargeProject success, meta:', meta);
             currentProjectIdRef.current = meta.id;
             // Update URL with project_id query parameter for permalink
             const url = new URL(window.location);
@@ -374,6 +379,7 @@ const App = props => {
             console.error('[App] Error saving large project:', err);
           });
       } else {
+        console.log('[App] Calling showSaveModal with:', { name, existingProjectId: currentProjectIdRef.current, hasThumbnail: !!exportImageDataUri });
         if (typeof header?.showSaveModal === 'function') {
           header.showSaveModal({
             name,
@@ -382,7 +388,8 @@ const App = props => {
             existingProjectId: currentProjectIdRef.current,
           });
         } else {
-          console.warn('[App] showSaveModal is not available');
+          console.warn('[App] showSaveModal is not available on header');
+          console.log('[App] Available header methods:', Object.getOwnPropertyNames(header || {}));
         }
       }
     }, 2000); // サムネイル生成に最大2秒待機
@@ -515,9 +522,11 @@ const App = props => {
 
         // Set up project management with new API
         if (typeof (header as any).setProjectConfig === 'function') {
+          console.log('[App] Setting up project config with callbacks...');
           (header as any).setProjectConfig({
             appName: 'keplergl',
             onProjectLoad: (projectData) => {
+              console.log('[App] onProjectLoad callback called');
               const file = new File(
                 [JSON.stringify(projectData)],
                 'project.json',
@@ -527,7 +536,7 @@ const App = props => {
               // URL update is handled by onLoadCloudMapSuccess in actions.js via loadParams.id
             },
             onProjectSave: (meta) => {
-              console.log('[App] onProjectSave called with meta:', meta);
+              console.log('[App] onProjectSave CALLBACK TRIGGERED with meta:', meta);
               if (meta?.id) {
                 currentProjectIdRef.current = meta.id;
                 console.log('[App] Stored currentProjectIdRef:', currentProjectIdRef.current);
@@ -542,6 +551,9 @@ const App = props => {
               }
             }
           });
+          console.log('[App] Project config set successfully');
+        } else {
+          console.warn('[App] setProjectConfig method not found on header');
         }
       } else {
         // Fallback if setConfig is missing (unexpected)
