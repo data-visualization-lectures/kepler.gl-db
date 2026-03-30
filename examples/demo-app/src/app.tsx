@@ -635,7 +635,58 @@ const App = props => {
       return;
     }
 
-    // Handle /projects/{projectId} path (KEPLER_GL_API_MIGRATION.md パーマリンク形式)
+    // ?project_id=xxx クエリパラメータによるパーマリンク処理
+    const queryProjectId = query.project_id;
+    if (queryProjectId) {
+      const currentRef = { provider: 'dataviz', id: queryProjectId };
+      if (isEqual(prevQueryRef.current, currentRef)) {
+        return;
+      }
+      prevQueryRef.current = currentRef;
+      currentProjectIdRef.current = queryProjectId;
+
+      const doLoadByQueryParam = async () => {
+        const header = document.querySelector('dataviz-tool-header') as any;
+        try {
+          if (header && typeof header.loadProject === 'function') {
+            console.log('[App] Loading project via toolHeader.loadProject:', queryProjectId);
+            const projectData = await header.loadProject(queryProjectId);
+            const file = new File(
+              [JSON.stringify(projectData)],
+              'project.json',
+              { type: 'application/json' }
+            );
+            dispatch(loadFiles([file]));
+            console.log('[App] Project restored via toolHeader.loadProject:', queryProjectId);
+          } else {
+            console.log('[App] loadProject not available, falling back to downloadMap:', queryProjectId);
+            const datavizProvider = CLOUD_PROVIDERS.find(c => c.name === 'dataviz') as any;
+            if (datavizProvider) {
+              const result = await datavizProvider.downloadMap({ id: queryProjectId });
+              const projectData = result.map || result;
+              const file = new File(
+                [JSON.stringify(projectData)],
+                'project.json',
+                { type: 'application/json' }
+              );
+              dispatch(loadFiles([file]));
+              console.log('[App] Project restored via downloadMap:', queryProjectId);
+            }
+          }
+        } catch (err: any) {
+          console.error('[App] Failed to load project from query param:', err);
+        }
+      };
+
+      if (customElements.get('dataviz-tool-header')) {
+        doLoadByQueryParam();
+      } else {
+        customElements.whenDefined('dataviz-tool-header').then(doLoadByQueryParam);
+      }
+      return;
+    }
+
+    // Handle /projects/{projectId} path形式のパーマリンク
     const pathMatch = window.location.pathname.match(/^\/projects\/([a-f0-9\-]+)$/);
     let projectId: string | null = null;
 
@@ -652,22 +703,32 @@ const App = props => {
       currentProjectIdRef.current = projectId;
 
       const doLoadProject = async () => {
-        const datavizProvider = CLOUD_PROVIDERS.find(c => c.name === 'dataviz') as any;
-        if (!datavizProvider) {
-          console.error('[App] dataviz provider not found');
-          return;
-        }
+        const header = document.querySelector('dataviz-tool-header') as any;
         try {
-          console.log('[App] Loading project from path via downloadMap:', projectId);
-          const result = await datavizProvider.downloadMap({ id: projectId });
-          const projectData = result.map || result;
-          const file = new File(
-            [JSON.stringify(projectData)],
-            'project.json',
-            { type: 'application/json' }
-          );
-          dispatch(loadFiles([file]));
-          console.log('[App] Project restored from path:', projectId);
+          if (header && typeof header.loadProject === 'function') {
+            console.log('[App] Loading project via toolHeader.loadProject (path):', projectId);
+            const projectData = await header.loadProject(projectId);
+            const file = new File(
+              [JSON.stringify(projectData)],
+              'project.json',
+              { type: 'application/json' }
+            );
+            dispatch(loadFiles([file]));
+            console.log('[App] Project restored via toolHeader.loadProject (path):', projectId);
+          } else {
+            const datavizProvider = CLOUD_PROVIDERS.find(c => c.name === 'dataviz') as any;
+            if (datavizProvider) {
+              const result = await datavizProvider.downloadMap({ id: projectId });
+              const projectData = result.map || result;
+              const file = new File(
+                [JSON.stringify(projectData)],
+                'project.json',
+                { type: 'application/json' }
+              );
+              dispatch(loadFiles([file]));
+              console.log('[App] Project restored via downloadMap (path):', projectId);
+            }
+          }
         } catch (err: any) {
           console.error('[App] Failed to load project from path:', err);
         }
