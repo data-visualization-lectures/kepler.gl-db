@@ -421,7 +421,7 @@ const App = props => {
           logo: {
             type: 'image',
             src: logoUrl,
-            href: '/'
+            href: 'https://kepler-gl.dataviz.jp/'
           },
           buttons: [
             {
@@ -592,7 +592,7 @@ const App = props => {
           logo: {
             type: 'image',
             src: logoUrl,
-            href: '/'
+            href: 'https://kepler-gl.dataviz.jp/'
           },
           buttons: []
         };
