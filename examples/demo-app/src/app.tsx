@@ -540,14 +540,19 @@ const App = props => {
               );
               dispatch(loadFiles([file]));
 
-              // Update URL with project_id if available in projectData
-              if (projectData?.id) {
-                currentProjectIdRef.current = projectData.id;
-                const url = new URL(window.location);
-                url.pathname = '/';
-                url.searchParams.set('project_id', projectData.id);
-                window.history.replaceState({}, '', url);
-                console.log('[App] Updated URL with project_id from onProjectLoad:', projectData.id);
+              // Get project_id from DatavizProvider's cached value (set during downloadMap)
+              const datavizProvider = CLOUD_PROVIDERS.find(c => c.name === 'dataviz');
+              if (datavizProvider && typeof datavizProvider.getCurrentProjectId === 'function') {
+                const projectId = datavizProvider.getCurrentProjectId();
+                console.log('[App] Got projectId from DatavizProvider:', projectId);
+                if (projectId) {
+                  currentProjectIdRef.current = projectId;
+                  const url = new URL(window.location);
+                  url.pathname = '/';
+                  url.searchParams.set('project_id', projectId);
+                  window.history.replaceState({}, '', url);
+                  console.log('[App] Updated URL with project_id from onProjectLoad:', projectId);
+                }
               }
             },
             onProjectSave: (meta) => {

@@ -101,6 +101,14 @@ export default class DatavizProvider extends Provider {
         console.log('[DatavizProvider] Cleared project cache');
     }
 
+    /**
+     * Get the currently cached project ID
+     */
+    getCurrentProjectId() {
+        console.log('[DatavizProvider] getCurrentProjectId returning:', cachedProjectId);
+        return cachedProjectId;
+    }
+
 
     async getAccessToken() {
         if (Window.datavizSupabase?.auth?.getSession) {
