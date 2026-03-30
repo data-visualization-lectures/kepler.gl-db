@@ -180,7 +180,7 @@ export default class DatavizProvider extends Provider {
         }
 
         try {
-            const response = await fetch(`${getApiUrl()}/projects?app=keplergl`, {
+            const response = await fetch(`${getApiUrl()}/projects?app=kepler-gl`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
