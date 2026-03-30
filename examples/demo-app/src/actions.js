@@ -97,9 +97,11 @@ export function onExportFileSuccess({provider, options}) {
 
 export function onLoadCloudMapSuccess({provider, loadParams}) {
   return dispatch => {
+    console.log('[onLoadCloudMapSuccess] Called with provider:', provider?.name, 'loadParams:', loadParams);
     // dataviz プロバイダーは ?project_id=xxx 形式のURLを使う
     if (provider?.name === 'dataviz') {
       const projectId = loadParams?.id;
+      console.log('[onLoadCloudMapSuccess] dataviz provider, projectId:', projectId);
       if (projectId) {
         // URL を ?project_id=xxx 形式で更新（パスは/ のままに保つ）
         const url = new URL(window.location);
