@@ -458,6 +458,7 @@ const App = props => {
               id: 'save-project-btn',
               label: 'プロジェクトの保存',
               action: () => {
+                console.log('[App] Save button clicked');
                 // Serialize current kepler.gl state
                 const projectData = keplerMapStateRef.current
                   ? KeplerGlSchema.save(keplerMapStateRef.current)
@@ -476,6 +477,7 @@ const App = props => {
                 const dataSize = new Blob([JSON.stringify(projectData)]).size;
                 const LARGE_THRESHOLD = 4.5 * 1024 * 1024; // 4.5MB
                 const isLarge = dataSize >= LARGE_THRESHOLD;
+                console.log('[App] Save button action: dataSize=', dataSize, 'isLarge=', isLarge);
 
                 if (isLarge) {
                   const confirmedName = prompt('プロジェクト名を入力してください:', name);
@@ -485,6 +487,7 @@ const App = props => {
 
                 // サムネイル生成のため startExportingImage を dispatch
                 // → exportImageDataUri が更新されたら useEffect 内で保存処理を実行
+                console.log('[App] Setting pendingSaveRef and dispatching startExportingImage');
                 pendingSaveRef.current = { name, projectData, isLarge };
 
                 // マップの実寸をセット（デフォルト 0×0 では透明・細長い画像になるため）
@@ -494,6 +497,7 @@ const App = props => {
                 dispatch(setExportImageSetting({ mapW, mapH }));
 
                 dispatch(startExportingImage());
+                console.log('[App] startExportingImage dispatched');
               },
               align: 'right'
             },
