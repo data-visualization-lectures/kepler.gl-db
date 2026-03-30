@@ -532,14 +532,23 @@ const App = props => {
           (header as any).setProjectConfig({
             appName: 'keplergl',
             onProjectLoad: (projectData) => {
-              console.log('[App] onProjectLoad callback called');
+              console.log('[App] onProjectLoad callback called with projectData:', projectData);
               const file = new File(
                 [JSON.stringify(projectData)],
                 'project.json',
                 { type: 'application/json' }
               );
               dispatch(loadFiles([file]));
-              // URL update is handled by onLoadCloudMapSuccess in actions.js via loadParams.id
+
+              // Update URL with project_id if available in projectData
+              if (projectData?.id) {
+                currentProjectIdRef.current = projectData.id;
+                const url = new URL(window.location);
+                url.pathname = '/';
+                url.searchParams.set('project_id', projectData.id);
+                window.history.replaceState({}, '', url);
+                console.log('[App] Updated URL with project_id from onProjectLoad:', projectData.id);
+              }
             },
             onProjectSave: (meta) => {
               console.log('[App] onProjectSave CALLBACK TRIGGERED with meta:', meta);
