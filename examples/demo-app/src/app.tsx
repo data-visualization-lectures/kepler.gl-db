@@ -201,6 +201,8 @@ async function uploadLargeProject({
     existingProjectId,
     hasThumbnail: !!thumbnailDataUri
   });
+  console.log('[uploadLargeProject] Data being sent to Supabase:', projectData);
+  console.log('[uploadLargeProject] Stringified data:', dataString);
 
   // Step 1: 署名付きURL取得
   const uploadUrlBody: any = { type: 'data' };
@@ -380,6 +382,7 @@ const App = props => {
           });
       } else {
         console.log('[App] Calling showSaveModal with:', { name, existingProjectId: currentProjectIdRef.current, hasThumbnail: !!exportImageDataUri });
+        console.log('[App] Data being sent via showSaveModal to tool-header:', projectData);
         if (typeof header?.showSaveModal === 'function') {
           header.showSaveModal({
             name,
