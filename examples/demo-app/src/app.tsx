@@ -536,28 +536,9 @@ const App = props => {
             appName: 'keplergl',
             onProjectLoad: (projectData) => {
               console.log('[App] onProjectLoad callback called with projectData:', projectData);
-
-              // Log what's available on the header element
-              const header = document.querySelector('dataviz-tool-header');
-              if (header) {
-                console.log('[App] Header element keys:', Object.keys(header).slice(0, 50)); // First 50 keys
-                console.log('[App] Header._currentProjectId:', (header as any)._currentProjectId);
-                console.log('[App] Header.currentProjectId:', (header as any).currentProjectId);
-                console.log('[App] Header.projectId:', (header as any).projectId);
-                console.log('[App] Header.getProjectId:', typeof (header as any).getProjectId);
-                console.log('[App] Header.getCurrentProjectId:', typeof (header as any).getCurrentProjectId);
-              }
-
-              // Check window object
-              console.log('[App] window.dataviz:', (window as any).dataviz);
-              console.log('[App] window.datavizCurrentProjectId:', (window as any).datavizCurrentProjectId);
-
-              // Check localStorage and sessionStorage
-              const localStorageKeys = Object.keys(localStorage).filter(k => k.includes('project') || k.includes('dataviz'));
-              console.log('[App] localStorage keys with project/dataviz:', localStorageKeys);
-              localStorageKeys.forEach(key => {
-                console.log(`[App] localStorage["${key}"] =`, localStorage.getItem(key));
-              });
+              console.log('[App] projectData keys:', Object.keys(projectData || {}));
+              console.log('[App] projectData.info:', projectData?.info);
+              console.log('[App] Full projectData JSON:', JSON.stringify(projectData, null, 2).substring(0, 500));
 
               const file = new File(
                 [JSON.stringify(projectData)],
@@ -566,19 +547,20 @@ const App = props => {
               );
               dispatch(loadFiles([file]));
 
-              // Get project_id from DatavizProvider's cached value (set during downloadMap)
-              const datavizProvider = CLOUD_PROVIDERS.find(c => c.name === 'dataviz');
-              if (datavizProvider && typeof datavizProvider.getCurrentProjectId === 'function') {
-                const projectId = datavizProvider.getCurrentProjectId();
-                console.log('[App] Got projectId from DatavizProvider:', projectId);
-                if (projectId) {
-                  currentProjectIdRef.current = projectId;
-                  const url = new URL(window.location);
-                  url.pathname = '/';
-                  url.searchParams.set('project_id', projectId);
-                  window.history.replaceState({}, '', url);
-                  console.log('[App] Updated URL with project_id from onProjectLoad:', projectId);
-                }
+              // モーダルから読込された時の project_id 取得
+              // projectData.info に project_id が含まれているか確認
+              const projectId = projectData?.info?.project_id;
+              console.log('[App] Extracted projectId from projectData.info:', projectId);
+
+              if (projectId) {
+                currentProjectIdRef.current = projectId;
+                const url = new URL(window.location);
+                url.pathname = '/';
+                url.searchParams.set('project_id', projectId);
+                window.history.replaceState({}, '', url);
+                console.log('[App] Updated URL with project_id from onProjectLoad:', projectId);
+              } else {
+                console.warn('[App] onProjectLoad: projectId not found in projectData.info');
               }
             },
             onProjectSave: (meta) => {
