@@ -583,17 +583,23 @@ const App = props => {
             },
             onProjectSave: (meta) => {
               console.log('[App] onProjectSave CALLBACK TRIGGERED with meta:', meta);
-              if (meta?.id) {
-                currentProjectIdRef.current = meta.id;
+              // tool-header は {project: {...}} で返す可能性があるため、project を抽出
+              const projectMeta = meta?.project || meta;
+              const projectId = projectMeta?.id;
+              console.log('[App] Extracted projectMeta:', projectMeta);
+              console.log('[App] Extracted projectId:', projectId);
+
+              if (projectId) {
+                currentProjectIdRef.current = projectId;
                 console.log('[App] Stored currentProjectIdRef:', currentProjectIdRef.current);
                 // Update URL with project_id query parameter for permalink (path should be / only)
                 const url = new URL(window.location);
                 url.pathname = '/';  // Ensure path is just /
-                url.searchParams.set('project_id', meta.id);
+                url.searchParams.set('project_id', projectId);
                 window.history.replaceState({}, '', url);
-                console.log('[App] Updated URL with project_id:', meta.id);
+                console.log('[App] Updated URL with project_id:', projectId);
               } else {
-                console.warn('[App] onProjectSave: meta.id is missing', meta);
+                console.warn('[App] onProjectSave: projectId not found in meta', meta);
               }
             }
           });
