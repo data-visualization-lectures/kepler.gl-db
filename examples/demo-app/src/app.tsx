@@ -469,9 +469,19 @@ const App = props => {
                   ? KeplerGlSchema.save(keplerMapStateRef.current)
                   : {};
 
-                // Get project name from map info or generate default
+                // Get project name from map info, dataset filename, or generate default
                 const currentMapInfo = mapInfoRef.current;
                 let name = currentMapInfo?.title;
+                if (!name) {
+                  const datasets = keplerMapStateRef.current?.visState?.datasets;
+                  if (datasets) {
+                    const firstDataset = Object.values(datasets)[0] as any;
+                    const label = firstDataset?.label;
+                    if (label) {
+                      name = label.replace(/\.[^.]+$/, ''); // 拡張子を除去
+                    }
+                  }
+                }
                 if (!name) {
                   const now = new Date();
                   const pad = (n: number) => String(n).padStart(2, '0');
