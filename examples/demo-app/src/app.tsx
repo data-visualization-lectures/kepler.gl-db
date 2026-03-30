@@ -536,9 +536,6 @@ const App = props => {
             appName: 'keplergl',
             onProjectLoad: (projectData) => {
               console.log('[App] onProjectLoad callback called with projectData:', projectData);
-              console.log('[App] projectData keys:', Object.keys(projectData || {}));
-              console.log('[App] projectData.info:', projectData?.info);
-              console.log('[App] Full projectData JSON:', JSON.stringify(projectData, null, 2).substring(0, 500));
 
               const file = new File(
                 [JSON.stringify(projectData)],
@@ -548,9 +545,10 @@ const App = props => {
               dispatch(loadFiles([file]));
 
               // モーダルから読込された時の project_id 取得
-              // projectData.info に project_id が含まれているか確認
-              const projectId = projectData?.info?.project_id;
-              console.log('[App] Extracted projectId from projectData.info:', projectId);
+              // tool-header は _currentSelectedProjectId に project_id を保存している
+              const header = document.querySelector('dataviz-tool-header') as any;
+              const projectId = header?._currentSelectedProjectId;
+              console.log('[App] Got projectId from header._currentSelectedProjectId:', projectId);
 
               if (projectId) {
                 currentProjectIdRef.current = projectId;
@@ -560,7 +558,7 @@ const App = props => {
                 window.history.replaceState({}, '', url);
                 console.log('[App] Updated URL with project_id from onProjectLoad:', projectId);
               } else {
-                console.warn('[App] onProjectLoad: projectId not found in projectData.info');
+                console.warn('[App] onProjectLoad: projectId not found in header._currentSelectedProjectId');
               }
             },
             onProjectSave: (meta) => {
