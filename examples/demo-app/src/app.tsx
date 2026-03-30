@@ -533,6 +533,29 @@ const App = props => {
             appName: 'keplergl',
             onProjectLoad: (projectData) => {
               console.log('[App] onProjectLoad callback called with projectData:', projectData);
+
+              // Log what's available on the header element
+              const header = document.querySelector('dataviz-tool-header');
+              if (header) {
+                console.log('[App] Header element keys:', Object.keys(header).slice(0, 50)); // First 50 keys
+                console.log('[App] Header._currentProjectId:', (header as any)._currentProjectId);
+                console.log('[App] Header.currentProjectId:', (header as any).currentProjectId);
+                console.log('[App] Header.projectId:', (header as any).projectId);
+                console.log('[App] Header.getProjectId:', typeof (header as any).getProjectId);
+                console.log('[App] Header.getCurrentProjectId:', typeof (header as any).getCurrentProjectId);
+              }
+
+              // Check window object
+              console.log('[App] window.dataviz:', (window as any).dataviz);
+              console.log('[App] window.datavizCurrentProjectId:', (window as any).datavizCurrentProjectId);
+
+              // Check localStorage and sessionStorage
+              const localStorageKeys = Object.keys(localStorage).filter(k => k.includes('project') || k.includes('dataviz'));
+              console.log('[App] localStorage keys with project/dataviz:', localStorageKeys);
+              localStorageKeys.forEach(key => {
+                console.log(`[App] localStorage["${key}"] =`, localStorage.getItem(key));
+              });
+
               const file = new File(
                 [JSON.stringify(projectData)],
                 'project.json',
