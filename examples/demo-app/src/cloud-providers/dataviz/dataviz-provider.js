@@ -466,6 +466,6 @@ export default class DatavizProvider extends Provider {
     }
 
     getManagementUrl() {
-        return 'https://auth.dataviz.jp/';
+        return 'https://app.dataviz.jp/';
     }
 }

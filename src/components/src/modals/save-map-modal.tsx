@@ -202,7 +202,7 @@ function SaveMapModalFactory() {
                     <div className="selection">
                       <a
                         key={1}
-                        href="https://auth.dataviz.jp/?tool=kepler-gl"
+                        href="https://app.dataviz.jp/?tool=kepler-gl"
                         target="_blank"
                         rel="noopener noreferrer"
                         style={PROVIDER_MANAGER_URL_STYLE}
