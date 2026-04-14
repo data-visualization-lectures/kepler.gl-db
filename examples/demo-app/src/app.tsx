@@ -757,10 +757,16 @@ const App = props => {
       dispatch(loadSampleConfigurations(id));
     }
 
-    // Load map using a custom
-    if (query.mapUrl) {
+    // Load map using a custom URL.
+    // Priority keeps existing behavior: mapUrl > data_url > dataUrl.
+    const incomingDataUrl =
+      (typeof query.mapUrl === 'string' && query.mapUrl) ||
+      (typeof query.data_url === 'string' && query.data_url) ||
+      (typeof query.dataUrl === 'string' && query.dataUrl) ||
+      null;
+    if (incomingDataUrl) {
       // TODO?: validate map url
-      dispatch(loadRemoteMap({ dataUrl: query.mapUrl }));
+      dispatch(loadRemoteMap({dataUrl: incomingDataUrl}));
     }
 
     if (duckDbPluginEnabled && query.sql) {
