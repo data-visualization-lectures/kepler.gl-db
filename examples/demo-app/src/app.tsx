@@ -478,8 +478,10 @@ const App = props => {
 
     // project_id 読込ロジック（互換維持: query優先 → path）
     const queryProjectId = typeof query.project_id === 'string' ? query.project_id : null;
-    const pathMatch = window.location.pathname.match(/^\/projects\/([a-f0-9\-]+)$/);
-    const pathProjectId = pathMatch ? pathMatch[1] : null;
+    const routeProjectId =
+      typeof id === 'string' && window.location.pathname.startsWith('/projects/') ? id : null;
+    const pathMatch = window.location.pathname.match(/^\/projects\/([^/]+)\/?$/);
+    const pathProjectId = routeProjectId || (pathMatch ? decodeURIComponent(pathMatch[1]) : null);
     const targetProjectId = queryProjectId || pathProjectId;
     const sourceLabel = queryProjectId ? 'query param' : 'path';
 
