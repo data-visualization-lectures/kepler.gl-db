@@ -38,6 +38,13 @@ import {
   onExportFileSuccess,
   onLoadCloudMapSuccess
 } from './actions';
+import {
+  DATAVIZ_PROVIDER_NAME,
+  buildProjectName,
+  getToolHeader,
+  loadProjectById,
+  resolveProjectLoadTarget
+} from './utils/project-flow';
 
 import {
   loadCloudMap,
@@ -218,7 +225,7 @@ const App = props => {
       console.log('[App] Processing pending save: name=', name, 'existingProjectId=', currentProjectIdRef.current);
       pendingSaveRef.current = null;
 
-      const header = document.querySelector('dataviz-tool-header') as any;
+      const header = getToolHeader();
 
       // 使い終わったら ExportImage 状態をリセット
       dispatch(cleanupExportImage());
@@ -310,24 +317,7 @@ const App = props => {
                   ? KeplerGlSchema.save(keplerMapStateRef.current)
                   : {};
 
-                // Get project name from map info, dataset filename, or generate default
-                const currentMapInfo = mapInfoRef.current;
-                let name = currentMapInfo?.title;
-                if (!name) {
-                  const datasets = keplerMapStateRef.current?.visState?.datasets;
-                  if (datasets) {
-                    const firstDataset = Object.values(datasets)[0] as any;
-                    const label = firstDataset?.label;
-                    if (label) {
-                      name = label.replace(/\.[^.]+$/, ''); // 拡張子を除去
-                    }
-                  }
-                }
-                if (!name) {
-                  const now = new Date();
-                  const pad = (n: number) => String(n).padStart(2, '0');
-                  name = `Dataviz_Project_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}:${pad(now.getMinutes())}`;
-                }
+                const name = buildProjectName(mapInfoRef.current, keplerMapStateRef.current);
 
                 // サムネイル生成のため startExportingImage を dispatch
                 // → exportImageDataUri が更新されたら useEffect 内で保存処理を実行
@@ -349,7 +339,7 @@ const App = props => {
               id: 'load-project-btn',
               label: 'プロジェクトの読込',
               action: () => {
-                const header = document.querySelector('dataviz-tool-header');
+                const header = getToolHeader();
                 if (header && typeof (header as any).showLoadModal === 'function') {
                   (header as any).showLoadModal();
                 }
@@ -388,7 +378,7 @@ const App = props => {
 
               // モーダルから読込された時の project_id 取得
               // tool-header は _currentSelectedProjectId に project_id を保存している
-              const header = document.querySelector('dataviz-tool-header') as any;
+              const header = getToolHeader();
               const projectId = header?._currentSelectedProjectId;
               console.log('[App] Got projectId from header._currentSelectedProjectId:', projectId);
 
@@ -476,17 +466,14 @@ const App = props => {
       return;
     }
 
-    // project_id 読込ロジック（互換維持: query優先 → path）
-    const queryProjectId = typeof query.project_id === 'string' ? query.project_id : null;
-    const routeProjectId =
-      typeof id === 'string' && window.location.pathname.startsWith('/projects/') ? id : null;
-    const pathMatch = window.location.pathname.match(/^\/projects\/([^/]+)\/?$/);
-    const pathProjectId = routeProjectId || (pathMatch ? decodeURIComponent(pathMatch[1]) : null);
-    const targetProjectId = queryProjectId || pathProjectId;
-    const sourceLabel = queryProjectId ? 'query param' : 'path';
+    const { targetProjectId, sourceLabel } = resolveProjectLoadTarget({
+      query,
+      pathname: window.location.pathname,
+      routeId: id
+    });
 
     if (targetProjectId) {
-      const currentRef = { provider: 'dataviz', id: targetProjectId };
+      const currentRef = { provider: DATAVIZ_PROVIDER_NAME, id: targetProjectId };
       if (isEqual(prevQueryRef.current, currentRef)) {
         return;
       }
@@ -494,32 +481,13 @@ const App = props => {
       currentProjectIdRef.current = targetProjectId;
 
       const doLoadProjectById = async () => {
-        const header = document.querySelector('dataviz-tool-header') as any;
         try {
-          let projectData: any = null;
-
-          if (header && typeof header.loadProject === 'function') {
-            console.log(`[App] Loading project via toolHeader.loadProject (${sourceLabel}):`, targetProjectId);
-            projectData = await header.loadProject(targetProjectId);
-            console.log(`[App] Project restored via toolHeader.loadProject (${sourceLabel}):`, targetProjectId);
-          } else {
-            console.log(`[App] loadProject not available, falling back to downloadMap (${sourceLabel}):`, targetProjectId);
-            const datavizProvider = CLOUD_PROVIDERS.find(c => c.name === 'dataviz') as any;
-            if (datavizProvider) {
-              const result = await datavizProvider.downloadMap({ id: targetProjectId });
-              projectData = result.map || result;
-              console.log(`[App] Project restored via downloadMap (${sourceLabel}):`, targetProjectId);
-            }
-          }
-
-          if (projectData) {
-            const file = new File(
-              [JSON.stringify(projectData)],
-              'project.json',
-              { type: 'application/json' }
-            );
-            dispatch(loadFiles([file]));
-          }
+          await loadProjectById({
+            projectId: targetProjectId,
+            sourceLabel,
+            dispatch,
+            cloudProviders: CLOUD_PROVIDERS
+          });
         } catch (err: any) {
           console.error(`[App] Failed to load project from ${sourceLabel}:`, err);
         }
