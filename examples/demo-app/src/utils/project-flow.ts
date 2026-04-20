@@ -74,7 +74,7 @@ export async function loadProjectById({
     const datavizProvider = cloudProviders.find(c => c.name === DATAVIZ_PROVIDER_NAME) as any;
     if (datavizProvider) {
       const result = await datavizProvider.downloadMap({ id: projectId });
-      projectData = result.map || result;
+      projectData = result.map;
       console.log(`[App] Project restored via downloadMap (${sourceLabel}):`, projectId);
     }
   }

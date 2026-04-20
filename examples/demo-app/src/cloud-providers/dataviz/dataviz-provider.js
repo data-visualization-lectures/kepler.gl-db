@@ -206,17 +206,9 @@ export default class DatavizProvider extends Provider {
             const responseData = await response.json();
             console.log('[DatavizProvider] listMaps response:', responseData);
 
-            let projects = [];
-            if (Array.isArray(responseData)) {
-                projects = responseData;
-            } else if (responseData && Array.isArray(responseData.data)) {
-                projects = responseData.data;
-            } else if (responseData && Array.isArray(responseData.projects)) {
-                projects = responseData.projects;
-            } else {
+            const projects = Array.isArray(responseData?.projects) ? responseData.projects : [];
+            if (!Array.isArray(responseData?.projects)) {
                 console.warn('[DatavizProvider] Unexpected response format for listMaps:', responseData);
-                // Fallback to empty array to avoid crash
-                projects = [];
             }
 
             // Map to Kepler.gl MapListItem format
@@ -349,10 +341,9 @@ export default class DatavizProvider extends Provider {
             const dataString = JSON.stringify(map);
             const result = await this._uploadViaSignedUrl(token, name, map, dataString, thumbnailDataURI, shouldUpdate);
 
-            const project = result.project || result;
-            cachedProjectId = project.id;
+            cachedProjectId = result.project.id;
             showToast('プロジェクトを保存しました', 'success');
-            return { id: project.id };
+            return { id: result.project.id };
         } catch (error) {
             showToast('プロジェクトの保存に失敗しました', 'error');
             throw error;
