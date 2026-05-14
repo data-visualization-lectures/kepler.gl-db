@@ -7,9 +7,45 @@ import { processKeplerglJSON } from '@kepler.gl/processors';
 export const DATAVIZ_PROVIDER_NAME = 'dataviz';
 const SUPABASE_URL = 'https://vebhoeiltxspsurqoxvl.supabase.co';
 const SHARE_METADATA_ENDPOINT = `${SUPABASE_URL}/functions/v1/get-kepler-gl-share`;
+const AUTH_WAIT_TIMEOUT_MS = 6500;
+const AUTH_WAIT_INTERVAL_MS = 250;
 
 export function getToolHeader() {
   return document.querySelector('dataviz-tool-header') as any;
+}
+
+async function readDatavizAccessToken() {
+  const supabase = (window as any).datavizSupabase;
+  if (!supabase?.auth) {
+    return null;
+  }
+
+  try {
+    if (typeof supabase.auth.getSession === 'function') {
+      const { data } = await supabase.auth.getSession();
+      return data?.session?.access_token || null;
+    }
+
+    if (typeof supabase.auth.session === 'function') {
+      return supabase.auth.session()?.access_token || null;
+    }
+  } catch (_error) {
+    return null;
+  }
+
+  return null;
+}
+
+async function waitForDatavizAccessToken(timeoutMs = AUTH_WAIT_TIMEOUT_MS) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    const accessToken = await readDatavizAccessToken();
+    if (accessToken) {
+      return accessToken;
+    }
+    await new Promise(resolve => setTimeout(resolve, AUTH_WAIT_INTERVAL_MS));
+  }
+  return null;
 }
 
 function isSavedProjectPayload(value: unknown): value is Record<string, any> {
@@ -191,6 +227,11 @@ export async function loadProjectById({
   const header = getToolHeader();
   const datavizProvider = cloudProviders.find(c => c.name === DATAVIZ_PROVIDER_NAME) as any;
   let lastError: unknown = null;
+  const accessToken = await readDatavizAccessToken();
+  if (!accessToken) {
+    console.log(`[App] Waiting for auth session before project load (${sourceLabel}):`, projectId);
+    await waitForDatavizAccessToken();
+  }
 
   if (header && typeof header.loadProject === 'function') {
     try {
