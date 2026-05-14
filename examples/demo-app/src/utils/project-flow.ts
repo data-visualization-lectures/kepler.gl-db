@@ -12,7 +12,80 @@ export function getToolHeader() {
   return document.querySelector('dataviz-tool-header') as any;
 }
 
-async function restoreSavedProjectData({
+function isSavedProjectPayload(value: unknown): value is Record<string, any> {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      Array.isArray((value as Record<string, any>).datasets) &&
+      (value as Record<string, any>).config &&
+      typeof (value as Record<string, any>).config === 'object'
+  );
+}
+
+function parseJsonString(value: unknown) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch (_error) {
+    return null;
+  }
+}
+
+export function extractSavedProjectPayload(
+  value: unknown,
+  depth = 0
+): Record<string, any> | null {
+  if (depth > 5 || value == null) {
+    return null;
+  }
+
+  if (isSavedProjectPayload(value)) {
+    return value;
+  }
+
+  const parsedValue = parseJsonString(value);
+  if (parsedValue) {
+    return extractSavedProjectPayload(parsedValue, depth + 1);
+  }
+
+  if (typeof value !== 'object') {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const candidateKeys = [
+    'data',
+    'projectData',
+    'project_data',
+    'map',
+    'payload',
+    'content',
+    'json',
+    'value'
+  ];
+
+  for (const key of candidateKeys) {
+    if (!(key in record)) {
+      continue;
+    }
+    const extracted = extractSavedProjectPayload(record[key], depth + 1);
+    if (extracted) {
+      return extracted;
+    }
+  }
+
+  return null;
+}
+
+export async function restoreSavedProjectData({
   projectData,
   dispatch,
   readOnly = false
@@ -21,7 +94,17 @@ async function restoreSavedProjectData({
   dispatch: (...args: any[]) => any;
   readOnly?: boolean;
 }) {
-  const loadedMap = processKeplerglJSON(projectData as any);
+  const savedProject = extractSavedProjectPayload(projectData);
+  if (!savedProject) {
+    console.error('[project-flow] Invalid saved project payload', {
+      topLevelKeys:
+        projectData && typeof projectData === 'object' ? Object.keys(projectData).slice(0, 20) : [],
+      projectData
+    });
+    throw new Error('Saved project payload is invalid.');
+  }
+
+  const loadedMap = processKeplerglJSON(savedProject as any);
   if (!loadedMap?.datasets || !loadedMap?.config) {
     throw new Error('Saved project payload is invalid.');
   }
@@ -29,7 +112,7 @@ async function restoreSavedProjectData({
   await dispatch(
     addDataToMap({
       ...loadedMap,
-      info: projectData.info,
+      info: savedProject.info,
       options: {
         centerMap: false,
         readOnly
@@ -106,28 +189,52 @@ export async function loadProjectById({
   cloudProviders: any[];
 }) {
   const header = getToolHeader();
-  let projectData: any = null;
+  const datavizProvider = cloudProviders.find(c => c.name === DATAVIZ_PROVIDER_NAME) as any;
+  let lastError: unknown = null;
 
   if (header && typeof header.loadProject === 'function') {
-    console.log(`[App] Loading project via toolHeader.loadProject (${sourceLabel}):`, projectId);
-    projectData = await header.loadProject(projectId);
-    console.log(`[App] Project restored via toolHeader.loadProject (${sourceLabel}):`, projectId);
-  } else {
-    console.log(`[App] loadProject not available, falling back to downloadMap (${sourceLabel}):`, projectId);
-    const datavizProvider = cloudProviders.find(c => c.name === DATAVIZ_PROVIDER_NAME) as any;
-    if (datavizProvider) {
-      const result = await datavizProvider.downloadMap({ id: projectId });
-      projectData = result.map;
-      console.log(`[App] Project restored via downloadMap (${sourceLabel}):`, projectId);
+    try {
+      console.log(`[App] Loading project via toolHeader.loadProject (${sourceLabel}):`, projectId);
+      const projectData = await header.loadProject(projectId);
+      await restoreSavedProjectData({
+        projectData,
+        dispatch
+      });
+      console.log(`[App] Project restored via toolHeader.loadProject (${sourceLabel}):`, projectId);
+      return true;
+    } catch (error) {
+      lastError = error;
+      console.warn(`[App] toolHeader.loadProject failed (${sourceLabel}), falling back to provider download:`, error);
     }
   }
 
-  if (projectData) {
-    await restoreSavedProjectData({
-      projectData,
-      dispatch
-    });
-    return true;
+  if (datavizProvider) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        if (attempt === 0) {
+          console.log(`[App] Loading project via downloadMap (${sourceLabel}):`, projectId);
+        } else {
+          console.log(`[App] Retrying project download (${sourceLabel}) attempt ${attempt + 1}:`, projectId);
+        }
+        const result = await datavizProvider.downloadMap({ id: projectId });
+        await restoreSavedProjectData({
+          projectData: result.map,
+          dispatch
+        });
+        console.log(`[App] Project restored via downloadMap (${sourceLabel}):`, projectId);
+        return true;
+      } catch (error) {
+        lastError = error;
+        if (attempt === 2) {
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 800 * (attempt + 1)));
+      }
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
   }
 
   return false;

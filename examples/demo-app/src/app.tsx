@@ -45,6 +45,7 @@ import {
   getToolHeader,
   loadProjectById,
   loadSharedMapById,
+  restoreSavedProjectData,
   resolveProjectLoadTarget,
   resolveShareLoadTarget
 } from './utils/project-flow';
@@ -87,7 +88,6 @@ import sampleIconCsv from './data/sample-icon-csv';
 import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, { config as rowDataConfig } from './data/sample-row-data';
 import { processCsvData, processGeojson, processRowObject } from '@kepler.gl/processors';
-import { processKeplerglJSON } from '@kepler.gl/processors';
 
 /* eslint-enable no-unused-vars */
 
@@ -419,22 +419,17 @@ const App = props => {
             apiBaseUrl: 'https://api.dataviz.jp',  // 新APIを明示的に指定
             largeUploadEnabled: true,
             largeUploadThresholdBytes: 4.5 * 1024 * 1024,
-            onProjectLoad: (projectData) => {
+            onProjectLoad: async (projectData) => {
               console.log('[App] onProjectLoad callback called with projectData:', projectData);
-              const loadedMap = processKeplerglJSON(projectData);
-              if (!loadedMap?.datasets || !loadedMap?.config) {
-                console.error('[App] Invalid saved project payload from tool header');
+              try {
+                await restoreSavedProjectData({
+                  projectData,
+                  dispatch
+                });
+              } catch (error) {
+                console.error('[App] Invalid saved project payload from tool header', error);
                 return;
               }
-              dispatch(
-                addDataToMap({
-                  ...loadedMap,
-                  info: projectData?.info,
-                  options: {
-                    centerMap: false
-                  }
-                })
-              );
 
               // モーダルから読込された時の project_id 取得
               // tool-header は _currentSelectedProjectId に project_id を保存している
