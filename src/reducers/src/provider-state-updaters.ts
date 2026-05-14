@@ -154,10 +154,10 @@ export const exportFileSuccessUpdater = (
     isProviderLoading: false,
     // TODO: do we always have to store this?
     successInfo: response,
+    savedMapId: response?.info?.id ?? response?.project?.id ?? response?.sourceProjectId ?? response?.id ?? null,
     ...(!options.isPublic
       ? {
-          mapSaved: provider.name,
-          savedMapId: response?.info?.id ?? null
+          mapSaved: provider.name
         }
       : {})
   };

@@ -85,6 +85,9 @@ export function setLoadingMapStatus(isMapLoading) {
  */
 export function onExportFileSuccess({provider, options}) {
   return dispatch => {
+    if (options.isPublic && provider?.name === 'dataviz') {
+      return;
+    }
     // if isPublic is true, use share Url
     if (options.isPublic && provider.getShareUrl) {
       dispatch(push(provider.getShareUrl(false)));

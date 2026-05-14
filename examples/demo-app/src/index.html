@@ -5,6 +5,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>主題地図ツール kepler.gl</title>
+  <script>
+    (function () {
+      var isPublicShare = /^\/shares\/[^/]+\/?$/.test(window.location.pathname);
+      if (isPublicShare) {
+        window.DATAVIZ_HEADER_CONFIG = { mode: 'public' };
+        document.documentElement.classList.add('public-share-route');
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="/bundle.css">
   <style>
     body {
@@ -27,6 +36,16 @@
       left: 0 !important;
       width: 100% !important;
       z-index: 9999 !important;
+    }
+
+    html.public-share-route dataviz-header,
+    html.public-share-route dataviz-tool-header {
+      display: none !important;
+    }
+
+    html.public-share-route #root {
+      height: 100vh !important;
+      margin-top: 0 !important;
     }
   </style>
   <!-- Google tag (gtag.js) -->

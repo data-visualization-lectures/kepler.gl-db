@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, { ThemeProvider, StyleSheetManager } from 'styled-components';
 import Window from 'global/window';
@@ -19,6 +19,7 @@ import {
   setMapBoundary
 } from '@kepler.gl/ai-assistant';
 import { panelBorderColor, theme } from '@kepler.gl/styles';
+import { SHARE_MAP_ID } from '@kepler.gl/constants';
 import { ParsedConfig } from '@kepler.gl/types';
 import { getApplicationConfig } from '@kepler.gl/utils';
 import { SqlPanel } from '@kepler.gl/duckdb';
@@ -43,7 +44,9 @@ import {
   buildProjectName,
   getToolHeader,
   loadProjectById,
-  resolveProjectLoadTarget
+  loadSharedMapById,
+  resolveProjectLoadTarget,
+  resolveShareLoadTarget
 } from './utils/project-flow';
 
 import {
@@ -141,7 +144,28 @@ const CONTAINER_STYLE = {
   backgroundColor: '#333'
 };
 
+const PUBLIC_CONTAINER_STYLE = {
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%',
+  backgroundColor: '#333'
+};
 
+const PUBLIC_STATUS_STYLE = {
+  position: 'absolute',
+  inset: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '24px',
+  color: '#fff',
+  backgroundColor: 'rgba(17, 24, 39, 0.82)',
+  fontSize: '14px',
+  letterSpacing: '0.01em',
+  zIndex: 10,
+  textAlign: 'center'
+};
 
 const StyledResizeHandle = styled(PanelResizeHandle)`
   background-color: ${panelBorderColor};
@@ -165,8 +189,16 @@ const StyledVerticalResizeHandle = styled(PanelResizeHandle)`
 `;
 
 const App = props => {
-  const { params: { id, provider } = {}, location: { query = {} } = {} } = props;
+  const {
+    params: { id, provider } = {},
+    location: { query = {}, pathname = Window.location.pathname } = {}
+  } = props;
   const dispatch = useDispatch();
+  const publicShareView = pathname.startsWith('/shares/');
+  const [publicShareStatus, setPublicShareStatus] = useState({
+    isLoading: publicShareView,
+    error: ''
+  });
 
   // TODO find another way to check for existence of duckDb plugin
   const duckDbPluginEnabled = (getApplicationConfig().plugins || []).some(p => p.name === 'duckdb');
@@ -181,6 +213,9 @@ const App = props => {
 
   // Get map info to check availability for saving
   const mapInfo = useSelector(state => state?.demo?.keplerGl?.map?.visState?.mapInfo);
+  const providerSavedMapId = useSelector(
+    state => state?.demo?.keplerGl?.map?.providerState?.savedMapId || null
+  );
   // Use explicit ref to access current mapInfo in callbacks without re-triggering effects
   const mapInfoRef = useRef(mapInfo);
 
@@ -248,9 +283,19 @@ const App = props => {
     return () => clearTimeout(timeout);
   }, [dispatch, exportImageDataUri]);
 
-  const prevQueryRef = useRef<{ provider?: string; id?: string; query?: any } | null>(null);
+  const prevQueryRef = useRef<Record<string, unknown> | null>(null);
+  const syncCurrentProjectId = useCallback((projectId: string | null) => {
+    currentProjectIdRef.current = projectId;
+    const datavizProvider = CLOUD_PROVIDERS.find(c => c.name === DATAVIZ_PROVIDER_NAME);
+    if (datavizProvider && typeof datavizProvider.setCurrentProjectId === 'function') {
+      datavizProvider.setCurrentProjectId(projectId);
+    }
+  }, []);
 
   const configureHeader = useCallback(() => {
+    if (publicShareView) {
+      return;
+    }
     console.log('[App] configureHeader called');
     const header = document.querySelector('dataviz-tool-header');
     console.log('[App] header element:', header ? 'found' : 'NOT FOUND');
@@ -336,6 +381,14 @@ const App = props => {
               align: 'right'
             },
             {
+              id: 'share-project-btn',
+              label: 'シェア',
+              action: () => {
+                dispatch(toggleModal(SHARE_MAP_ID));
+              },
+              align: 'right'
+            },
+            {
               id: 'load-project-btn',
               label: 'プロジェクトの読込',
               action: () => {
@@ -383,7 +436,7 @@ const App = props => {
               console.log('[App] Got projectId from header._currentSelectedProjectId:', projectId);
 
               if (projectId) {
-                currentProjectIdRef.current = projectId;
+                syncCurrentProjectId(projectId);
                 // パーマリンク形式に統一: /projects/{projectId}
                 const permalink = `/projects/${projectId}`;
                 window.history.replaceState({ projectId }, projectId, permalink);
@@ -401,7 +454,7 @@ const App = props => {
               console.log('[App] Extracted projectId:', projectId);
 
               if (projectId) {
-                currentProjectIdRef.current = projectId;
+                syncCurrentProjectId(projectId);
                 console.log('[App] Stored currentProjectIdRef:', currentProjectIdRef.current);
                 // KEPLER_GL_API_MIGRATION.md に従って /projects/{projectId} パーマリンク形式で URL を更新
                 const permalink = `/projects/${projectId}`;
@@ -431,9 +484,13 @@ const App = props => {
     } else {
       console.warn('[App] dataviz-tool-header not found in DOM');
     }
-  }, [dispatch]);
+  }, [dispatch, publicShareView, syncCurrentProjectId]);
 
   useEffect(() => {
+    if (publicShareView) {
+      return;
+    }
+
     console.log('[App] Header setup useEffect running');
     if (customElements.get('dataviz-tool-header')) {
       console.log('[App] dataviz-tool-header already defined');
@@ -445,12 +502,69 @@ const App = props => {
         configureHeader();
       });
     }
+  }, [configureHeader, publicShareView]);
 
-    // if we pass an id as part of the url
-    // we try to fetch along map configurations
+  useEffect(() => {
+    if (publicShareView || !providerSavedMapId || providerSavedMapId === currentProjectIdRef.current) {
+      return;
+    }
+
+    syncCurrentProjectId(providerSavedMapId);
+    const permalink = `/projects/${providerSavedMapId}`;
+    if (window.location.pathname !== permalink) {
+      window.history.replaceState({ projectId: providerSavedMapId }, providerSavedMapId, permalink);
+    }
+  }, [providerSavedMapId, publicShareView, syncCurrentProjectId]);
+
+  useEffect(() => {
+    setPublicShareStatus({
+      isLoading: publicShareView,
+      error: ''
+    });
+
+    const { targetShareId } = resolveShareLoadTarget({
+      pathname,
+      routeId: id
+    });
+
+    if (targetShareId) {
+      const currentRef = { shareId: targetShareId, mode: 'public-share' };
+      if (isEqual(prevQueryRef.current, currentRef)) {
+        return;
+      }
+
+      prevQueryRef.current = currentRef;
+      syncCurrentProjectId(null);
+
+      const doLoadSharedMapById = async () => {
+        try {
+          setPublicShareStatus({ isLoading: true, error: '' });
+          const result = await loadSharedMapById({
+            shareId: targetShareId,
+            dispatch,
+            onTitle: title => {
+              document.title = title ? `${title} | kepler.gl` : 'kepler.gl';
+            }
+          });
+          if (!document.title || document.title === '主題地図ツール kepler.gl') {
+            document.title = result?.title ? `${result.title} | kepler.gl` : 'kepler.gl';
+          }
+          setPublicShareStatus({ isLoading: false, error: '' });
+        } catch (err: any) {
+          console.error('[App] Failed to load public share:', err);
+          setPublicShareStatus({
+            isLoading: false,
+            error: err?.message || '共有地図の読み込みに失敗しました。'
+          });
+        }
+      };
+
+      doLoadSharedMapById();
+      return;
+    }
+
     const cloudProvider = CLOUD_PROVIDERS.find(c => c.name === provider);
     if (cloudProvider) {
-      // Prevent constant reloading after change of the location
       if (isEqual(prevQueryRef.current, { provider, id, query })) {
         return;
       }
@@ -468,7 +582,7 @@ const App = props => {
 
     const { targetProjectId, sourceLabel } = resolveProjectLoadTarget({
       query,
-      pathname: window.location.pathname,
+      pathname,
       routeId: id
     });
 
@@ -478,7 +592,7 @@ const App = props => {
         return;
       }
       prevQueryRef.current = currentRef;
-      currentProjectIdRef.current = targetProjectId;
+      syncCurrentProjectId(targetProjectId);
 
       const doLoadProjectById = async () => {
         try {
@@ -501,20 +615,16 @@ const App = props => {
       return;
     }
 
-    // Load sample using its id
     if (id) {
       dispatch(loadSampleConfigurations(id));
     }
 
-    // Load map using a custom URL.
-    // Priority keeps existing behavior: mapUrl > data_url > dataUrl.
     const incomingDataUrl =
       (typeof query.mapUrl === 'string' && query.mapUrl) ||
       (typeof query.data_url === 'string' && query.data_url) ||
       (typeof query.dataUrl === 'string' && query.dataUrl) ||
       null;
     if (incomingDataUrl) {
-      // TODO?: validate map url
       dispatch(loadRemoteMap({dataUrl: incomingDataUrl}));
     }
 
@@ -522,15 +632,16 @@ const App = props => {
       dispatch(toggleMapControl('sqlPanel', 0));
       dispatch(toggleModal(null));
     }
-
-    // load sample data
-    _loadSampleData();
-
-    // Notifications
-
-    // no dependencies, as this was part of componentDidMount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, provider, query, dispatch, configureHeader]);
+  }, [
+    id,
+    provider,
+    query,
+    pathname,
+    dispatch,
+    duckDbPluginEnabled,
+    publicShareView,
+    syncCurrentProjectId
+  ]);
 
   // Bridge kepler.gl notification events to dataviz-tool-header toast UI
   useEffect(() => {
@@ -940,6 +1051,46 @@ const App = props => {
     _loadSyncedFilterWTripLayer,
     _replaceSyncedFilterWTripLayer
   ]);
+
+  if (publicShareView) {
+    const statusMessage = publicShareStatus.error ||
+      (publicShareStatus.isLoading ? '共有地図を読み込んでいます...' : '');
+
+    return (
+      <StyleSheetManager shouldForwardProp={shouldForwardProp}>
+        <ThemeProvider theme={theme}>
+          <GlobalStyle>
+            <div style={PUBLIC_CONTAINER_STYLE}>
+              {statusMessage ? (
+                <div style={PUBLIC_STATUS_STYLE}>
+                  {statusMessage}
+                </div>
+              ) : null}
+              {!publicShareStatus.isLoading && !publicShareStatus.error ? (
+                <AutoSizer>
+                  {({ height, width }) => (
+                    <KeplerGl
+                      mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                      id="map"
+                      getState={keplerGlGetState}
+                      width={width}
+                      height={height}
+                      cloudProviders={[]}
+                      localeMessages={messages}
+                      onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                      featureFlags={DEFAULT_FEATURE_FLAGS}
+                      onViewStateChange={onViewStateChange}
+                      readOnly={true}
+                    />
+                  )}
+                </AutoSizer>
+              ) : null}
+            </div>
+          </GlobalStyle>
+        </ThemeProvider>
+      </StyleSheetManager>
+    );
+  }
 
   return (
     <StyleSheetManager shouldForwardProp={shouldForwardProp}>

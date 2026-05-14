@@ -4,6 +4,8 @@
 import { loadFiles } from '@kepler.gl/actions';
 
 export const DATAVIZ_PROVIDER_NAME = 'dataviz';
+const SUPABASE_URL = 'https://vebhoeiltxspsurqoxvl.supabase.co';
+const SHARE_METADATA_ENDPOINT = `${SUPABASE_URL}/functions/v1/get-kepler-gl-share`;
 
 export function getToolHeader() {
   return document.querySelector('dataviz-tool-header') as any;
@@ -51,6 +53,20 @@ export function resolveProjectLoadTarget({
   return { targetProjectId, sourceLabel };
 }
 
+export function resolveShareLoadTarget({
+  pathname,
+  routeId
+}: {
+  pathname: string;
+  routeId?: string;
+}) {
+  const routeShareId = typeof routeId === 'string' && pathname.startsWith('/shares/') ? routeId : null;
+  const pathMatch = pathname.match(/^\/shares\/([^/]+)\/?$/);
+  const pathShareId = routeShareId || (pathMatch ? decodeURIComponent(pathMatch[1]) : null);
+
+  return { targetShareId: pathShareId };
+}
+
 export async function loadProjectById({
   projectId,
   sourceLabel,
@@ -90,4 +106,56 @@ export async function loadProjectById({
   }
 
   return false;
+}
+
+export async function loadSharedMapById({
+  shareId,
+  dispatch,
+  onTitle
+}: {
+  shareId: string;
+  dispatch: (...args: any[]) => any;
+  onTitle?: (title: string) => void;
+}) {
+  const metadataResponse = await fetch(
+    `${SHARE_METADATA_ENDPOINT}?id=${encodeURIComponent(shareId)}`,
+    { cache: 'no-store' }
+  );
+
+  const metadataPayload = await metadataResponse.json().catch(() => null);
+  const metadataErrorMessage =
+    (typeof metadataPayload?.error === 'string' && metadataPayload.error) ||
+    (typeof metadataPayload?.error?.message === 'string' && metadataPayload.error.message) ||
+    metadataPayload?.message ||
+    null;
+  if (!metadataResponse.ok) {
+    throw new Error(
+      metadataErrorMessage || `Failed to resolve shared map (${metadataResponse.status})`
+    );
+  }
+
+  const title = String(metadataPayload?.title || '').trim();
+  const snapshotUrl = String(metadataPayload?.snapshotUrl || '').trim();
+  if (title && typeof onTitle === 'function') {
+    onTitle(title);
+  }
+  if (!snapshotUrl) {
+    throw new Error('Shared map snapshot is unavailable.');
+  }
+
+  const snapshotResponse = await fetch(snapshotUrl, { cache: 'no-store' });
+  if (!snapshotResponse.ok) {
+    throw new Error(`Failed to fetch shared snapshot (${snapshotResponse.status})`);
+  }
+
+  const projectData = await snapshotResponse.json();
+  const file = new File([JSON.stringify(projectData)], 'project.json', {
+    type: 'application/json'
+  });
+  await dispatch(loadFiles([file]));
+
+  return {
+    title,
+    snapshotUrl
+  };
 }

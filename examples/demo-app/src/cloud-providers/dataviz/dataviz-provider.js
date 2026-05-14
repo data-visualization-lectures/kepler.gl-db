@@ -7,6 +7,9 @@ import Window from 'global/window';
 
 const NAME = 'dataviz';
 const DISPLAY_NAME = 'Dataviz Cloud';
+const SUPABASE_URL = 'https://vebhoeiltxspsurqoxvl.supabase.co';
+const SHARE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/publish-kepler-gl-share`;
+const SHARE_ROUTE_PREFIX = '/shares/';
 
 // Use dynamic API URL from the auth client if available
 function getApiUrl() {
@@ -18,6 +21,17 @@ function getApiUrl() {
 
 // Module-level cache to persist ID across provider re-instantiations
 let cachedProjectId = null;
+let cachedShareId = null;
+let cachedShareUrl = '';
+
+function buildSharePath(shareId) {
+    return `${SHARE_ROUTE_PREFIX}${encodeURIComponent(shareId)}`;
+}
+
+function buildShareUrl(shareId, fullUrl = true) {
+    const path = buildSharePath(shareId);
+    return fullUrl ? `${Window.location.origin}${path}` : path;
+}
 
 function showToast(message, type = 'success', duration) {
     const toolHeader = document.querySelector('dataviz-tool-header');
@@ -90,7 +104,7 @@ export default class DatavizProvider extends Provider {
      * Whether this provider support share map via a public url
      */
     hasSharingUrl() {
-        return false;
+        return true;
     }
 
     /**
@@ -98,6 +112,8 @@ export default class DatavizProvider extends Provider {
      */
     clearProjectCache() {
         cachedProjectId = null;
+        cachedShareId = null;
+        cachedShareUrl = '';
         console.log('[DatavizProvider] Cleared project cache');
     }
 
@@ -107,6 +123,15 @@ export default class DatavizProvider extends Provider {
     getCurrentProjectId() {
         console.log('[DatavizProvider] getCurrentProjectId returning:', cachedProjectId);
         return cachedProjectId;
+    }
+
+    setCurrentProjectId(projectId) {
+        cachedProjectId = projectId && projectId !== 'undefined' ? String(projectId) : null;
+        console.log('[DatavizProvider] setCurrentProjectId:', cachedProjectId);
+    }
+
+    getCurrentShareId() {
+        return cachedShareId;
     }
 
 
@@ -320,6 +345,7 @@ export default class DatavizProvider extends Provider {
         const { map, thumbnail } = mapData;
         const name = (map.info && map.info.title) || 'Untitled Map';
         const thumbnailBlob = thumbnail || options.thumbnail;
+        const isPublic = Boolean(options.isPublic);
 
         // Convert thumbnail Blob to Base64 Data URI if provided
         let thumbnailDataURI = null;
@@ -332,22 +358,100 @@ export default class DatavizProvider extends Provider {
         }
 
         // Determine if we should update an existing project
-        const shouldUpdate = options.overwrite && cachedProjectId && cachedProjectId !== 'undefined';
-
-        showToast('プロジェクトを保存しています...', 'info');
+        const shouldUpdate = Boolean(
+            cachedProjectId &&
+                cachedProjectId !== 'undefined' &&
+                (isPublic || options.overwrite)
+        );
 
         try {
             // Always use signed URL flow to avoid Vercel 4.5MB body size limit
             const dataString = JSON.stringify(map);
-            const result = await this._uploadViaSignedUrl(token, name, map, dataString, thumbnailDataURI, shouldUpdate);
+            if (isPublic) {
+                showToast('最新のプロジェクトを保存しています...', 'info');
+                const result = await this._uploadViaSignedUrl(
+                    token,
+                    name,
+                    map,
+                    dataString,
+                    thumbnailDataURI,
+                    shouldUpdate
+                );
+                const projectId = result?.project?.id || cachedProjectId;
+                if (!projectId) {
+                    throw new Error('Saved project id is unavailable');
+                }
+                cachedProjectId = projectId;
+
+                showToast('シェアURLを更新しています...', 'info');
+                const shareResult = await this._publishShare(token, projectId, name);
+
+                cachedShareId = shareResult?.shareId || shareResult?.id || null;
+                cachedShareUrl = shareResult?.shareUrl || (cachedShareId ? buildShareUrl(cachedShareId, true) : '');
+
+                if (!cachedShareId || !cachedShareUrl) {
+                    throw new Error('Share URL was not returned');
+                }
+
+                showToast('シェアURLを更新しました', 'success');
+                return {
+                    id: cachedShareId,
+                    shareId: cachedShareId,
+                    shareUrl: cachedShareUrl,
+                    sourceProjectId: projectId,
+                    info: {
+                        id: projectId
+                    }
+                };
+            }
+
+            showToast('プロジェクトを保存しています...', 'info');
+            const result = await this._uploadViaSignedUrl(
+                token,
+                name,
+                map,
+                dataString,
+                thumbnailDataURI,
+                shouldUpdate
+            );
 
             cachedProjectId = result.project.id;
             showToast('プロジェクトを保存しました', 'success');
-            return { id: result.project.id };
+            return { id: result.project.id, project: result.project };
         } catch (error) {
-            showToast('プロジェクトの保存に失敗しました', 'error');
+            if (isPublic) {
+                showToast('シェアURLの更新に失敗しました', 'error');
+            } else {
+                showToast('プロジェクトの保存に失敗しました', 'error');
+            }
             throw error;
         }
+    }
+
+    async _publishShare(token, projectId, fallbackTitle) {
+        const response = await fetch(SHARE_FUNCTION_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Dataviz-Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                projectId,
+                fallbackTitle
+            })
+        });
+
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) {
+            throw new Error(
+                payload?.error?.message ||
+                    payload?.error ||
+                    payload?.message ||
+                    `Share publish failed (${response.status})`
+            );
+        }
+
+        return payload || {};
     }
 
     /**
@@ -453,7 +557,20 @@ export default class DatavizProvider extends Provider {
     }
 
     getShareUrl(fullUrl = true) {
-        return '';
+        if (cachedShareId) {
+            return buildShareUrl(cachedShareId, fullUrl);
+        }
+        if (!cachedShareUrl) {
+            return '';
+        }
+        if (fullUrl) {
+            return cachedShareUrl;
+        }
+        try {
+            return new URL(cachedShareUrl, Window.location.origin).pathname;
+        } catch (_error) {
+            return '';
+        }
     }
 
     getManagementUrl() {
