@@ -16,10 +16,15 @@
   </script>
   <link rel="stylesheet" href="/bundle.css">
   <style>
+    :root {
+      --dataviz-tool-header-background: #2b2b2b;
+    }
+
     body {
       margin: 0;
       padding: 0;
       overflow: hidden;
+      background: var(--dataviz-tool-header-background);
       font-family: sans-serif;
     }
 
@@ -31,11 +36,24 @@
     }
 
     dataviz-tool-header {
+      display: block !important;
       position: fixed !important;
       top: 48px !important;
       left: 0 !important;
       width: 100% !important;
+      background: var(--dataviz-tool-header-background) !important;
       z-index: 9999 !important;
+    }
+
+    dataviz-tool-header::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 1px;
+      background: var(--dataviz-tool-header-background);
+      pointer-events: none;
     }
 
     html.public-share-route dataviz-header,
