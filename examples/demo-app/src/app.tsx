@@ -55,7 +55,6 @@ import {
   replaceDataInMap,
   toggleMapControl,
   toggleModal,
-  loadFiles,
   startExportingImage,
   cleanupExportImage,
   setExportImageSetting
@@ -88,6 +87,7 @@ import sampleIconCsv from './data/sample-icon-csv';
 import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, { config as rowDataConfig } from './data/sample-row-data';
 import { processCsvData, processGeojson, processRowObject } from '@kepler.gl/processors';
+import { processKeplerglJSON } from '@kepler.gl/processors';
 
 /* eslint-enable no-unused-vars */
 
@@ -421,13 +421,20 @@ const App = props => {
             largeUploadThresholdBytes: 4.5 * 1024 * 1024,
             onProjectLoad: (projectData) => {
               console.log('[App] onProjectLoad callback called with projectData:', projectData);
-
-              const file = new File(
-                [JSON.stringify(projectData)],
-                'project.json',
-                { type: 'application/json' }
+              const loadedMap = processKeplerglJSON(projectData);
+              if (!loadedMap?.datasets || !loadedMap?.config) {
+                console.error('[App] Invalid saved project payload from tool header');
+                return;
+              }
+              dispatch(
+                addDataToMap({
+                  ...loadedMap,
+                  info: projectData?.info,
+                  options: {
+                    centerMap: false
+                  }
+                })
               );
-              dispatch(loadFiles([file]));
 
               // モーダルから読込された時の project_id 取得
               // tool-header は _currentSelectedProjectId に project_id を保存している

@@ -1,0 +1,7 @@
+project_id = "kepler-gl-db"
+
+[functions.publish-kepler-gl-share]
+verify_jwt = false
+
+[functions.get-kepler-gl-share]
+verify_jwt = false

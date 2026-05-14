@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import { loadFiles } from '@kepler.gl/actions';
+import { addDataToMap } from '@kepler.gl/actions';
+import { processKeplerglJSON } from '@kepler.gl/processors';
 
 export const DATAVIZ_PROVIDER_NAME = 'dataviz';
 const SUPABASE_URL = 'https://vebhoeiltxspsurqoxvl.supabase.co';
@@ -9,6 +10,32 @@ const SHARE_METADATA_ENDPOINT = `${SUPABASE_URL}/functions/v1/get-kepler-gl-shar
 
 export function getToolHeader() {
   return document.querySelector('dataviz-tool-header') as any;
+}
+
+async function restoreSavedProjectData({
+  projectData,
+  dispatch,
+  readOnly = false
+}: {
+  projectData: Record<string, any>;
+  dispatch: (...args: any[]) => any;
+  readOnly?: boolean;
+}) {
+  const loadedMap = processKeplerglJSON(projectData as any);
+  if (!loadedMap?.datasets || !loadedMap?.config) {
+    throw new Error('Saved project payload is invalid.');
+  }
+
+  await dispatch(
+    addDataToMap({
+      ...loadedMap,
+      info: projectData.info,
+      options: {
+        centerMap: false,
+        readOnly
+      }
+    })
+  );
 }
 
 export function buildProjectName(mapInfo: any, keplerMapState: any) {
@@ -96,12 +123,10 @@ export async function loadProjectById({
   }
 
   if (projectData) {
-    const file = new File(
-      [JSON.stringify(projectData)],
-      'project.json',
-      { type: 'application/json' }
-    );
-    await dispatch(loadFiles([file]));
+    await restoreSavedProjectData({
+      projectData,
+      dispatch
+    });
     return true;
   }
 
@@ -149,10 +174,11 @@ export async function loadSharedMapById({
   }
 
   const projectData = await snapshotResponse.json();
-  const file = new File([JSON.stringify(projectData)], 'project.json', {
-    type: 'application/json'
+  await restoreSavedProjectData({
+    projectData,
+    dispatch,
+    readOnly: true
   });
-  await dispatch(loadFiles([file]));
 
   return {
     title,
