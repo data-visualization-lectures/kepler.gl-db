@@ -167,6 +167,14 @@ const PUBLIC_STATUS_STYLE = {
   textAlign: 'center'
 };
 
+const PUBLIC_LOADING_MASK_STYLE = {
+  position: 'absolute',
+  inset: 0,
+  backgroundColor: 'rgba(17, 24, 39, 0.18)',
+  pointerEvents: 'none',
+  zIndex: 5
+};
+
 const StyledResizeHandle = styled(PanelResizeHandle)`
   background-color: ${panelBorderColor};
   &:hover {
@@ -1063,29 +1071,30 @@ const App = props => {
         <ThemeProvider theme={theme}>
           <GlobalStyle>
             <div style={PUBLIC_CONTAINER_STYLE}>
+              <AutoSizer>
+                {({ height, width }) => (
+                  <KeplerGl
+                    mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
+                    id="map"
+                    getState={keplerGlGetState}
+                    width={width}
+                    height={height}
+                    cloudProviders={[]}
+                    localeMessages={messages}
+                    onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                    featureFlags={DEFAULT_FEATURE_FLAGS}
+                    onViewStateChange={onViewStateChange}
+                    readOnly={true}
+                  />
+                )}
+              </AutoSizer>
+              {publicShareStatus.isLoading ? (
+                <div style={PUBLIC_LOADING_MASK_STYLE} />
+              ) : null}
               {statusMessage ? (
                 <div style={PUBLIC_STATUS_STYLE}>
                   {statusMessage}
                 </div>
-              ) : null}
-              {!publicShareStatus.isLoading && !publicShareStatus.error ? (
-                <AutoSizer>
-                  {({ height, width }) => (
-                    <KeplerGl
-                      mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
-                      id="map"
-                      getState={keplerGlGetState}
-                      width={width}
-                      height={height}
-                      cloudProviders={[]}
-                      localeMessages={messages}
-                      onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                      featureFlags={DEFAULT_FEATURE_FLAGS}
-                      onViewStateChange={onViewStateChange}
-                      readOnly={true}
-                    />
-                  )}
-                </AutoSizer>
               ) : null}
             </div>
           </GlobalStyle>
