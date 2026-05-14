@@ -371,6 +371,17 @@ const App = props => {
               align: 'left'
             },
             {
+              id: 'load-project-btn',
+              label: getAppMessage('header.loadProject', locale),
+              action: () => {
+                const header = getToolHeader();
+                if (header && typeof (header as any).showLoadModal === 'function') {
+                  (header as any).showLoadModal();
+                }
+              },
+              align: 'right'
+            },
+            {
               id: 'save-project-btn',
               label: getAppMessage('header.saveProject', locale),
               action: () => {
@@ -403,17 +414,6 @@ const App = props => {
               label: getAppMessage('header.shareProject', locale),
               action: () => {
                 dispatch(toggleModal(SHARE_MAP_ID));
-              },
-              align: 'right'
-            },
-            {
-              id: 'load-project-btn',
-              label: getAppMessage('header.loadProject', locale),
-              action: () => {
-                const header = getToolHeader();
-                if (header && typeof (header as any).showLoadModal === 'function') {
-                  (header as any).showLoadModal();
-                }
               },
               align: 'right'
             },
