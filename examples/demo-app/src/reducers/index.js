@@ -25,6 +25,7 @@ import {
 } from '../actions';
 
 import { CLOUD_PROVIDERS_CONFIGURATION } from '../constants/default-settings';
+import { detectBrowserLocale } from '../constants/localization';
 import { generateHashId } from '../utils/strings';
 
 // initialize kepler demo-app with DuckDB plugin
@@ -87,6 +88,7 @@ export const appReducer = handleActions(
 );
 
 const { DEFAULT_EXPORT_MAP } = uiStateUpdaters;
+const defaultLocale = detectBrowserLocale();
 
 // combine app reducer and keplerGl reducer
 // to mimic the reducer state of kepler.gl website
@@ -100,7 +102,7 @@ const demoReducer = combineReducers({
     },
     uiState: {
       currentModal: null,
-      locale: 'ja',
+      locale: defaultLocale,
       // In order to provide single file export functionality
       // we are going to set the mapbox access token to be used
       // in the exported file

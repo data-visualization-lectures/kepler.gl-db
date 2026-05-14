@@ -29,7 +29,7 @@ import { replaceMapControl } from './factories/map-control';
 import { replacePanelHeader } from './factories/panel-header';
 
 import { CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS } from './constants/default-settings';
-import { messages } from './constants/localization';
+import { detectBrowserLocale, getAppMessage, messages, setAppLocale } from './constants/localization';
 // Import logo
 import logoPng from './assets/logo.png';
 
@@ -207,6 +207,9 @@ const App = props => {
     isLoading: publicShareView,
     error: ''
   });
+  const locale = useSelector(
+    state => state?.demo?.keplerGl?.map?.uiState?.locale || detectBrowserLocale()
+  );
 
   // TODO find another way to check for existence of duckDb plugin
   const duckDbPluginEnabled = (getApplicationConfig().plugins || []).some(p => p.name === 'duckdb');
@@ -226,6 +229,13 @@ const App = props => {
   );
   // Use explicit ref to access current mapInfo in callbacks without re-triggering effects
   const mapInfoRef = useRef(mapInfo);
+
+  useEffect(() => {
+    const normalizedLocale = setAppLocale(locale);
+    if (document?.documentElement) {
+      document.documentElement.lang = normalizedLocale;
+    }
+  }, [locale]);
 
   useEffect(() => {
     mapInfoRef.current = mapInfo;
@@ -327,7 +337,7 @@ const App = props => {
           buttons: [
             {
               id: 'load-data-btn',
-              label: 'データファイルの読込',
+              label: getAppMessage('header.loadData', locale),
               action: () => {
                 console.log('[App] Loading data file modal...');
                 dispatch(toggleModal('addData'));
@@ -338,7 +348,7 @@ const App = props => {
             },
             {
               id: 'load-sample-btn',
-              label: 'サンプルプロジェクトの読込',
+              label: getAppMessage('header.loadSample', locale),
               action: () => {
                 console.log('[App] Loading sample project modal...');
                 dispatch(toggleModal('addData'));
@@ -362,7 +372,7 @@ const App = props => {
             },
             {
               id: 'save-project-btn',
-              label: 'プロジェクトの保存',
+              label: getAppMessage('header.saveProject', locale),
               action: () => {
                 console.log('[App] Save button clicked');
                 // Serialize current kepler.gl state
@@ -390,7 +400,7 @@ const App = props => {
             },
             {
               id: 'share-project-btn',
-              label: 'シェア',
+              label: getAppMessage('header.shareProject', locale),
               action: () => {
                 dispatch(toggleModal(SHARE_MAP_ID));
               },
@@ -398,7 +408,7 @@ const App = props => {
             },
             {
               id: 'load-project-btn',
-              label: 'プロジェクトの読込',
+              label: getAppMessage('header.loadProject', locale),
               action: () => {
                 const header = getToolHeader();
                 if (header && typeof (header as any).showLoadModal === 'function') {
@@ -409,7 +419,7 @@ const App = props => {
             },
             {
               id: 'help-btn',
-              label: 'ヘルプ',
+              label: getAppMessage('header.help', locale),
               action: () => {
                 window.open('https://docs.kepler.gl/docs/user-guides', '_blank');
               },
@@ -494,7 +504,7 @@ const App = props => {
     } else {
       console.warn('[App] dataviz-tool-header not found in DOM');
     }
-  }, [dispatch, publicShareView, syncCurrentProjectId]);
+  }, [dispatch, locale, publicShareView, syncCurrentProjectId]);
 
   useEffect(() => {
     if (publicShareView) {
@@ -564,7 +574,7 @@ const App = props => {
           console.error('[App] Failed to load public share:', err);
           setPublicShareStatus({
             isLoading: false,
-            error: err?.message || '共有地図の読み込みに失敗しました。'
+            error: err?.message || getAppMessage('status.publicShareLoadError', locale)
           });
         }
       };
@@ -1064,7 +1074,7 @@ const App = props => {
 
   if (publicShareView) {
     const statusMessage = publicShareStatus.error ||
-      (publicShareStatus.isLoading ? '共有地図を読み込んでいます...' : '');
+      (publicShareStatus.isLoading ? getAppMessage('status.publicShareLoading', locale) : '');
 
     return (
       <StyleSheetManager shouldForwardProp={shouldForwardProp}>

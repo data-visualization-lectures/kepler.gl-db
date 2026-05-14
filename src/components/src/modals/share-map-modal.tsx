@@ -58,7 +58,9 @@ export const SharingUrl: React.FC<SharingUrlProps> = ({url, message = ''}) => {
       <div style={{display: 'flex'}}>
         <InputLight type="text" value={url} readOnly />
         <CopyToClipboard text={url} onCopy={() => setCopy(true)}>
-          <Button width="80px">{copied ? 'Copied!' : 'Copy'}</Button>
+          <Button width="80px">
+            <FormattedMessage id={copied ? 'modal.button.copied' : 'modal.button.copy'} />
+          </Button>
         </CopyToClipboard>
       </div>
     </StyleSharingUrl>
@@ -172,7 +174,9 @@ export default function ShareMapUrlModalFactory() {
                 {shareUrl && (
                   <StyledExportSection>
                     <div className="description">
-                      <div className="title">Share Url</div>
+                      <div className="title">
+                        <FormattedMessage id={'modal.shareMap.generatedUrlTitle'} />
+                      </div>
                     </div>
                     <div className="selection">
                       <SharingUrl key={0} url={shareUrl} />

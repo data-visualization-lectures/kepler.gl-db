@@ -306,6 +306,8 @@ export default {
       download: 'Download',
       export: 'Export',
       addStyle: 'Add Style',
+      copy: 'Copy',
+      copied: 'Copied!',
       save: 'Save',
       defaultCancel: 'Cancel',
       defaultConfirm: 'Confirm'
@@ -361,7 +363,8 @@ export default {
     },
     shareMap: {
       title: 'Share Map',
-      shareUriTitle: 'Share Map Url',
+      shareUriTitle: 'Share URL',
+      generatedUrlTitle: 'Share URL',
       shareUriSubtitle: 'Generate a map url to share with others',
       cloudTitle: 'Cloud storage',
       cloudSubtitle: 'Login and upload map data to your personal cloud storage',

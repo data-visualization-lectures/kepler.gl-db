@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.findMapBounds = findMapBounds;
 exports.processLayerBounds = processLayerBounds;
-var _src = require("/Users/yuichiyazaki/Documents/GitHubRepository/Prj_DatavizJP/_app_fork/kepler.gl-db/src/utils/src");
+var _src = require("/Users/yuichiyazaki/Documents/GitHubRepository/Prj_DatavizJP/_app_dataviz/kepler.gl-db/src/utils/src");
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 

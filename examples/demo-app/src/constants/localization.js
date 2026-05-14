@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import Window from 'global/window';
+
 // Add english messages here, other languages will use these
 // if translations not available for every message
 const en = {
   'modal.loadData.remote': 'Load Map using URL',
   'sampleMapsTab.noData': 'No data ?',
-  'modal.shareMap.cloudSuccess': '保存されたプロジェクトは「保存プロジェクト一覧」ページにアクセスしてください',
+  'modal.shareMap.cloudSuccess': 'Open the saved projects page to manage your project.',
   'sampleMapsTab.trySampleData': 'Try sample data',
   'sampleDataViewer.rowCount': ' {rowCount} rows',
   'loadRemoteMap.description': 'Load your map using your custom URL',
@@ -35,7 +37,9 @@ export const messages = {
     'loadRemoteMap.examples': '使用例:',
     'loadRemoteMap.cors': '* アクセスには CORS 設定が必要です。詳しくは',
     'loadRemoteMap.clickHere': 'こちら',
-    'loadRemoteMap.fetch': '取得'
+    'loadRemoteMap.fetch': '取得',
+    'tooltip.hideSQLPanel': 'SQL パネルを隠す',
+    'tooltip.showSQLPanel': 'SQL パネルを表示'
   },
   fi: {
     'modal.loadData.remote': 'Lataa kartta URL-osoitteen avulla',
@@ -93,3 +97,90 @@ export const messages = {
     'loadRemoteMap.fetch': '获取'
   }
 };
+
+export const appMessages = {
+  en: {
+    'header.loadData': 'Load data file',
+    'header.loadSample': 'Load sample project',
+    'header.saveProject': 'Save project',
+    'header.shareProject': 'Share',
+    'header.loadProject': 'Load project',
+    'header.help': 'Help',
+    'status.publicShareLoading': 'Loading shared map...',
+    'status.publicShareLoadError': 'Failed to load the shared map.',
+    'toast.projectLoading': 'Loading project...',
+    'toast.projectLoadFailed': 'Failed to load the project.',
+    'toast.projectLoaded': 'Project loaded.',
+    'toast.projectSavingLatest': 'Saving the latest project...',
+    'toast.shareUpdating': 'Updating the share URL...',
+    'toast.shareUpdated': 'Share URL updated.',
+    'toast.projectSaving': 'Saving project...',
+    'toast.projectSaved': 'Project saved.',
+    'toast.shareUpdateFailed': 'Failed to update the share URL.',
+    'toast.projectSaveFailed': 'Failed to save the project.'
+  },
+  ja: {
+    'header.loadData': 'データファイルの読込',
+    'header.loadSample': 'サンプルプロジェクトの読込',
+    'header.saveProject': 'プロジェクトの保存',
+    'header.shareProject': 'シェア',
+    'header.loadProject': 'プロジェクトの読込',
+    'header.help': 'ヘルプ',
+    'status.publicShareLoading': '共有地図を読み込んでいます...',
+    'status.publicShareLoadError': '共有地図の読み込みに失敗しました。',
+    'toast.projectLoading': 'プロジェクトを読み込んでいます...',
+    'toast.projectLoadFailed': 'プロジェクトの読み込みに失敗しました',
+    'toast.projectLoaded': 'プロジェクトを読み込みました',
+    'toast.projectSavingLatest': '最新のプロジェクトを保存しています...',
+    'toast.shareUpdating': 'シェアURLを更新しています...',
+    'toast.shareUpdated': 'シェアURLを更新しました',
+    'toast.projectSaving': 'プロジェクトを保存しています...',
+    'toast.projectSaved': 'プロジェクトを保存しました',
+    'toast.shareUpdateFailed': 'シェアURLの更新に失敗しました',
+    'toast.projectSaveFailed': 'プロジェクトの保存に失敗しました'
+  }
+};
+
+export function normalizeAppLocale(locale) {
+  const normalized = String(locale || '').toLowerCase();
+
+  if (normalized.startsWith('ja')) {
+    return 'ja';
+  }
+
+  return 'en';
+}
+
+export function detectBrowserLocale() {
+  const browserLanguages = Array.isArray(Window?.navigator?.languages)
+    ? Window.navigator.languages
+    : [];
+  const fallbackLanguages = [Window?.navigator?.language, Window?.navigator?.userLanguage].filter(
+    Boolean
+  );
+  const candidates = browserLanguages.length ? browserLanguages : fallbackLanguages;
+
+  for (const candidate of candidates) {
+    const normalized = normalizeAppLocale(candidate);
+    if (normalized === 'ja' || String(candidate || '').toLowerCase().startsWith('en')) {
+      return normalized;
+    }
+  }
+
+  return 'en';
+}
+
+export function getAppLocale() {
+  return normalizeAppLocale(Window.__DATAVIZ_LOCALE || detectBrowserLocale());
+}
+
+export function setAppLocale(locale) {
+  const normalized = normalizeAppLocale(locale);
+  Window.__DATAVIZ_LOCALE = normalized;
+  return normalized;
+}
+
+export function getAppMessage(key, locale = getAppLocale()) {
+  const normalized = normalizeAppLocale(locale);
+  return appMessages[normalized]?.[key] || appMessages.en[key] || key;
+}

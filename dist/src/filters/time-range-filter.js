@@ -7,9 +7,9 @@ Object.defineProperty(exports, "__esModule", {
 exports["default"] = void 0;
 exports.timeRangeSliderFieldsSelector = timeRangeSliderFieldsSelector;
 var _extends2 = _interopRequireDefault(require("@babel/runtime/helpers/extends"));
-var _react = _interopRequireDefault(require("/Users/yuichiyazaki/Documents/GitHubRepository/Prj_DatavizJP/_app_fork/kepler.gl-db/node_modules/react"));
+var _react = _interopRequireDefault(require("/Users/yuichiyazaki/Documents/GitHubRepository/Prj_DatavizJP/_app_dataviz/kepler.gl-db/node_modules/react"));
 var _timeRangeSlider = _interopRequireDefault(require("../common/time-range-slider"));
-var _src = require("/Users/yuichiyazaki/Documents/GitHubRepository/Prj_DatavizJP/_app_fork/kepler.gl-db/src/constants/src");
+var _src = require("/Users/yuichiyazaki/Documents/GitHubRepository/Prj_DatavizJP/_app_dataviz/kepler.gl-db/src/constants/src");
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 

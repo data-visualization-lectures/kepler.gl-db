@@ -4,6 +4,7 @@
 import { Provider } from '@kepler.gl/cloud-providers';
 import DatavizIcon from './dataviz-icon';
 import Window from 'global/window';
+import { getAppMessage } from '../../constants/localization';
 
 const NAME = 'dataviz';
 const DISPLAY_NAME = 'Dataviz Cloud';
@@ -287,7 +288,7 @@ export default class DatavizProvider extends Provider {
             throw new Error('Not logged in');
         }
 
-        showToast('プロジェクトを読み込んでいます...', 'info');
+        showToast(getAppMessage('toast.projectLoading'), 'info');
 
         try {
             // Fetch project data from API
@@ -315,13 +316,13 @@ export default class DatavizProvider extends Provider {
                     }
                 }
                 console.error('[DatavizProvider]', errorMessage);
-                showToast('プロジェクトの読み込みに失敗しました', 'error');
+                showToast(getAppMessage('toast.projectLoadFailed'), 'error');
                 throw new Error(errorMessage);
             }
 
             const mapData = await response.json();
             console.log('[DatavizProvider] Successfully downloaded map:', id);
-            showToast('プロジェクトを読み込みました', 'success');
+            showToast(getAppMessage('toast.projectLoaded'), 'success');
 
             return {
                 map: mapData,
@@ -329,7 +330,7 @@ export default class DatavizProvider extends Provider {
             };
         } catch (error) {
             console.error('[DatavizProvider] Error downloading map:', error);
-            showToast('プロジェクトの読み込みに失敗しました', 'error');
+            showToast(getAppMessage('toast.projectLoadFailed'), 'error');
             throw error;
         }
     }
@@ -368,7 +369,7 @@ export default class DatavizProvider extends Provider {
             // Always use signed URL flow to avoid Vercel 4.5MB body size limit
             const dataString = JSON.stringify(map);
             if (isPublic) {
-                showToast('最新のプロジェクトを保存しています...', 'info');
+                showToast(getAppMessage('toast.projectSavingLatest'), 'info');
                 const result = await this._uploadViaSignedUrl(
                     token,
                     name,
@@ -383,7 +384,7 @@ export default class DatavizProvider extends Provider {
                 }
                 cachedProjectId = projectId;
 
-                showToast('シェアURLを更新しています...', 'info');
+                showToast(getAppMessage('toast.shareUpdating'), 'info');
                 const shareResult = await this._publishShare(token, projectId, name);
 
                 cachedShareId = shareResult?.shareId || shareResult?.id || null;
@@ -393,7 +394,7 @@ export default class DatavizProvider extends Provider {
                     throw new Error('Share URL was not returned');
                 }
 
-                showToast('シェアURLを更新しました', 'success');
+                showToast(getAppMessage('toast.shareUpdated'), 'success');
                 return {
                     id: cachedShareId,
                     shareId: cachedShareId,
@@ -405,7 +406,7 @@ export default class DatavizProvider extends Provider {
                 };
             }
 
-            showToast('プロジェクトを保存しています...', 'info');
+            showToast(getAppMessage('toast.projectSaving'), 'info');
             const result = await this._uploadViaSignedUrl(
                 token,
                 name,
@@ -416,13 +417,13 @@ export default class DatavizProvider extends Provider {
             );
 
             cachedProjectId = result.project.id;
-            showToast('プロジェクトを保存しました', 'success');
+            showToast(getAppMessage('toast.projectSaved'), 'success');
             return { id: result.project.id, project: result.project };
         } catch (error) {
             if (isPublic) {
-                showToast('シェアURLの更新に失敗しました', 'error');
+                showToast(getAppMessage('toast.shareUpdateFailed'), 'error');
             } else {
-                showToast('プロジェクトの保存に失敗しました', 'error');
+                showToast(getAppMessage('toast.projectSaveFailed'), 'error');
             }
             throw error;
         }

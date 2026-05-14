@@ -9,7 +9,7 @@ exports.ArcLayerColorSelectorFactory = ArcLayerColorSelectorFactory;
 exports.LayerColorRangeSelectorFactory = LayerColorRangeSelectorFactory;
 exports.LayerColorSelectorFactory = LayerColorSelectorFactory;
 var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
-var _react = _interopRequireWildcard(require("/Users/yuichiyazaki/Documents/GitHubRepository/Prj_DatavizJP/_app_fork/kepler.gl-db/node_modules/react"));
+var _react = _interopRequireWildcard(require("/Users/yuichiyazaki/Documents/GitHubRepository/Prj_DatavizJP/_app_dataviz/kepler.gl-db/node_modules/react"));
 var _colorSelector = _interopRequireDefault(require("./color-selector"));
 var _styledComponents = require("../../common/styled-components");
 function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }

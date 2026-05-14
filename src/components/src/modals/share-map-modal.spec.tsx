@@ -138,7 +138,7 @@ describe('ShareMapModal', () => {
     const {getByText} = renderWithTheme(
       <ShareMapUrlModal {...DEFAULT_PROPS} successInfo={{shareUrl}} />
     );
-    expect(getByText('Share Url')).toBeInTheDocument();
+    expect(getByText(/Share URL|modal\.shareMap\.generatedUrlTitle/)).toBeInTheDocument();
   });
 
   it('renders errors', () => {

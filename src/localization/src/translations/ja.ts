@@ -239,6 +239,8 @@ export default {
       download: 'ダウンロード',
       export: '出力',
       addStyle: 'スタイル追加',
+      copy: 'コピー',
+      copied: 'コピーしました',
       save: '保存',
       defaultCancel: 'キャンセル',
       defaultConfirm: '確認'
@@ -293,7 +295,9 @@ export default {
       namingTitle: '3. スタイルの名称を設定'
     },
     shareMap: {
-      shareUriTitle: '地図のURLを共有',
+      title: '地図を共有',
+      shareUriTitle: '共有URLを作成',
+      generatedUrlTitle: '共有URL',
       shareUriSubtitle: '共有用に地図のURLを生成',
       cloudTitle: 'クラウドストレージ',
       cloudSubtitle: 'ログインして地図データを個人用クラウドストレージにアップロード',
