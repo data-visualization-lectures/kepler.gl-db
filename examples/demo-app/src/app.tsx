@@ -175,6 +175,42 @@ const PUBLIC_LOADING_MASK_STYLE = {
   zIndex: 5
 };
 
+const APP_TOP_OFFSET_CSS_VAR = '--dataviz-app-top-offset';
+const DEFAULT_APP_TOP_OFFSET = 96;
+
+function getVisibleHeaderBottom(selector: string) {
+  const element = document.querySelector(selector);
+  if (!(element instanceof HTMLElement)) {
+    return 0;
+  }
+
+  const style = window.getComputedStyle(element);
+  if (style.display === 'none' || style.visibility === 'hidden') {
+    return 0;
+  }
+
+  const rect = element.getBoundingClientRect();
+  if (rect.height <= 0) {
+    return 0;
+  }
+
+  return Math.max(0, rect.bottom);
+}
+
+function setAppTopOffset(offset: number) {
+  document.documentElement.style.setProperty(APP_TOP_OFFSET_CSS_VAR, `${Math.ceil(offset)}px`);
+}
+
+function getAppTopOffset() {
+  const rawValue = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue(APP_TOP_OFFSET_CSS_VAR)
+    .trim();
+  const parsed = Number.parseFloat(rawValue);
+
+  return Number.isFinite(parsed) ? parsed : DEFAULT_APP_TOP_OFFSET;
+}
+
 const StyledResizeHandle = styled(PanelResizeHandle)`
   background-color: ${panelBorderColor};
   &:hover {
@@ -310,6 +346,23 @@ const App = props => {
     }
   }, []);
 
+  const updateAppLayoutOffset = useCallback(() => {
+    if (publicShareView) {
+      setAppTopOffset(0);
+      return 0;
+    }
+
+    const toolHeaderBottom = getVisibleHeaderBottom('dataviz-tool-header');
+    const globalHeaderBottom = getVisibleHeaderBottom('dataviz-header');
+    const nextOffset =
+      toolHeaderBottom > 0
+        ? Math.max(globalHeaderBottom, toolHeaderBottom)
+        : DEFAULT_APP_TOP_OFFSET;
+
+    setAppTopOffset(nextOffset);
+    return nextOffset;
+  }, [publicShareView]);
+
   const configureHeader = useCallback(() => {
     if (publicShareView) {
       return;
@@ -401,7 +454,9 @@ const App = props => {
                 // マップの実寸をセット（デフォルト 0×0 では透明・細長い画像になるため）
                 const mapContainer = document.querySelector('#root') as HTMLElement;
                 const mapW = mapContainer?.clientWidth || window.innerWidth;
-                const mapH = mapContainer?.clientHeight || (window.innerHeight - 96);
+                const mapH =
+                  mapContainer?.clientHeight ||
+                  Math.max(window.innerHeight - getAppTopOffset(), 0);
                 dispatch(setExportImageSetting({ mapW, mapH }));
 
                 dispatch(startExportingImage());
@@ -428,6 +483,9 @@ const App = props => {
           ]
         });
         console.log('[App] setConfig called successfully');
+        window.requestAnimationFrame(() => {
+          updateAppLayoutOffset();
+        });
 
         // Set up project management with new API
         if (typeof (header as any).setProjectConfig === 'function') {
@@ -504,10 +562,44 @@ const App = props => {
     } else {
       console.warn('[App] dataviz-tool-header not found in DOM');
     }
-  }, [dispatch, locale, publicShareView, syncCurrentProjectId]);
+  }, [dispatch, locale, publicShareView, syncCurrentProjectId, updateAppLayoutOffset]);
+
+  useEffect(() => {
+    updateAppLayoutOffset();
+
+    if (publicShareView) {
+      return;
+    }
+
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => {
+            updateAppLayoutOffset();
+          })
+        : null;
+
+    ['dataviz-header', 'dataviz-tool-header'].forEach(selector => {
+      const element = document.querySelector(selector);
+      if (element && resizeObserver) {
+        resizeObserver.observe(element);
+      }
+    });
+
+    const handleWindowResize = () => {
+      updateAppLayoutOffset();
+    };
+
+    window.addEventListener('resize', handleWindowResize);
+
+    return () => {
+      window.removeEventListener('resize', handleWindowResize);
+      resizeObserver?.disconnect();
+    };
+  }, [publicShareView, updateAppLayoutOffset]);
 
   useEffect(() => {
     if (publicShareView) {
+      setAppTopOffset(0);
       return;
     }
 
@@ -515,14 +607,16 @@ const App = props => {
     if (customElements.get('dataviz-tool-header')) {
       console.log('[App] dataviz-tool-header already defined');
       configureHeader();
+      updateAppLayoutOffset();
     } else {
       console.log('[App] waiting for dataviz-tool-header...');
       customElements.whenDefined('dataviz-tool-header').then(() => {
         console.log('[App] dataviz-tool-header defined, calling configureHeader');
         configureHeader();
+        updateAppLayoutOffset();
       });
     }
-  }, [configureHeader, publicShareView]);
+  }, [configureHeader, publicShareView, updateAppLayoutOffset]);
 
   useEffect(() => {
     if (publicShareView || !providerSavedMapId || providerSavedMapId === currentProjectIdRef.current) {
