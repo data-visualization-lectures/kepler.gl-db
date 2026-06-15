@@ -29,14 +29,16 @@ export type DimensionScaleSelectorProps = {
     newVisConfig?: Partial<LayerVisConfig>
   ) => void;
   setColorUI: (range: string, newConfig: { [key in keyof ColorUI]: ColorUI[key] }) => void;
-} & WrappedComponentProps;
+};
+
+type DimensionScaleSelectorInternalProps = DimensionScaleSelectorProps & WrappedComponentProps;
 
 DimensionScaleSelectorFactory.deps = [ColorScaleSelectorFactory];
 
 function DimensionScaleSelectorFactory(
   ColorScaleSelector: ReturnType<typeof ColorScaleSelectorFactory>
 ): React.FC<DimensionScaleSelectorProps> {
-  const DimensionScaleSelector: React.FC<DimensionScaleSelectorProps> = ({
+  const DimensionScaleSelector: React.FC<DimensionScaleSelectorInternalProps> = ({
     layer,
     channel,
     dataset,
