@@ -298,8 +298,9 @@ const App = props => {
     name: string;
     projectData: object;
   } | null>(null);
+  const [saveRequestId, setSaveRequestId] = useState(0);
 
-  // exportImageDataUri が更新されたとき、または pendingSaveRef が設定されてから2秒後に保存処理を実行
+  // exportImageDataUri が更新されたとき、または保存リクエストから2秒後に保存処理を実行
   // サムネイル生成に失敗しても保存を続行するため、タイマーで実行
   useEffect(() => {
     if (!pendingSaveRef.current) return;
@@ -335,7 +336,7 @@ const App = props => {
     }, 2000); // サムネイル生成に最大2秒待機
 
     return () => clearTimeout(timeout);
-  }, [dispatch, exportImageDataUri]);
+  }, [dispatch, exportImageDataUri, saveRequestId]);
 
   const prevQueryRef = useRef<Record<string, unknown> | null>(null);
   const syncCurrentProjectId = useCallback((projectId: string | null) => {
@@ -450,6 +451,7 @@ const App = props => {
                 // → exportImageDataUri が更新されたら useEffect 内で保存処理を実行
                 console.log('[App] Setting pendingSaveRef and dispatching startExportingImage');
                 pendingSaveRef.current = { name, projectData };
+                setSaveRequestId(requestId => requestId + 1);
 
                 // マップの実寸をセット（デフォルト 0×0 では透明・細長い画像になるため）
                 const mapContainer = document.querySelector('#root') as HTMLElement;
