@@ -89,6 +89,8 @@ import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, { config as rowDataConfig } from './data/sample-row-data';
 import { processCsvData, processGeojson, processRowObject } from '@kepler.gl/processors';
 
+const SAVE_THUMBNAIL_TIMEOUT_MS = 10000;
+
 /* eslint-enable no-unused-vars */
 
 // This implements the default behavior from styled-components v5
@@ -289,9 +291,11 @@ const App = props => {
   }, [keplerMapState]);
 
   // kepler.gl の ExportImage 機能で生成されたサムネイル dataUri を取得
-  const exportImageDataUri = useSelector(
-    (state: any) => state?.demo?.keplerGl?.map?.uiState?.exportImage?.imageDataUri || null
+  const exportImageState = useSelector(
+    (state: any) => state?.demo?.keplerGl?.map?.uiState?.exportImage || {}
   );
+  const exportImageDataUri = exportImageState?.imageDataUri || null;
+  const exportImageError = exportImageState?.error || null;
 
   // 保存を保留中の情報（exportImage 完了後に保存処理を実行するため）
   const pendingSaveRef = useRef<{
@@ -300,19 +304,12 @@ const App = props => {
   } | null>(null);
   const [saveRequestId, setSaveRequestId] = useState(0);
 
-  // exportImageDataUri が更新されたとき、または保存リクエストから2秒後に保存処理を実行
-  // サムネイル生成に失敗しても保存を続行するため、タイマーで実行
-  useEffect(() => {
-    if (!pendingSaveRef.current) return;
-
-    console.log('[App] saveEffect triggered, exportImageDataUri:', exportImageDataUri ? 'set' : 'not set');
-
-    const timeout = setTimeout(() => {
+  const finishPendingSave = useCallback(
+    (thumbnailDataUri: string | null, thumbnailStatus: 'ready' | 'error' | 'timeout') => {
       const pending = pendingSaveRef.current;
       if (!pending) return;
 
       const { name, projectData } = pending;
-      console.log('[App] Processing pending save: name=', name, 'existingProjectId=', currentProjectIdRef.current);
       pendingSaveRef.current = null;
 
       const header = getToolHeader();
@@ -320,23 +317,60 @@ const App = props => {
       // 使い終わったら ExportImage 状態をリセット
       dispatch(cleanupExportImage());
 
-      console.log('[App] Calling showSaveModal with:', { name, existingProjectId: currentProjectIdRef.current, hasThumbnail: !!exportImageDataUri });
+      console.log('[App] Processing pending save: name=', name, 'existingProjectId=', currentProjectIdRef.current, 'thumbnailStatus=', thumbnailStatus);
+      console.log('[App] Calling showSaveModal with:', {
+        name,
+        existingProjectId: currentProjectIdRef.current,
+        hasThumbnail: !!thumbnailDataUri,
+        thumbnailStatus
+      });
       console.log('[App] Data being sent via showSaveModal to tool-header:', projectData);
       if (typeof header?.showSaveModal === 'function') {
         header.showSaveModal({
           name,
           data: projectData,
-          thumbnailDataUri: exportImageDataUri || null,
+          thumbnailDataUri,
           existingProjectId: currentProjectIdRef.current,
         });
       } else {
         console.warn('[App] showSaveModal is not available on header');
         console.log('[App] Available header methods:', Object.getOwnPropertyNames(header || {}));
       }
-    }, 2000); // サムネイル生成に最大2秒待機
+    },
+    [dispatch]
+  );
+
+  // exportImageDataUri が生成されたら保存処理を実行する。
+  // エラーまたはタイムアウト時だけ、サムネイルなしで保存を継続する。
+  useEffect(() => {
+    if (!pendingSaveRef.current) return;
+
+    console.log(
+      '[App] saveEffect triggered, exportImageDataUri:',
+      exportImageDataUri ? 'set' : 'not set',
+      'exportImageError:',
+      exportImageError ? 'set' : 'not set'
+    );
+
+    if (exportImageDataUri) {
+      finishPendingSave(exportImageDataUri, 'ready');
+      return;
+    }
+
+    if (exportImageError) {
+      console.warn('[App] Export image failed; continuing save without thumbnail:', exportImageError);
+      finishPendingSave(null, 'error');
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      if (!pendingSaveRef.current) return;
+      console.warn('[App] Export image timed out; continuing save without thumbnail');
+      finishPendingSave(null, 'timeout');
+    }, SAVE_THUMBNAIL_TIMEOUT_MS);
 
     return () => clearTimeout(timeout);
-  }, [dispatch, exportImageDataUri, saveRequestId]);
+  }, [exportImageDataUri, exportImageError, finishPendingSave, saveRequestId]);
 
   const prevQueryRef = useRef<Record<string, unknown> | null>(null);
   const syncCurrentProjectId = useCallback((projectId: string | null) => {
