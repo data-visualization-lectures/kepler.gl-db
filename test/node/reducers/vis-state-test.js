@@ -5774,6 +5774,20 @@ test('VisStateUpdaters -> updateFileLoadingProgressUpdater', t => {
     'should not mutate previous progress'
   );
 
+  const stateWithMissingProgress = {
+    ...oldState,
+    fileLoadingProgress: {}
+  };
+  const nextStateWithMissingProgress = updateFileLoadingProgressUpdater(stateWithMissingProgress, {
+    fileName: 'new.csv',
+    progress: {percent: 0.5, message: 'loading...'}
+  });
+  t.deepEqual(
+    nextStateWithMissingProgress.fileLoadingProgress['new.csv'],
+    {percent: 0.5, message: 'loading...'},
+    'should create progress entry when the file has no previous progress'
+  );
+
   t.end();
 });
 

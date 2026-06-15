@@ -127,7 +127,8 @@ import {
   FilterAnimationConfig,
   Editor,
   Field,
-  TimeRangeFilter
+  TimeRangeFilter,
+  FileLoadingProgress
 } from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
@@ -2682,6 +2683,24 @@ export function closeSpecificMapAtIndex<S extends VisState>(
   };
 }
 
+type FileLoadingProgressEntry = FileLoadingProgress[string];
+type FileLoadingProgressPatch = Partial<FileLoadingProgressEntry>;
+type FileWithOptionalName = {name?: string};
+
+function getFileLoadingName(file: FileWithOptionalName, index: number): string {
+  return file.name || `Untitled File ${index}`;
+}
+
+function createInitialFileLoadingProgressEntry(fileName: string): FileLoadingProgressEntry {
+  return {
+    // percent of current file
+    percent: 0,
+    message: '',
+    fileName,
+    error: null
+  };
+}
+
 /**
  * Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if failed
  * @memberof visStateUpdaters
@@ -2819,11 +2838,14 @@ export function processFileContentUpdater(
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function parseProgress(prevProgress = {}, progress) {
+export function parseProgress(
+  prevProgress: FileLoadingProgressPatch = {},
+  progress?: FileLoadingProgressPatch | null
+): FileLoadingProgressPatch {
+  void prevProgress;
   // This happens when receiving query metadata or other cases we don't
   // have an update for the user.
-  if (!progress || !progress.percent) {
+  if (!progress?.percent) {
     return {};
   }
 
@@ -2980,22 +3002,32 @@ export function addDefaultTooltips(state, dataset) {
   return set(['interactionConfig', 'tooltip', 'config', 'fieldsToShow'], merged, state);
 }
 
-export function initialFileLoadingProgress(file, index) {
-  const fileName = file.name || `Untitled File ${index}`;
+export function initialFileLoadingProgress(
+  file: FileWithOptionalName,
+  index: number
+): FileLoadingProgress {
+  const fileName = getFileLoadingName(file, index);
   return {
-    [fileName]: {
-      // percent of current file
-      percent: 0,
-      message: '',
-      fileName,
-      error: null
-    }
+    [fileName]: createInitialFileLoadingProgressEntry(fileName)
   };
 }
 
-export function updateFileLoadingProgressUpdater(state, {fileName, progress}) {
-  // @ts-expect-error
-  return pick_('fileLoadingProgress')(pick_(fileName)(merge_(progress)))(state);
+export function updateFileLoadingProgressUpdater(
+  state: VisState,
+  {fileName, progress}: {fileName: string; progress: FileLoadingProgressPatch}
+): VisState {
+  const currentProgress = state.fileLoadingProgress[fileName] || {};
+
+  return {
+    ...state,
+    fileLoadingProgress: {
+      ...state.fileLoadingProgress,
+      [fileName]: {
+        ...currentProgress,
+        ...progress
+      }
+    }
+  };
 }
 /**
  * Helper function to update layer domains for an array of datasets
