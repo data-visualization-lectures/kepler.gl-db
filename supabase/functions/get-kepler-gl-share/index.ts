@@ -12,6 +12,7 @@ import {
   noContentResponse,
   serializeUnknownError,
 } from "../_shared/http.ts";
+import { isValidShareId } from "./share-id.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -61,6 +62,13 @@ Deno.serve(async (req) => {
   if (!shareId) {
     return errorResponse(
       new HttpError(400, "share_id_required", "id is required"),
+      corsHeaders,
+    );
+  }
+
+  if (!isValidShareId(shareId)) {
+    return errorResponse(
+      new HttpError(404, "share_not_found", "Share not found"),
       corsHeaders,
     );
   }

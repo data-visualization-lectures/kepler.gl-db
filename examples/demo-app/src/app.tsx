@@ -702,9 +702,13 @@ const App = props => {
           setPublicShareStatus({ isLoading: false, error: '' });
         } catch (err: any) {
           console.error('[App] Failed to load public share:', err);
+          const publicShareErrorKey =
+            err?.code === 'share_not_found'
+              ? 'status.publicShareNotFound'
+              : 'status.publicShareLoadError';
           setPublicShareStatus({
             isLoading: false,
-            error: err?.message || getAppMessage('status.publicShareLoadError', locale)
+            error: getAppMessage(publicShareErrorKey, locale)
           });
         }
       };

@@ -10,8 +10,39 @@ const SHARE_METADATA_ENDPOINT = `${SUPABASE_URL}/functions/v1/get-kepler-gl-shar
 const AUTH_WAIT_TIMEOUT_MS = 6500;
 const AUTH_WAIT_INTERVAL_MS = 250;
 
+export class SharedMapLoadError extends Error {
+  code?: string;
+  status?: number;
+
+  constructor(message: string, options: { code?: string; status?: number } = {}) {
+    super(message);
+    this.name = 'SharedMapLoadError';
+    this.code = options.code;
+    this.status = options.status;
+  }
+}
+
 export function getToolHeader() {
   return document.querySelector('dataviz-tool-header') as any;
+}
+
+function getMetadataErrorCode(payload: any) {
+  return typeof payload?.error?.code === 'string' ? payload.error.code : null;
+}
+
+function createSharedMapLoadError(payload: any, status: number) {
+  const code = getMetadataErrorCode(payload);
+  if (code === 'share_not_found' || status === 404) {
+    return new SharedMapLoadError('Shared map not found.', {
+      code: 'share_not_found',
+      status
+    });
+  }
+
+  return new SharedMapLoadError('Failed to load the shared map.', {
+    code: code || 'public_share_load_failed',
+    status
+  });
 }
 
 async function readDatavizAccessToken() {
@@ -296,15 +327,8 @@ export async function loadSharedMapById({
   );
 
   const metadataPayload = await metadataResponse.json().catch(() => null);
-  const metadataErrorMessage =
-    (typeof metadataPayload?.error === 'string' && metadataPayload.error) ||
-    (typeof metadataPayload?.error?.message === 'string' && metadataPayload.error.message) ||
-    metadataPayload?.message ||
-    null;
   if (!metadataResponse.ok) {
-    throw new Error(
-      metadataErrorMessage || `Failed to resolve shared map (${metadataResponse.status})`
-    );
+    throw createSharedMapLoadError(metadataPayload, metadataResponse.status);
   }
 
   const title = String(metadataPayload?.title || '').trim();
