@@ -4,6 +4,14 @@
 //   supabase functions deploy get-kepler-gl-share --no-verify-jwt
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  createCorsHeaders,
+  errorResponse,
+  HttpError,
+  jsonResponse,
+  noContentResponse,
+  serializeUnknownError,
+} from "../_shared/http.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -15,49 +23,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
 });
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "content-type, x-dataviz-authorization",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-};
-
-function jsonResponse(payload: unknown, status = 200) {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json; charset=utf-8",
-    },
-  });
-}
-
-function serializeUnknownError(error: unknown) {
-  if (error instanceof Error) {
-    return {
-      type: "Error",
-      message: error.message,
-      stack: error.stack || null,
-    };
-  }
-
-  if (error && typeof error === "object") {
-    const record = error as Record<string, unknown>;
-    return {
-      type: "Object",
-      message: typeof record.message === "string" ? record.message : String(error),
-      code: typeof record.code === "string" ? record.code : null,
-      details: typeof record.details === "string" ? record.details : null,
-      hint: typeof record.hint === "string" ? record.hint : null,
-      status: typeof record.status === "number" ? record.status : null,
-      name: typeof record.name === "string" ? record.name : null,
-    };
-  }
-
-  return {
-    type: typeof error,
-    message: String(error),
-  };
-}
+const corsHeaders = createCorsHeaders(["GET", "OPTIONS"]);
 
 async function createSnapshotUrl(snapshotStoragePath: string) {
   const { data, error } = await supabase.storage
@@ -69,7 +35,11 @@ async function createSnapshotUrl(snapshotStoragePath: string) {
   }
 
   if (!data?.signedUrl) {
-    throw new Error("snapshot_url_unavailable");
+    throw new HttpError(
+      500,
+      "snapshot_url_unavailable",
+      "Snapshot URL is unavailable",
+    );
   }
 
   return data.signedUrl;
@@ -77,19 +47,22 @@ async function createSnapshotUrl(snapshotStoragePath: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
+    return noContentResponse(corsHeaders);
   }
 
   if (req.method !== "GET") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return errorResponse(
+      new HttpError(405, "method_not_allowed", "Method not allowed"),
+      corsHeaders,
+    );
   }
 
   const shareId = String(new URL(req.url).searchParams.get("id") || "").trim();
   if (!shareId) {
-    return jsonResponse({ error: "id is required" }, 400);
+    return errorResponse(
+      new HttpError(400, "share_id_required", "id is required"),
+      corsHeaders,
+    );
   }
 
   try {
@@ -104,22 +77,29 @@ Deno.serve(async (req) => {
     }
 
     if (!shareRow?.id || !shareRow?.snapshot_storage_path) {
-      return jsonResponse({ error: "Share not found" }, 404);
+      return errorResponse(
+        new HttpError(404, "share_not_found", "Share not found"),
+        corsHeaders,
+      );
     }
 
     const snapshotUrl = await createSnapshotUrl(shareRow.snapshot_storage_path);
-    return jsonResponse({
-      shareId: shareRow.id,
-      title: shareRow.title,
-      sourceProjectId: shareRow.source_project_id,
-      snapshotUrl,
-    });
+    return jsonResponse(
+      {
+        shareId: shareRow.id,
+        title: shareRow.title,
+        sourceProjectId: shareRow.source_project_id,
+        snapshotUrl,
+      },
+      200,
+      corsHeaders,
+    );
   } catch (error) {
     const serializedError = serializeUnknownError(error);
     console.error("[get-kepler-gl-share] failed", {
       shareId,
       serializedError,
     });
-    return jsonResponse({ error: serializedError }, 500);
+    return errorResponse(error, corsHeaders);
   }
 });

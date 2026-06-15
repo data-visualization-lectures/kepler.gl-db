@@ -4,11 +4,22 @@
 //   supabase functions deploy publish-kepler-gl-share --no-verify-jwt
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  createCorsHeaders,
+  errorResponse,
+  HttpError,
+  jsonResponse,
+  noContentResponse,
+  serializeUnknownError,
+} from "../_shared/http.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const DATAVIZ_API_URL = Deno.env.get("DATAVIZ_API_URL") || "https://api.dataviz.jp";
-const SHARE_ORIGIN = (Deno.env.get("KEPLER_SHARE_ORIGIN") || "https://kepler-gl.dataviz.jp").replace(/\/+$/, "");
+const DATAVIZ_API_URL = Deno.env.get("DATAVIZ_API_URL") ||
+  "https://api.dataviz.jp";
+const SHARE_ORIGIN =
+  (Deno.env.get("KEPLER_SHARE_ORIGIN") || "https://kepler-gl.dataviz.jp")
+    .replace(/\/+$/, "");
 const SHARE_TABLE = "kepler_gl_shares";
 const SHARE_BUCKET = "kepler-gl-shares";
 const SNAPSHOT_TTL_SECONDS = 60 * 60;
@@ -17,49 +28,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
 });
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "content-type, x-dataviz-authorization",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-function jsonResponse(payload: unknown, status = 200) {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json; charset=utf-8",
-    },
-  });
-}
-
-function serializeUnknownError(error: unknown) {
-  if (error instanceof Error) {
-    return {
-      type: "Error",
-      message: error.message,
-      stack: error.stack || null,
-    };
-  }
-
-  if (error && typeof error === "object") {
-    const record = error as Record<string, unknown>;
-    return {
-      type: "Object",
-      message: typeof record.message === "string" ? record.message : String(error),
-      code: typeof record.code === "string" ? record.code : null,
-      details: typeof record.details === "string" ? record.details : null,
-      hint: typeof record.hint === "string" ? record.hint : null,
-      status: typeof record.status === "number" ? record.status : null,
-      name: typeof record.name === "string" ? record.name : null,
-    };
-  }
-
-  return {
-    type: typeof error,
-    message: String(error),
-  };
-}
+const corsHeaders = createCorsHeaders(["POST", "OPTIONS"]);
 
 function readDatavizAccessToken(req: Request) {
   const raw = req.headers.get("x-dataviz-authorization") || "";
@@ -101,33 +70,56 @@ function resolveShareTitle(
     "kepler.gl",
   ];
 
-  return candidates.map((value) => String(value || "").trim()).find(Boolean) || "kepler.gl";
+  return candidates.map((value) => String(value || "").trim()).find(Boolean) ||
+    "kepler.gl";
 }
 
 async function loadSavedProject(projectId: string, accessToken: string) {
-  const response = await fetch(`${DATAVIZ_API_URL}/api/projects/${encodeURIComponent(projectId)}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
+  const response = await fetch(
+    `${DATAVIZ_API_URL}/api/projects/${encodeURIComponent(projectId)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     const errorPayload = await response.json().catch(async () => ({
       error: await response.text().catch(() => ""),
     }));
-    const message = errorPayload?.error || errorPayload?.detail || `Project API error: ${response.status}`;
-    throw new Error(message);
+    const message = errorPayload?.error || errorPayload?.detail ||
+      `Project API error: ${response.status}`;
+    throw new HttpError(
+      getProjectApiPublicStatus(response.status),
+      getProjectApiErrorCode(response.status),
+      getProjectApiPublicMessage(response.status),
+      {
+        cause: {
+          status: response.status,
+          message,
+        },
+      },
+    );
   }
 
   const projectData = await response.json();
   if (!projectData || typeof projectData !== "object") {
-    throw new Error("invalid_project_payload");
+    throw new HttpError(
+      502,
+      "invalid_project_payload",
+      "Project API returned an invalid payload",
+    );
   }
 
   return cloneJson(projectData as Record<string, unknown>);
 }
 
-async function ensureShareRegistry(projectId: string, title: string, createdBy: string | null) {
+async function ensureShareRegistry(
+  projectId: string,
+  title: string,
+  createdBy: string | null,
+) {
   const { data: existingShare, error: lookupError } = await supabase
     .from(SHARE_TABLE)
     .select("id, snapshot_storage_path, source_project_id")
@@ -168,7 +160,10 @@ async function ensureShareRegistry(projectId: string, title: string, createdBy: 
   return data;
 }
 
-async function uploadSnapshot(snapshotStoragePath: string, projectData: Record<string, unknown>) {
+async function uploadSnapshot(
+  snapshotStoragePath: string,
+  projectData: Record<string, unknown>,
+) {
   const snapshotBlob = new Blob([JSON.stringify(projectData)], {
     type: "application/json; charset=utf-8",
   });
@@ -213,7 +208,11 @@ async function createSnapshotUrl(snapshotStoragePath: string) {
   }
 
   if (!data?.signedUrl) {
-    throw new Error("snapshot_url_unavailable");
+    throw new HttpError(
+      500,
+      "snapshot_url_unavailable",
+      "Snapshot URL is unavailable",
+    );
   }
 
   return data.signedUrl;
@@ -225,51 +224,101 @@ function buildShareUrl(shareId: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
+    return noContentResponse(corsHeaders);
   }
 
   if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return errorResponse(
+      new HttpError(405, "method_not_allowed", "Method not allowed"),
+      corsHeaders,
+    );
   }
 
   const accessToken = readDatavizAccessToken(req);
   if (!accessToken) {
-    return jsonResponse({ error: "Login required" }, 401);
+    return errorResponse(
+      new HttpError(401, "login_required", "Login required"),
+      corsHeaders,
+    );
   }
 
-  const body = await req.json().catch(() => null) as Record<string, unknown> | null;
+  const body = await req.json().catch(() => null) as
+    | Record<string, unknown>
+    | null;
+  if (!body || typeof body !== "object") {
+    return errorResponse(
+      new HttpError(400, "invalid_json", "Request body must be valid JSON"),
+      corsHeaders,
+    );
+  }
+
   const projectId = String(body?.projectId || "").trim();
   const fallbackTitle = String(body?.fallbackTitle || "").trim();
   if (!projectId) {
-    return jsonResponse({ error: "projectId is required" }, 400);
+    return errorResponse(
+      new HttpError(400, "project_id_required", "projectId is required"),
+      corsHeaders,
+    );
   }
 
   try {
     const savedProject = await loadSavedProject(projectId, accessToken);
     const title = resolveShareTitle(savedProject, fallbackTitle);
     const createdBy = decodeJwtSubject(accessToken);
-    const shareRegistry = await ensureShareRegistry(projectId, title, createdBy);
+    const shareRegistry = await ensureShareRegistry(
+      projectId,
+      title,
+      createdBy,
+    );
 
     await uploadSnapshot(shareRegistry.snapshot_storage_path, savedProject);
     const shareRow = await updateShareMetadata(shareRegistry.id, title);
     const snapshotUrl = await createSnapshotUrl(shareRow.snapshot_storage_path);
 
-    return jsonResponse({
-      shareId: shareRow.id,
-      title: shareRow.title,
-      sourceProjectId: shareRow.source_project_id,
-      shareUrl: buildShareUrl(shareRow.id),
-      snapshotUrl,
-    });
+    return jsonResponse(
+      {
+        shareId: shareRow.id,
+        title: shareRow.title,
+        sourceProjectId: shareRow.source_project_id,
+        shareUrl: buildShareUrl(shareRow.id),
+        snapshotUrl,
+      },
+      200,
+      corsHeaders,
+    );
   } catch (error) {
     const serializedError = serializeUnknownError(error);
     console.error("[publish-kepler-gl-share] failed", {
       projectId,
       serializedError,
     });
-    return jsonResponse({ error: serializedError }, 500);
+    return errorResponse(error, corsHeaders);
   }
 });
+
+function getProjectApiPublicStatus(status: number) {
+  if (status === 401 || status === 403 || status === 404) {
+    return status;
+  }
+  return 502;
+}
+
+function getProjectApiErrorCode(status: number) {
+  if (status === 401 || status === 403) {
+    return "project_access_denied";
+  }
+  if (status === 404) {
+    return "project_not_found";
+  }
+  return "project_api_error";
+}
+
+function getProjectApiPublicMessage(status: number) {
+  if (status === 401 || status === 403) {
+    return "Project access denied";
+  }
+  if (status === 404) {
+    return "Project not found";
+  }
+  return "Project API request failed";
+}
