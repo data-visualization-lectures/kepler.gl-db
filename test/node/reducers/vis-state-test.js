@@ -4098,6 +4098,105 @@ test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
   t.end();
 });
 
+test('#visStateReducer -> SPLIT_MAP: SHOW MISSING LAYER', t => {
+  const oldState = {
+    splitMaps: [
+      {
+        layers: {
+          a: true
+        }
+      },
+      {
+        layers: {
+          a: false
+        }
+      }
+    ]
+  };
+
+  const newState = reducer(oldState, VisStateActions.toggleLayerForMap(0, 'b'));
+
+  t.deepEqual(
+    newState.splitMaps,
+    [
+      {
+        layers: {
+          a: true,
+          b: true
+        }
+      },
+      {
+        layers: {
+          a: false
+        }
+      }
+    ],
+    'should set missing layer visible in the target split map'
+  );
+  t.deepEqual(
+    oldState.splitMaps,
+    [
+      {
+        layers: {
+          a: true
+        }
+      },
+      {
+        layers: {
+          a: false
+        }
+      }
+    ],
+    'should not mutate previous split maps'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> SPLIT_MAP: SHOW LAYER IN ONE MAP', t => {
+  const layer = new PointLayer({id: 'a', isVisible: false});
+  const oldState = {
+    ...INITIAL_VIS_STATE,
+    layers: [layer],
+    layerData: [{}],
+    layerOrder: [layer.id],
+    splitMaps: [
+      {
+        id: 'left',
+        layers: {}
+      },
+      {
+        id: 'right',
+        layers: {}
+      }
+    ]
+  };
+
+  const newState = reducer(oldState, VisStateActions.layerToggleVisibility('a', true, 'right'));
+
+  t.equal(newState.layers[0].config.isVisible, true, 'should show the global layer');
+  t.deepEqual(
+    newState.splitMaps,
+    [
+      {
+        id: 'left',
+        layers: {
+          a: false
+        }
+      },
+      {
+        id: 'right',
+        layers: {
+          a: true
+        }
+      }
+    ],
+    'should show the layer only in the selected split map'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> SET_LAYER_ANIMATION_TIME', t => {
   const initialState = StateWTripGeojson.visState;
   const newState = reducer(initialState, VisStateActions.setLayerAnimationTime(1000));
