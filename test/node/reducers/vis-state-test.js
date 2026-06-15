@@ -18,7 +18,11 @@ import {
   serializeLayer,
   validateLayerWithData,
   defaultInteractionConfig,
+  closeSpecificMapAtIndex,
+  initialFileLoadingProgress,
+  parseProgress,
   prepareStateForDatasetReplace,
+  updateFileLoadingProgressUpdater,
   syncTimeFilterWithLayerTimelineUpdater,
   setTimeFilterTimelineModeUpdater,
   setFilterAnimationTimeUpdater,
@@ -3690,6 +3694,68 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE', t => {
   t.end();
 });
 
+test('VisStateUpdaters -> closeSpecificMapAtIndex', t => {
+  const createLayer = (id, isVisible) => ({
+    id,
+    config: {isVisible},
+    updateLayerConfig(config) {
+      return {
+        ...this,
+        config: {
+          ...this.config,
+          ...config
+        }
+      };
+    }
+  });
+  const visibleLayerInRemainingMap = createLayer('visible', true);
+  const visibleLayerOutsideRemainingMap = createLayer('outside', true);
+  const invisibleLayerOutsideRemainingMap = createLayer('invisible', false);
+  const oldState = {
+    layers: [
+      visibleLayerInRemainingMap,
+      visibleLayerOutsideRemainingMap,
+      invisibleLayerOutsideRemainingMap
+    ],
+    splitMaps: [
+      {
+        layers: {
+          visible: true,
+          outside: true,
+          invisible: true
+        }
+      },
+      {
+        layers: {
+          visible: true
+        }
+      }
+    ]
+  };
+
+  const nextState = closeSpecificMapAtIndex(oldState, {payload: 0});
+
+  t.equal(nextState.splitMaps.length, 0, 'should close split maps');
+  t.equal(
+    nextState.layers[0],
+    visibleLayerInRemainingMap,
+    'should keep visible layer that is present in remaining map'
+  );
+  t.equal(
+    nextState.layers[1].config.isVisible,
+    false,
+    'should hide visible layer missing from remaining map'
+  );
+  t.equal(
+    nextState.layers[2],
+    invisibleLayerOutsideRemainingMap,
+    'should keep already invisible layer unchanged'
+  );
+  t.equal(oldState.splitMaps.length, 2, 'should not mutate original split maps');
+
+  t.end();
+});
+
 test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
   const layer1 = new PointLayer({id: 'a'});
   const layer2 = new PointLayer({id: 'b'});
@@ -5620,6 +5686,92 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
     nextState2.datasets[testCsvDataId].pinnedColumns,
     [],
     'should remove from pinned columns'
+  );
+
+  t.end();
+});
+
+test('VisStateUpdaters -> parseProgress', t => {
+  t.deepEqual(parseProgress({}, null), {}, 'should ignore empty progress updates');
+  t.deepEqual(
+    parseProgress({percent: 0.2}, {message: 'metadata'}),
+    {},
+    'should ignore metadata-only updates'
+  );
+  t.deepEqual(
+    parseProgress({percent: 0.2, message: 'loading'}, {percent: 0.7, message: 'ignored'}),
+    {percent: 0.7},
+    'should expose only percent from progress updates'
+  );
+
+  t.end();
+});
+
+test('VisStateUpdaters -> initialFileLoadingProgress', t => {
+  t.deepEqual(
+    initialFileLoadingProgress({name: 'data.csv'}, 0),
+    {
+      'data.csv': {
+        percent: 0,
+        message: '',
+        fileName: 'data.csv',
+        error: null
+      }
+    },
+    'should key progress by file name'
+  );
+  t.deepEqual(
+    initialFileLoadingProgress({}, 2),
+    {
+      'Untitled File 2': {
+        percent: 0,
+        message: '',
+        fileName: 'Untitled File 2',
+        error: null
+      }
+    },
+    'should provide a deterministic fallback file name'
+  );
+
+  t.end();
+});
+
+test('VisStateUpdaters -> updateFileLoadingProgressUpdater', t => {
+  const oldState = {
+    fileLoadingProgress: {
+      'data.csv': {
+        percent: 0.25,
+        message: 'loading...',
+        fileName: 'data.csv',
+        error: null
+      }
+    }
+  };
+
+  const nextState = updateFileLoadingProgressUpdater(oldState, {
+    fileName: 'data.csv',
+    progress: {percent: 0.75}
+  });
+
+  t.deepEqual(
+    nextState.fileLoadingProgress['data.csv'],
+    {
+      percent: 0.75,
+      message: 'loading...',
+      fileName: 'data.csv',
+      error: null
+    },
+    'should merge progress into existing file progress'
+  );
+  t.deepEqual(
+    oldState.fileLoadingProgress['data.csv'],
+    {
+      percent: 0.25,
+      message: 'loading...',
+      fileName: 'data.csv',
+      error: null
+    },
+    'should not mutate previous progress'
   );
 
   t.end();
