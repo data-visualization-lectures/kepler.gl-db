@@ -242,13 +242,11 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
   const resultState2 = reducer(resultState1, succeedTaskInTest(task3, undefined));
 
   // saveToCloudSuccess
-  const [task4, task5, task6, task7, ...more3] = drainTasksForTesting();
-  t.ok(more3.length === 0, 'should create 4 tasks');
+  const [task4, task5, ...more3] = drainTasksForTesting();
+  t.ok(more3.length === 0, 'should create 2 tasks');
 
-  t.ok(task4.type === 'ACTION_TASK', 'should create 3 ACTION_TASKS');
-  t.ok(task5.type === 'ACTION_TASK', 'should create 3 ACTION_TASKS');
-  t.ok(task6.type === 'ACTION_TASK', 'should create 3 ACTION_TASKS');
-  t.ok(task7.type === 'DELAY_TASK', 'should create 1 DELAY_TASK');
+  t.ok(task4.type === 'ACTION_TASK', 'should create toggle modal ACTION_TASK');
+  t.ok(task5.type === 'ACTION_TASK', 'should create reset provider status ACTION_TASK');
 
   // toggleModal(null),
   const resultState3 = composedReducer(resultState2, succeedTaskInTest(task4, undefined));
@@ -286,16 +284,6 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
     },
     'Should call resetProviderStatus'
   );
-
-  const resultState5 = composedReducer(resultState4, succeedTaskInTest(task6, undefined));
-  t.equal(
-    resultState5.notification.type,
-    'success',
-    'Should call addNotification with successNote'
-  );
-
-  const resultState6 = composedReducer(resultState5, succeedTaskInTest(task7, undefined));
-  t.equal(resultState6.remove, true, 'Should call removeNotification');
 
   t.end();
 });

@@ -174,17 +174,17 @@ test('Components -> ColumnStatsChart -> ColorChartHeader', t => {
   t.equal(colorChartHeader.children().length, 3, 'should render 3 divs in color chart header');
   t.equal(
     colorChartHeader.children().at(0).text(),
-    'MIN: 1',
+    'Min: 1',
     'should render MIN value in color chart header'
   );
   t.equal(
     colorChartHeader.children().at(1).text(),
-    'MEAN: 50',
+    'Mean: 50',
     'should render MEAN value in color chart header'
   );
   t.equal(
     colorChartHeader.children().at(2).text(),
-    'MAX: 100',
+    'Max: 100',
     'should render MAX value in color chart header'
   );
 
