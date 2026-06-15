@@ -288,7 +288,7 @@ export default class DatavizProvider extends Provider {
             throw new Error('Not logged in');
         }
 
-        showToast(getAppMessage('toast.projectLoading'), 'info');
+        showToast(getAppMessage('processing.projectLoad'), 'info', 5000);
 
         try {
             // Fetch project data from API
@@ -369,7 +369,7 @@ export default class DatavizProvider extends Provider {
             // Always use signed URL flow to avoid Vercel 4.5MB body size limit
             const dataString = JSON.stringify(map);
             if (isPublic) {
-                showToast(getAppMessage('toast.projectSavingLatest'), 'info');
+                showToast(getAppMessage('processing.projectSave'), 'info', 5000);
                 const result = await this._uploadViaSignedUrl(
                     token,
                     name,
@@ -384,7 +384,7 @@ export default class DatavizProvider extends Provider {
                 }
                 cachedProjectId = projectId;
 
-                showToast(getAppMessage('toast.shareUpdating'), 'info');
+                showToast(getAppMessage('processing.share'), 'info', 5000);
                 const shareResult = await this._publishShare(token, projectId, name);
 
                 cachedShareId = shareResult?.shareId || shareResult?.id || null;
@@ -406,7 +406,7 @@ export default class DatavizProvider extends Provider {
                 };
             }
 
-            showToast(getAppMessage('toast.projectSaving'), 'info');
+            showToast(getAppMessage('processing.projectSave'), 'info', 5000);
             const result = await this._uploadViaSignedUrl(
                 token,
                 name,

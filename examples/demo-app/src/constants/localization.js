@@ -118,7 +118,15 @@ export const appMessages = {
     'toast.projectSaving': 'Saving project...',
     'toast.projectSaved': 'Project saved.',
     'toast.shareUpdateFailed': 'Failed to update the share URL.',
-    'toast.projectSaveFailed': 'Failed to save the project.'
+    'toast.projectSaveFailed': 'Failed to save the project.',
+    'processing.projectList': 'Loading project list...',
+    'processing.projectLoad': 'Loading project...',
+    'processing.projectSave': 'Saving project...',
+    'processing.savePrep': 'Preparing save...',
+    'processing.sample': 'Loading sample data...',
+    'processing.file': 'Reading file...',
+    'processing.export': 'Exporting...',
+    'processing.share': 'Creating share...'
   },
   ja: {
     'header.loadData': 'データファイルの読込',
@@ -139,7 +147,15 @@ export const appMessages = {
     'toast.projectSaving': 'プロジェクトを保存しています...',
     'toast.projectSaved': 'プロジェクトを保存しました',
     'toast.shareUpdateFailed': 'シェアURLの更新に失敗しました',
-    'toast.projectSaveFailed': 'プロジェクトの保存に失敗しました'
+    'toast.projectSaveFailed': 'プロジェクトの保存に失敗しました',
+    'processing.projectList': 'プロジェクト一覧を読み込み中です',
+    'processing.projectLoad': 'プロジェクトを読み込み中です',
+    'processing.projectSave': 'プロジェクトを保存中です',
+    'processing.savePrep': '保存準備中です',
+    'processing.sample': 'サンプルデータを読み込み中です',
+    'processing.file': 'ファイルを読み込み中です',
+    'processing.export': '書き出し中です',
+    'processing.share': 'シェアを作成中です'
   }
 };
 

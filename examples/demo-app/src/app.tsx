@@ -89,6 +89,52 @@ import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, { config as rowDataConfig } from './data/sample-row-data';
 import { processCsvData, processGeojson, processRowObject } from '@kepler.gl/processors';
 
+function showProcessingToast(message: string) {
+  const header = getToolHeader();
+  if (header && typeof header.showMessage === 'function') {
+    header.showMessage(message, 'info', 5000);
+  }
+}
+
+function installHeaderProcessingToasts(header: any, locale: string) {
+  if (!header) return;
+
+  header.__dvzProcessingToastLocale = locale;
+  if (header.__dvzProcessingToastsInstalled === '1') return;
+
+  if (typeof header.showLoadModal === 'function') {
+    const originalShowLoadModal = header.showLoadModal.bind(header);
+    header.showLoadModal = (...args: any[]) => {
+      showProcessingToast(
+        getAppMessage('processing.projectList', header.__dvzProcessingToastLocale || locale)
+      );
+      return originalShowLoadModal(...args);
+    };
+  }
+
+  if (typeof header.loadProject === 'function') {
+    const originalLoadProject = header.loadProject.bind(header);
+    header.loadProject = (...args: any[]) => {
+      showProcessingToast(
+        getAppMessage('processing.projectLoad', header.__dvzProcessingToastLocale || locale)
+      );
+      return originalLoadProject(...args);
+    };
+  }
+
+  if (typeof header.saveProject === 'function') {
+    const originalSaveProject = header.saveProject.bind(header);
+    header.saveProject = (...args: any[]) => {
+      showProcessingToast(
+        getAppMessage('processing.projectSave', header.__dvzProcessingToastLocale || locale)
+      );
+      return originalSaveProject(...args);
+    };
+  }
+
+  header.__dvzProcessingToastsInstalled = '1';
+}
+
 const SAVE_THUMBNAIL_TIMEOUT_MS = 10000;
 
 /* eslint-enable no-unused-vars */
@@ -406,6 +452,8 @@ const App = props => {
     const header = document.querySelector('dataviz-tool-header');
     console.log('[App] header element:', header ? 'found' : 'NOT FOUND');
     if (header) {
+      installHeaderProcessingToasts(header, locale);
+
       // Resolve logo path to absolute URL just in case
       // Ensure we resolve against the origin (root) to avoid issues when in sub-routes like /demo/map/
       const logoUrl = new URL(logoPng, window.location.origin + '/').href;
@@ -439,6 +487,7 @@ const App = props => {
               label: getAppMessage('header.loadSample', locale),
               action: () => {
                 console.log('[App] Loading sample project modal...');
+                showProcessingToast(getAppMessage('processing.sample', locale));
                 dispatch(toggleModal('addData'));
                 // Simulate user mechanism: wait for modal and click the "Sample Data" tab
                 setTimeout(() => {
@@ -474,6 +523,7 @@ const App = props => {
               label: getAppMessage('header.saveProject', locale),
               action: () => {
                 console.log('[App] Save button clicked');
+                showProcessingToast(getAppMessage('processing.savePrep', locale));
                 // Serialize current kepler.gl state
                 const projectData = keplerMapStateRef.current
                   ? KeplerGlSchema.save(keplerMapStateRef.current)
@@ -770,6 +820,7 @@ const App = props => {
     }
 
     if (id) {
+      showProcessingToast(getAppMessage('processing.sample', locale));
       dispatch(loadSampleConfigurations(id));
     }
 
@@ -779,6 +830,7 @@ const App = props => {
       (typeof query.dataUrl === 'string' && query.dataUrl) ||
       null;
     if (incomingDataUrl) {
+      showProcessingToast(getAppMessage('processing.sample', locale));
       dispatch(loadRemoteMap({dataUrl: incomingDataUrl}));
     }
 
@@ -794,6 +846,7 @@ const App = props => {
     dispatch,
     duckDbPluginEnabled,
     publicShareView,
+    locale,
     syncCurrentProjectId
   ]);
 
