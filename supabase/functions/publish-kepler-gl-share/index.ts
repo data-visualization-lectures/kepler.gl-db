@@ -12,14 +12,23 @@ import {
   noContentResponse,
   serializeUnknownError,
 } from "../_shared/http.ts";
+import {
+  buildShareUrl,
+  cloneJson,
+  decodeJwtSubject,
+  getProjectApiErrorCode,
+  getProjectApiPublicMessage,
+  getProjectApiPublicStatus,
+  normalizeShareOrigin,
+  readDatavizAccessToken,
+  resolveShareTitle,
+} from "./publish-utils.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const DATAVIZ_API_URL = Deno.env.get("DATAVIZ_API_URL") ||
   "https://api.dataviz.jp";
-const SHARE_ORIGIN =
-  (Deno.env.get("KEPLER_SHARE_ORIGIN") || "https://kepler-gl.dataviz.jp")
-    .replace(/\/+$/, "");
+const SHARE_ORIGIN = normalizeShareOrigin(Deno.env.get("KEPLER_SHARE_ORIGIN"));
 const SHARE_TABLE = "kepler_gl_shares";
 const SHARE_BUCKET = "kepler-gl-shares";
 const SNAPSHOT_TTL_SECONDS = 60 * 60;
@@ -29,50 +38,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 });
 
 const corsHeaders = createCorsHeaders(["POST", "OPTIONS"]);
-
-function readDatavizAccessToken(req: Request) {
-  const raw = req.headers.get("x-dataviz-authorization") || "";
-  const match = raw.match(/^Bearer\s+(.+)$/i);
-  return match?.[1]?.trim() || null;
-}
-
-function decodeJwtSubject(token: string | null) {
-  if (!token) return null;
-
-  try {
-    const [, payload] = token.split(".");
-    if (!payload) return null;
-
-    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
-    const decoded = atob(padded);
-    const parsed = JSON.parse(decoded);
-    return typeof parsed?.sub === "string" ? parsed.sub : null;
-  } catch (_error) {
-    return null;
-  }
-}
-
-function cloneJson<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value));
-}
-
-function resolveShareTitle(
-  projectData: Record<string, unknown>,
-  fallbackTitle: string,
-) {
-  const info = projectData.info && typeof projectData.info === "object"
-    ? projectData.info as Record<string, unknown>
-    : null;
-  const candidates = [
-    typeof info?.title === "string" ? info.title : "",
-    fallbackTitle,
-    "kepler.gl",
-  ];
-
-  return candidates.map((value) => String(value || "").trim()).find(Boolean) ||
-    "kepler.gl";
-}
 
 async function loadSavedProject(projectId: string, accessToken: string) {
   const response = await fetch(
@@ -218,10 +183,6 @@ async function createSnapshotUrl(snapshotStoragePath: string) {
   return data.signedUrl;
 }
 
-function buildShareUrl(shareId: string) {
-  return `${SHARE_ORIGIN}/shares/${encodeURIComponent(shareId)}`;
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return noContentResponse(corsHeaders);
@@ -280,7 +241,7 @@ Deno.serve(async (req) => {
         shareId: shareRow.id,
         title: shareRow.title,
         sourceProjectId: shareRow.source_project_id,
-        shareUrl: buildShareUrl(shareRow.id),
+        shareUrl: buildShareUrl(SHARE_ORIGIN, shareRow.id),
         snapshotUrl,
       },
       200,
@@ -295,30 +256,3 @@ Deno.serve(async (req) => {
     return errorResponse(error, corsHeaders);
   }
 });
-
-function getProjectApiPublicStatus(status: number) {
-  if (status === 401 || status === 403 || status === 404) {
-    return status;
-  }
-  return 502;
-}
-
-function getProjectApiErrorCode(status: number) {
-  if (status === 401 || status === 403) {
-    return "project_access_denied";
-  }
-  if (status === 404) {
-    return "project_not_found";
-  }
-  return "project_api_error";
-}
-
-function getProjectApiPublicMessage(status: number) {
-  if (status === 401 || status === 403) {
-    return "Project access denied";
-  }
-  if (status === 404) {
-    return "Project not found";
-  }
-  return "Project API request failed";
-}

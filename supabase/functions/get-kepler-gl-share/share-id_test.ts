@@ -1,4 +1,3 @@
-import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { isValidShareId } from "./share-id.ts";
 
 Deno.test("isValidShareId accepts canonical UUID values", () => {
@@ -21,3 +20,9 @@ Deno.test("isValidShareId rejects malformed share ids before database lookup", (
   );
   assertEquals(isValidShareId("1770c32238c74fb587e069419f08e441"), false);
 });
+
+function assertEquals(actual: unknown, expected: unknown) {
+  if (actual !== expected) {
+    throw new Error(`Expected ${String(expected)}, got ${String(actual)}`);
+  }
+}

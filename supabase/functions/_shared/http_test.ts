@@ -2,8 +2,52 @@ import {
   createCorsHeaders,
   errorResponse,
   HttpError,
+  jsonResponse,
+  noContentResponse,
   serializeUnknownError,
 } from "./http.ts";
+
+Deno.test("createCorsHeaders returns expected CORS policy", () => {
+  const headers = createCorsHeaders(["POST", "OPTIONS"]);
+
+  assertEquals(headers["Access-Control-Allow-Origin"], "*");
+  assertEquals(
+    headers["Access-Control-Allow-Headers"],
+    "content-type, x-dataviz-authorization",
+  );
+  assertEquals(headers["Access-Control-Allow-Methods"], "POST, OPTIONS");
+});
+
+Deno.test("noContentResponse returns empty preflight response", async () => {
+  const response = noContentResponse(createCorsHeaders(["GET", "OPTIONS"]));
+
+  assertEquals(response.status, 204);
+  assertEquals(
+    response.headers.get("Access-Control-Allow-Methods"),
+    "GET, OPTIONS",
+  );
+  assertEquals(await response.text(), "");
+});
+
+Deno.test("jsonResponse returns utf-8 JSON response with CORS headers", async () => {
+  const response = jsonResponse(
+    { ok: true },
+    201,
+    createCorsHeaders(["POST", "OPTIONS"]),
+  );
+  const payload = await response.json();
+
+  assertEquals(response.status, 201);
+  assertEquals(
+    response.headers.get("content-type"),
+    "application/json; charset=utf-8",
+  );
+  assertEquals(
+    response.headers.get("Access-Control-Allow-Methods"),
+    "POST, OPTIONS",
+  );
+  assertEquals(payload.ok, true);
+});
 
 Deno.test("errorResponse returns stable public error shape for HttpError", async () => {
   const response = errorResponse(
