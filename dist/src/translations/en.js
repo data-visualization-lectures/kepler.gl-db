@@ -370,7 +370,7 @@ var _default = exports["default"] = {
       shareUriSubtitle: 'Generate a map url to share with others',
       cloudTitle: 'Cloud storage',
       cloudSubtitle: 'Login and upload map data to your personal cloud storage',
-      shareDisclaimer: 'kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' + 'You can edit/delete the data file in your cloud account anytime.',
+      shareDisclaimer: 'With kepler.gl on Data Toolbox, you can publish a URL that anyone can access for your created data map. ' + 'When sharing, the latest state is saved before publication.',
       gotoPage: 'Go to your Kepler.gl {currentProvider} page'
     },
     statusPanel: {

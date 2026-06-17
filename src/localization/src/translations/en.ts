@@ -369,8 +369,8 @@ export default {
       cloudTitle: 'Cloud storage',
       cloudSubtitle: 'Login and upload map data to your personal cloud storage',
       shareDisclaimer:
-        'kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' +
-        'You can edit/delete the data file in your cloud account anytime.',
+        'With kepler.gl on Data Toolbox, you can publish a URL that anyone can access for your created data map. ' +
+        'When sharing, the latest state is saved before publication.',
       gotoPage: 'Go to your Kepler.gl {currentProvider} page'
     },
     statusPanel: {

@@ -304,7 +304,7 @@ var _default = exports["default"] = {
       shareUriSubtitle: '共有用に地図のURLを生成',
       cloudTitle: 'クラウドストレージ',
       cloudSubtitle: 'ログインして地図データを個人用クラウドストレージにアップロード',
-      shareDisclaimer: 'kepler.glは作成した地図をあなたのクラウドストレージに保存するため、そのURLを知っている人のみが地図やそのデータにアクセス可能です。' + 'クラウドストレージのアカウントでいつでもデータファイルを編集/削除することができます。',
+      shareDisclaimer: 'データの道具箱上のkepler.glでは、作成したデータ地図について、誰でもアクセス可能なURLを発行することができます。' + 'シェアする際には最新状態を保存した上で公開されます。',
       gotoPage: 'Kepler.glの{currentProvider}ページに移動'
     },
     statusPanel: {
