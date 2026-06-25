@@ -100,7 +100,7 @@ function installHeaderProcessingToasts(header: any, locale: string) {
   if (!header) return;
 
   header.__dvzProcessingToastLocale = locale;
-  if (header.__dvzProcessingToastsInstalled === '1') return;
+  if (header.__dvzNativeProjectProcessingToasts === '1' || header.__dvzProcessingToastsInstalled === '1') return;
 
   if (typeof header.showLoadModal === 'function') {
     const originalShowLoadModal = header.showLoadModal.bind(header);
