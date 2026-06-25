@@ -580,7 +580,6 @@ const App = props => {
             appName: 'kepler-gl',
             apiBaseUrl: 'https://api.dataviz.jp',  // 新APIを明示的に指定
             largeUploadEnabled: true,
-            largeUploadThresholdBytes: 4.5 * 1024 * 1024,
             onProjectLoad: async (projectData) => {
               console.log('[App] onProjectLoad callback called with projectData:', projectData);
               try {
