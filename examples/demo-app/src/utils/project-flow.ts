@@ -220,7 +220,7 @@ export function resolveProjectLoadTarget({
   pathname: string;
   routeId?: string;
 }) {
-  const queryProjectId = typeof query.project_id === 'string' ? query.project_id : null;
+  const queryProjectId = typeof query.projectId === 'string' ? query.projectId : null;
   const routeProjectId = typeof routeId === 'string' && pathname.startsWith('/projects/') ? routeId : null;
   const pathMatch = pathname.match(/^\/projects\/([^/]+)\/?$/);
   const pathProjectId = routeProjectId || (pathMatch ? decodeURIComponent(pathMatch[1]) : null);
