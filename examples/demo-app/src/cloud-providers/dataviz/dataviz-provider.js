@@ -35,10 +35,14 @@ function buildShareUrl(shareId, fullUrl = true) {
 }
 
 function showToast(message, type = 'success', duration) {
-    const toolHeader = document.querySelector('dataviz-tool-header');
+    const toolHeader = getToolHeader();
     if (toolHeader && toolHeader.showMessage) {
         toolHeader.showMessage(message, type, duration);
     }
+}
+
+function getToolHeader() {
+    return document.querySelector('dataviz-tool-header');
 }
 
 /**
@@ -365,25 +369,19 @@ export default class DatavizProvider extends Provider {
                 (isPublic || options.overwrite)
         );
 
-        try {
-            // Always use signed URL flow to avoid Vercel 4.5MB body size limit
-            const dataString = JSON.stringify(map);
-            if (isPublic) {
-                showToast(getAppMessage('processing.projectSave'), 'info', 5000);
-                const result = await this._uploadViaSignedUrl(
-                    token,
-                    name,
-                    map,
-                    dataString,
-                    thumbnailDataURI,
-                    shouldUpdate
-                );
-                const projectId = result?.project?.id || cachedProjectId;
-                if (!projectId) {
-                    throw new Error('Saved project id is unavailable');
-                }
-                cachedProjectId = projectId;
+        let projectSaved = false;
 
+        try {
+            const result = await this._saveViaToolHeader(name, map, thumbnailDataURI, shouldUpdate);
+            const savedProject = this._normalizeSavedProject(result);
+            const projectId = savedProject.id || (shouldUpdate ? cachedProjectId : null);
+            if (!projectId) {
+                throw new Error('Saved project id is unavailable');
+            }
+            cachedProjectId = projectId;
+            projectSaved = true;
+
+            if (isPublic) {
                 showToast(getAppMessage('processing.share'), 'info', 5000);
                 const shareResult = await this._publishShare(token, projectId, name);
 
@@ -406,24 +404,10 @@ export default class DatavizProvider extends Provider {
                 };
             }
 
-            showToast(getAppMessage('processing.projectSave'), 'info', 5000);
-            const result = await this._uploadViaSignedUrl(
-                token,
-                name,
-                map,
-                dataString,
-                thumbnailDataURI,
-                shouldUpdate
-            );
-
-            cachedProjectId = result.project.id;
-            showToast(getAppMessage('toast.projectSaved'), 'success');
-            return { id: result.project.id, project: result.project };
+            return { id: projectId, project: savedProject.project };
         } catch (error) {
-            if (isPublic) {
+            if (isPublic && projectSaved) {
                 showToast(getAppMessage('toast.shareUpdateFailed'), 'error');
-            } else {
-                showToast(getAppMessage('toast.projectSaveFailed'), 'error');
             }
             throw error;
         }
@@ -455,101 +439,37 @@ export default class DatavizProvider extends Provider {
         return payload || {};
     }
 
-    /**
-     * Signed URL upload: upload data directly to Supabase Storage (for payloads > 4MB)
-     */
-    async _uploadViaSignedUrl(token, name, map, dataString, thumbnailDataURI, shouldUpdate) {
-        const apiUrl = getApiUrl();
-
-        // Step 1: Get signed upload URL
-        const uploadUrlBody = { type: 'data' };
-        if (shouldUpdate) {
-            uploadUrlBody.project_id = cachedProjectId;
+    async _saveViaToolHeader(name, map, thumbnailDataURI, shouldUpdate) {
+        const toolHeader = getToolHeader();
+        if (!toolHeader || typeof toolHeader.saveProject !== 'function') {
+            throw new Error('dataviz-tool-header saveProject is unavailable');
         }
 
-        const urlResponse = await fetch(`${apiUrl}/projects-upload-url`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(uploadUrlBody)
+        if (shouldUpdate && cachedProjectId && typeof toolHeader.setProjectContext === 'function') {
+            toolHeader.setProjectContext({
+                sourceType: 'owned-project',
+                projectId: cachedProjectId,
+                projectName: name,
+                canOverwrite: true
+            });
+        } else if (!shouldUpdate && typeof toolHeader.clearProjectContext === 'function') {
+            toolHeader.clearProjectContext();
+        }
+
+        return toolHeader.saveProject({
+            name,
+            data: map,
+            thumbnailDataUri: thumbnailDataURI || null,
+            existingProjectId: shouldUpdate ? cachedProjectId : null
         });
-
-        if (!urlResponse.ok) {
-            throw new Error(await this._parseErrorResponse(urlResponse, shouldUpdate));
-        }
-
-        const { upload_url, storage_path, project_id } = await urlResponse.json();
-
-        // Step 2: Upload data directly to Storage
-        const storageResponse = await fetch(upload_url, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: dataString
-        });
-
-        if (!storageResponse.ok) {
-            throw new Error(`Failed to upload data to storage: ${storageResponse.status}`);
-        }
-
-        // Step 3: Send metadata to API
-        const { url, method } = this._getProjectEndpoint(shouldUpdate);
-        const metadataBody = shouldUpdate
-            ? { name, storage_uploaded: true }
-            : { name, app_name: 'kepler-gl', storage_path, project_id, storage_uploaded: true };
-
-        if (thumbnailDataURI) {
-            metadataBody.thumbnail = thumbnailDataURI;
-        }
-
-        const metaResponse = await fetch(url, {
-            method,
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(metadataBody)
-        });
-
-        if (!metaResponse.ok) {
-            throw new Error(await this._parseErrorResponse(metaResponse, shouldUpdate));
-        }
-
-        return metaResponse.json();
     }
 
-    _getProjectEndpoint(shouldUpdate) {
-        if (shouldUpdate) {
-            return { url: `${getApiUrl()}/projects/${cachedProjectId}`, method: 'PUT' };
-        }
-        return { url: `${getApiUrl()}/projects`, method: 'POST' };
-    }
-
-    async _parseErrorResponse(response, shouldUpdate) {
-        let errorMessage = `Failed to ${shouldUpdate ? 'update' : 'save'} project: ${response.status}`;
-        if (response.status === 413) {
-            return 'The map data is too large to save (exceeds server limit). Please reduce the dataset size or number of layers.';
-        }
-        try {
-            const errorData = await response.json();
-            if (errorData.error) {
-                errorMessage += ` - ${errorData.error}`;
-                if (errorData.detail) {
-                    errorMessage += `: ${errorData.detail}`;
-                } else if (errorData.message) {
-                    errorMessage += `: ${errorData.message}`;
-                }
-            }
-        } catch (e) {
-            try {
-                const errorText = await response.text();
-                if (errorText) {
-                    errorMessage += ` - ${errorText.substring(0, 200)}`;
-                }
-            } catch (_) {}
-        }
-        return errorMessage;
+    _normalizeSavedProject(result) {
+        const project = result && typeof result.project === 'object' ? result.project : result;
+        return {
+            id: project?.id || result?.id || null,
+            project: project && typeof project === 'object' ? project : { id: result?.id || null }
+        };
     }
 
 
