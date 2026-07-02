@@ -7,6 +7,9 @@ import './utils';
 // test reducers
 import './reducers';
 
+// test cloud providers
+import './cloud-providers';
+
 // test schemas
 import './schemas';
 
