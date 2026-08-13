@@ -70,4 +70,6 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 #### [Save and export](./k-save-and-export.md)
 
+dataviz.jp フォークの Dataviz Cloud 保存・`/shares/:id` 公開はリポジトリ直下の [DATAVIZ.md](../../DATAVIZ.md)。
+
 #### [FAQ](./i-FAQ.md)

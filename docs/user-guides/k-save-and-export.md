@@ -1,5 +1,7 @@
 # Save and Export
 
+> **dataviz.jp fork:** このフォークでは Dataviz Cloud にプロジェクトを保存し、公開 URL は `/shares/:id` になる。詳細はリポジトリ直下の [DATAVIZ.md](../../DATAVIZ.md)。以下の「client-side only / Dropbox のみ」は上流 kepler.gl の説明であり、Dataviz 経路には当てはまらない。公開 URL を `share.html` に置き換えないこと。
+
 ![Save and Export](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-save-and-export-1.png "activate interactions")
 
 kepler.gl is a client-side only application. In the demo app, the data you uploaded stays in your browser. kepler.gl does not send or store any user data to any backends. This rule poses an limitation on how you can save and share your maps.

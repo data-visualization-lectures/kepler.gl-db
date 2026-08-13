@@ -1,3 +1,6 @@
+# kepler.gl（dataviz.jp フォーク）
+
+Dataviz Cloud の保存・公開シェア（`publish-kepler-gl-share`、公開 URL は `/shares/:id`）は [DATAVIZ.md](./DATAVIZ.md)。上流の Dropbox 手順だけを正にしないこと。
 
 ## 手順
 
