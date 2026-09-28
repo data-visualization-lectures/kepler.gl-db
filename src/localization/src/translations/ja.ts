@@ -255,7 +255,25 @@ export default {
       resolutionTitle: '解像度',
       resolutionDescription: '印刷には高解像度が適しています。',
       mapLegendTitle: '地図の凡例',
-      mapLegendAdd: '地図に判例を追加'
+      mapLegendAdd: '地図に判例を追加',
+      formatTitle: '出力形式',
+      formatDescription: 'SVG では図形を編集できるベクターのまま出力します。',
+      svgSplitUnsupported: '2画面表示のときは SVG を選べません。',
+      svgLayersTitle: 'レイヤー',
+      svgLayersDescription: 'レイヤーごとに SVG の別グループとして出力します。',
+      svgModeVector: 'ベクター',
+      svgModeRaster: '画像（透過PNG）',
+      svgModeUnsupported: 'SVG非対応',
+      svgUnsupportedReason: '集計・3D・アイコン・軌跡・タイルのレイヤーは SVG に出力できません。',
+      svgHeavyWarning:
+        'ベクター図形が約 {count} 個あります。ほかのアプリで開くときに重くなる可能性があります。',
+      svgBasemapTitle: '背景地図',
+      svgBasemapDescription: '背景地図は画像として、独立したグループに入れます。',
+      svgBasemapNone: '含めない',
+      svgBasemapRaster: '画像として含める',
+      svgZipTitle: 'PNG ファイル',
+      svgZipAdd: '画像部分を PNG ファイルとしても出力（ZIP）',
+      svgZipDescription: 'SVG と、背景地図・Heatmap の PNG を 1 つの ZIP にまとめます。'
     },
     exportData: {
       datasetTitle: 'データセット',

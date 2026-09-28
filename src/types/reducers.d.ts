@@ -388,6 +388,13 @@ export declare type ExportImage = {
   error: Error | false;
   center: boolean;
   escapeXhtmlForWebpack?: boolean;
+  format: 'png' | 'svg';
+  svgBasemap: 'none' | 'raster';
+  svgExcludedLayerIds: string[];
+  // also put raster parts (basemap, heatmap) as png files into a zip with the svg
+  svgZip: boolean;
+  // svgExporting: used to attach svg-export-container to dom
+  svgExporting: boolean;
 };
 
 export type ExportData = {

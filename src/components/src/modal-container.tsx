@@ -205,12 +205,21 @@ export default function ModalContainerFactory(
       this._closeModal();
     };
 
+    _isSplit = () => this.props.visState.splitMaps?.length > 1;
+
     _onExportImage = () => {
-      if (!this.props.uiState.exportImage.processing) {
-        exportImage(this.props.uiState.exportImage, `${this.props.appName}.png`);
-        this.props.uiStateActions.cleanupExportImage();
-        this._closeModal();
+      const {exportImage: exportImageState} = this.props.uiState;
+      if (exportImageState.processing || exportImageState.svgExporting) {
+        return;
       }
+      if (exportImageState.format === 'svg' && !this._isSplit()) {
+        // svg-export-container downloads the file and closes the modal when finished
+        this.props.uiStateActions.setExportImageSetting({svgExporting: true});
+        return;
+      }
+      exportImage(exportImageState, `${this.props.appName}.png`);
+      this.props.uiStateActions.cleanupExportImage();
+      this._closeModal();
     };
 
     _onExportData = () => {
@@ -381,6 +390,8 @@ export default function ModalContainerFactory(
                 exportImage={uiState.exportImage}
                 mapW={containerW}
                 mapH={containerH}
+                visState={visState}
+                isSplit={this._isSplit()}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
                 cleanupExportImage={uiStateActions.cleanupExportImage}
               />
@@ -393,7 +404,7 @@ export default function ModalContainerFactory(
               onConfirm: this._onExportImage,
               confirmButton: {
                 large: true,
-                disabled: uiState.exportImage.processing,
+                disabled: uiState.exportImage.processing || uiState.exportImage.svgExporting,
                 children: 'modal.button.download'
               }
             };

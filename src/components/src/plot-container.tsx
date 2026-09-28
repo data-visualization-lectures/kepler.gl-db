@@ -11,7 +11,7 @@ import {
   scaleMapStyleByResolution,
   getCenterAndZoomFromBounds,
   convertToPng,
-  getScaleFromImageSize
+  getExportImageScale
 } from '@kepler.gl/utils';
 import { findMapBounds } from '@kepler.gl/reducers';
 import MapContainerFactory from './map-container';
@@ -54,7 +54,7 @@ PlotContainerFactory.deps = [MapContainerFactory, MapsLayoutFactory];
 // Remove mapbox logo in exported map, because it contains non-ascii characters
 // Remove split viewport UI controls from exported images when the legend is shown
 // Hide dataviz-tool-header during screenshot generation
-const StyledPlotContainer = styled.div`
+export const StyledPlotContainer = styled.div`
   .maplibregl-ctrl-bottom-left,
   .maplibregl-ctrl-bottom-right,
   .maplibre-attribution-container,
@@ -146,27 +146,18 @@ export default function PlotContainerFactory(
     const { mapState } = mapFields;
 
     // Memoize the scale calculation
-    const scale = useMemo(() => {
-      if (imageSize.scale) {
-        return imageSize.scale;
-      }
-
-      const calculatedScale = getScaleFromImageSize(
+    const scale = useMemo(
+      () => getExportImageScale(imageSize, mapState),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [
+        imageSize.scale,
         imageSize.imageW,
         imageSize.imageH,
-        mapState.width * (mapState.isSplit ? 2 : 1),
-        mapState.height
-      );
-
-      return calculatedScale > 0 ? calculatedScale : 1;
-    }, [
-      imageSize.scale,
-      imageSize.imageW,
-      imageSize.imageH,
-      mapState.width,
-      mapState.height,
-      mapState.isSplit
-    ]);
+        mapState.width,
+        mapState.height,
+        mapState.isSplit
+      ]
+    );
 
     // Memoize the map style
     const scaledMapStyle = useMemo(() => {

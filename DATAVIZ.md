@@ -29,3 +29,5 @@
 実装: `examples/demo-app/src/cloud-providers/dataviz/dataviz-provider.js`
 
 上流の画像 / CSV / HTML / JSON / Dropbox 書き出しは `docs/user-guides/k-save-and-export.md` のまま。
+
+このフォークでは「画像を出力」に SVG 形式を追加している。geojson / point / arc / line レイヤーはベクター、Heatmap と背景地図は画像として、それぞれ別グループに入れる（`src/utils/src/export-svg.ts`、`src/components/src/svg-export-container.tsx`）。ZIP 出力を選ぶと、SVG と背景地図・Heatmap の PNG ファイルを 1 つの ZIP にまとめる。

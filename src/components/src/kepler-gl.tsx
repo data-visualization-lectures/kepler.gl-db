@@ -55,6 +55,7 @@ import MapsLayoutFactory from './maps-layout';
 import BottomWidgetFactory from './bottom-widget';
 import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
+import SvgExportContainerFactory from './svg-export-container';
 import NotificationPanelFactory from './notification-panel';
 import GeoCoderPanelFactory from './geocoder-panel';
 import EffectManagerFactory from './effects/effect-manager';
@@ -246,6 +247,17 @@ export const plotContainerSelector = (props: KeplerGLProps) => ({
   splitMaps: props.visState.splitMaps
 });
 
+export const svgExportContainerSelector = (props: KeplerGLProps) => ({
+  exportImage: props.uiState.exportImage,
+  appName: props.appName ? props.appName : DEFAULT_KEPLER_GL_PROPS.appName,
+  mapFields: mapFieldsSelector(props),
+  addNotification: props.uiStateActions.addNotification,
+  setExportImageError: props.uiStateActions.setExportImageError,
+  setExportImageSetting: props.uiStateActions.setExportImageSetting,
+  cleanupExportImage: props.uiStateActions.cleanupExportImage,
+  toggleModal: props.uiStateActions.toggleModal
+});
+
 export const isSplitSelector = (props: KeplerGLProps) =>
   props.visState.splitMaps && props.visState.splitMaps.length > 1;
 
@@ -428,6 +440,7 @@ KeplerGlFactory.deps = [
   ModalContainerFactory,
   SidePanelFactory,
   PlotContainerFactory,
+  SvgExportContainerFactory,
   NotificationPanelFactory,
   DndContextFactory,
   EffectManagerFactory
@@ -441,6 +454,7 @@ function KeplerGlFactory(
   ModalContainer: ReturnType<typeof ModalContainerFactory>,
   SidePanel: ReturnType<typeof SidePanelFactory>,
   PlotContainer: ReturnType<typeof PlotContainerFactory>,
+  SvgExportContainer: ReturnType<typeof SvgExportContainerFactory>,
   NotificationPanel: ReturnType<typeof NotificationPanelFactory>,
   DndContext: ReturnType<typeof DndContextFactory>
 ): React.ComponentType<KeplerGLBasicProps & {selector: (...args: any[]) => KeplerGlState}> {
@@ -633,6 +647,9 @@ function KeplerGlFactory(
                         </MapsLayout>
                       </DndContext>
                       {isExportingImage && <PlotContainer {...plotContainerFields} />}
+                      {uiState.exportImage.svgExporting && (
+                        <SvgExportContainer {...svgExportContainerSelector(this.props)} />
+                      )}
                       {/* 1 geocoder: single mode OR split mode and synced viewports */}
                       {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (
                         <GeoCoderPanel

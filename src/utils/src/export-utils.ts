@@ -38,6 +38,22 @@ export function getScaleFromImageSize(imageW = 0, imageH = 0, mapW = 0, mapH = 0
   return base / mapBase;
 }
 
+export function getExportImageScale(
+  imageSize: ExportImage['imageSize'],
+  mapState: {width: number; height: number; isSplit?: boolean}
+): number {
+  if (imageSize.scale) {
+    return imageSize.scale;
+  }
+  const scale = getScaleFromImageSize(
+    imageSize.imageW,
+    imageSize.imageH,
+    mapState.width * (mapState.isSplit ? 2 : 1),
+    mapState.height
+  );
+  return scale > 0 ? scale : 1;
+}
+
 export function calculateExportImageSize({
   mapW,
   mapH,

@@ -77,10 +77,20 @@ export {
   exportMap,
   exportToJsonString,
   default as exporters,
+  getExportImageScale,
   getMapJSON,
   getScaleFromImageSize,
   isMSEdge
 } from './export-utils';
+export {
+  buildExportSvg,
+  buildExportSvgZip,
+  countSvgVectorElements,
+  getRenderedLayers,
+  getSvgExportMode,
+  getSvgLegendSections
+} from './export-svg';
+export type {SvgExportMode, SvgRasters, BuildExportSvgOptions} from './export-svg';
 export {getFormatValue, getDefaultTimeFormat} from './format';
 export {setLayerBlending} from './gl-utils';
 export {flattenMessages, mergeMessages} from './locale-utils';

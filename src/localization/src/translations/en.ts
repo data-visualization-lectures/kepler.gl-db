@@ -322,7 +322,25 @@ export default {
       resolutionTitle: 'Resolution',
       resolutionDescription: 'High resolution is better for prints.',
       mapLegendTitle: 'Map Legend',
-      mapLegendAdd: 'Add legend on map'
+      mapLegendAdd: 'Add legend on map',
+      formatTitle: 'Format',
+      formatDescription: 'SVG keeps shapes as editable vectors.',
+      svgSplitUnsupported: 'SVG is not available in split map view.',
+      svgLayersTitle: 'Layers',
+      svgLayersDescription: 'Each layer becomes a separate group in the SVG.',
+      svgModeVector: 'Vector',
+      svgModeRaster: 'Image (transparent PNG)',
+      svgModeUnsupported: 'Not supported in SVG',
+      svgUnsupportedReason: 'Aggregated, 3D, icon, trip and tile layers cannot be exported as SVG.',
+      svgHeavyWarning:
+        'About {count} vector shapes. The file may be heavy to open in other applications.',
+      svgBasemapTitle: 'Base Map',
+      svgBasemapDescription: 'The base map is embedded as an image in its own group.',
+      svgBasemapNone: 'Exclude',
+      svgBasemapRaster: 'Include as image',
+      svgZipTitle: 'PNG Files',
+      svgZipAdd: 'Also export image parts as PNG files (ZIP)',
+      svgZipDescription: 'Bundles the SVG with base map and heatmap PNGs into one ZIP file.'
     },
     exportData: {
       datasetTitle: 'Dataset',

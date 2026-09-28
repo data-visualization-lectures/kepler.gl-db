@@ -5356,6 +5356,7 @@ __metadata:
     d3-format: "npm:^2.0.0"
     d3-interpolate: "npm:^2.0.1"
     decimal.js: "npm:^10.2.0"
+    fflate: "npm:^0.8.0"
     global: "npm:^4.3.0"
     h3-js: "npm:^3.1.0"
     keymirror: "npm:^0.1.1"

@@ -154,7 +154,12 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   processing: false,
   error: false,
   // whether to apply fix for uglify error in dom-to-image (should be true for webpack builds)
-  escapeXhtmlForWebpack: true
+  escapeXhtmlForWebpack: true,
+  format: 'png',
+  svgBasemap: 'raster',
+  svgExcludedLayerIds: [],
+  svgZip: false,
+  svgExporting: false
 };
 
 export const DEFAULT_LOAD_FILES = {
@@ -584,7 +589,8 @@ export const cleanupExportImageUpdater = (state: UiState): UiState => ({
     imageDataUri: '',
     error: false,
     processing: false,
-    center: false
+    center: false,
+    svgExporting: false
   }
 });
 
