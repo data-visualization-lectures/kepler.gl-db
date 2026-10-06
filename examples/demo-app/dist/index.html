@@ -34,6 +34,18 @@
       font-family: sans-serif;
     }
 
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--dataviz-app-top-offset);
+      background: var(--dataviz-tool-header-background);
+      pointer-events: none;
+      z-index: 9998;
+    }
+
     #root {
       width: 100vw;
       height: calc(100vh - var(--dataviz-app-top-offset));
@@ -59,9 +71,11 @@
       left: 0;
       right: 0;
       bottom: -6px;
-      height: 6px;
+      /* Overlap the header by 1px to cover its light bottom border. */
+      height: 7px;
       background: var(--dataviz-tool-header-background);
       pointer-events: none;
+      z-index: 1;
     }
 
     html.public-share-route dataviz-header,
