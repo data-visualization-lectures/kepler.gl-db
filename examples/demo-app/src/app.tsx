@@ -224,7 +224,9 @@ const PUBLIC_LOADING_MASK_STYLE = {
 };
 
 const APP_TOP_OFFSET_CSS_VAR = '--dataviz-app-top-offset';
-const DEFAULT_APP_TOP_OFFSET = 96;
+// Keep the application below both fixed shared headers even before their
+// custom elements finish loading and reporting their final dimensions.
+const DEFAULT_APP_TOP_OFFSET = 104;
 
 function getVisibleHeaderBottom(selector: string) {
   const element = document.querySelector(selector);
@@ -435,10 +437,11 @@ const App = props => {
 
     const toolHeaderBottom = getVisibleHeaderBottom('dataviz-tool-header');
     const globalHeaderBottom = getVisibleHeaderBottom('dataviz-header');
-    const nextOffset =
-      toolHeaderBottom > 0
-        ? Math.max(globalHeaderBottom, toolHeaderBottom)
-        : DEFAULT_APP_TOP_OFFSET;
+    const nextOffset = Math.max(
+      DEFAULT_APP_TOP_OFFSET,
+      globalHeaderBottom,
+      toolHeaderBottom
+    );
 
     setAppTopOffset(nextOffset);
     return nextOffset;
