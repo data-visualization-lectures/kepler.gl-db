@@ -16,7 +16,8 @@ import {
   isPlainObject,
   hexToRgb,
   colorMaybeToRGB,
-  getApplicationConfig
+  getApplicationConfig,
+  isImportBasedStyle
 } from '@kepler.gl/utils';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {
@@ -27,7 +28,8 @@ import {
   DEFAULT_BLDG_COLOR,
   DEFAULT_BACKGROUND_COLOR,
   BASE_MAP_BACKGROUND_LAYER_IDS,
-  DEFAULT_BASE_MAP_STYLE
+  DEFAULT_BASE_MAP_STYLE,
+  NO_BASEMAP_ICON
 } from '@kepler.gl/constants';
 import {ACTION_TASK, LOAD_MAP_STYLE_TASK} from '@kepler.gl/tasks';
 import {rgb} from 'd3-color';
@@ -194,6 +196,10 @@ export function getMapStyles({
   // style might not be loaded yet
   if (!mapStyle || !mapStyle.style) {
     return {};
+  }
+
+  if (isImportBasedStyle(mapStyle.style)) {
+    return {bottomMapStyle: mapStyle.style, topMapStyle: null, editable: 0};
   }
 
   const editable = Object.keys(visibleLayerGroups).length;
@@ -488,7 +494,12 @@ export const loadMapStylesUpdater = (
       ...accu,
       [id]: {
         ...newStyles[id],
-        layerGroups: newStyles[id].layerGroups || getLayerGroupsFromStyle(newStyles[id].style)
+        layerGroups: isImportBasedStyle(newStyles[id].style)
+          ? []
+          : newStyles[id].layerGroups || getLayerGroupsFromStyle(newStyles[id].style),
+        ...(isImportBasedStyle(newStyles[id].style)
+          ? {icon: `${getApplicationConfig().cdnUrl}/${NO_BASEMAP_ICON}`}
+          : {})
       }
     }),
     {}
@@ -662,31 +673,45 @@ export const resetMapConfigMapStyleUpdater = (state: MapStyle): MapStyle => {
 export const loadCustomMapStyleUpdater = (
   state: MapStyle,
   {payload: {icon, style, error}}: MapStyleActions.LoadCustomMapStyleUpdaterAction
-): MapStyle => ({
-  ...state,
-  // @ts-expect-error
-  inputStyle: {
-    ...state.inputStyle,
-    // style json and icon will load asynchronously
-    ...(style
-      ? {
-          id:
-            state.inputStyle.custom === 'MANAGED'
-              ? state.inputStyle.id // custom MANAGED type
-              : // @ts-expect-error
-                style.id || generateHashId(), // custom LOCAL type
-          // make a copy of the style object
-          style: cloneDeep(style),
-          // @ts-expect-error
-          label: state.inputStyle.label || style.name,
-          // gathering layer group info from style json
-          layerGroups: getLayerGroupsFromStyle(style)
-        }
-      : {}),
-    ...(icon ? {icon} : {}),
-    ...(error !== undefined ? {error} : {})
-  }
-});
+): MapStyle => {
+  const importBased = isImportBasedStyle(style);
+  const isMapboxStyleUrl =
+    state.inputStyle.url?.startsWith('mapbox://') || state.inputStyle.url?.includes('mapbox.com');
+  const loadedIcon = importBased
+    ? `${getApplicationConfig().cdnUrl}/${NO_BASEMAP_ICON}`
+    : icon ||
+      (style && isMapboxStyleUrl
+        ? getStyleImageIcon({
+            styleUrl: state.inputStyle.url || '',
+            mapboxApiAccessToken:
+              state.inputStyle.accessToken || state.mapboxApiAccessToken || '',
+            mapboxApiUrl: state.mapboxApiUrl || DEFAULT_MAPBOX_API_URL
+          })
+        : undefined);
+
+  return {
+    ...state,
+    // @ts-expect-error
+    inputStyle: {
+      ...state.inputStyle,
+      ...(style
+        ? {
+            id:
+              state.inputStyle.custom === 'MANAGED'
+                ? state.inputStyle.id
+                : // @ts-expect-error
+                  style.id || generateHashId(),
+            style: cloneDeep(style),
+            // @ts-expect-error
+            label: state.inputStyle.label || style.name,
+            layerGroups: importBased ? [] : getLayerGroupsFromStyle(style)
+          }
+        : {}),
+      ...(loadedIcon ? {icon: loadedIcon} : {}),
+      ...(error !== undefined ? {error} : {})
+    }
+  };
+};
 
 /**
  * Input a custom map style object
@@ -699,7 +724,11 @@ export const inputMapStyleUpdater = (
 ): MapStyle => {
   const updated = {
     ...state.inputStyle,
-    ...inputStyle
+    ...inputStyle,
+    ...(Object.prototype.hasOwnProperty.call(inputStyle, 'url') &&
+    inputStyle.url !== state.inputStyle.url
+      ? {style: null, error: false}
+      : {})
   };
 
   // differentiate between either a url to hosted style json that needs an icon url,
@@ -709,14 +738,16 @@ export const inputMapStyleUpdater = (
     updated.url?.startsWith('mapbox://') || updated.url?.includes('mapbox.com');
 
   const icon =
-    !isUpdatedIconDataUri && isMapboxStyleUrl
+    !isUpdatedIconDataUri && isMapboxStyleUrl && updated.style
       ? // Get image icon urls only for mapbox map lib.
-        getStyleImageIcon({
-          mapState,
-          styleUrl: updated.url || '',
-          mapboxApiAccessToken: updated.accessToken || state.mapboxApiAccessToken || '',
-          mapboxApiUrl: state.mapboxApiUrl || DEFAULT_MAPBOX_API_URL
-        })
+        isImportBasedStyle(updated.style)
+        ? `${getApplicationConfig().cdnUrl}/${NO_BASEMAP_ICON}`
+        : getStyleImageIcon({
+            mapState,
+            styleUrl: updated.url || '',
+            mapboxApiAccessToken: updated.accessToken || state.mapboxApiAccessToken || '',
+            mapboxApiUrl: state.mapboxApiUrl || DEFAULT_MAPBOX_API_URL
+          })
       : updated.icon;
 
   return {

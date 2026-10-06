@@ -3,7 +3,6 @@
 
 import React, {useCallback, useEffect, useMemo, useReducer, useRef, useState} from 'react';
 import styled from 'styled-components';
-import {Map} from 'react-map-gl';
 import debounce from 'lodash/debounce';
 import {
   buildExportSvg,
@@ -248,7 +247,6 @@ export default function SvgExportContainerFactory(
         : {...scaledMapStyle, bottomMapStyle: EMPTY_MAPBOX_STYLE, topMapStyle: null},
       mapState: exportMapState,
       mapControls: {mapLegend: {show: false, active: false}},
-      MapComponent: Map,
       onMapRender,
       isExport: true,
       deckGlProps: {

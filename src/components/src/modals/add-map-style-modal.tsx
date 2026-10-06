@@ -5,7 +5,6 @@ import React, {Component} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
 import classnames from 'classnames';
 import styled from 'styled-components';
-import {Map, MapboxMap, MapRef} from 'react-map-gl';
 import {
   StyledModalContent,
   InputLight,
@@ -22,6 +21,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {NO_BASEMAP_ICON} from '@kepler.gl/constants';
 import {InputStyle, MapState} from '@kepler.gl/types';
 import {ActionHandler, inputMapStyle, loadCustomMapStyle} from '@kepler.gl/actions';
+import {getDefaultMapComponent} from '../map-components';
 
 const MapH = 190;
 const MapW = 264;
@@ -136,9 +136,9 @@ function AddMapStyleModalFactory() {
       return null;
     }
 
-    _map: MapboxMap | undefined | null;
+    _map: any;
 
-    _setMapRef = (mapRef: MapRef) => {
+    _setMapRef = (mapRef: any) => {
       // Handle change of the basemap library
       if (this._map && mapRef) {
         const map = mapRef.getMap();
@@ -177,6 +177,7 @@ function AddMapStyleModalFactory() {
 
       const baseMapLibraryName = getBaseMapLibrary(inputStyle);
       const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
+      const MapComponent = getDefaultMapComponent(baseMapLibraryName);
 
       const mapboxApiAccessToken = inputStyle.accessToken || this.props.mapboxApiAccessToken;
       const mapProps = {
@@ -184,7 +185,9 @@ function AddMapStyleModalFactory() {
         // TODO baseApiUrl should be taken into account in transformRequest as we use dynamic mapLib import
         // baseApiUrl: mapboxApiUrl,
         mapboxAccessToken: mapboxApiAccessToken,
-        mapLib: baseMapLibraryConfig.getMapLib(),
+        ...(baseMapLibraryName === 'maplibre'
+          ? {mapLib: baseMapLibraryConfig.getMapLib()}
+          : {}),
         preserveDrawingBuffer: true,
         transformRequest:
           this.props.transformRequest?.(mapboxApiAccessToken) ||
@@ -299,7 +302,7 @@ function AddMapStyleModalFactory() {
                   <div className="preview-image-spinner" />
                 ) : (
                   <StyledMapContainer>
-                    <Map
+                    <MapComponent
                       {...mapProps}
                       ref={this._setMapRef}
                       key={`${baseMapLibraryName}-${this.state.reRenderKey}-${inputStyle.url}-${mapboxApiAccessToken}`}

@@ -484,7 +484,8 @@ export default function ModalContainerFactory(
                 disabled:
                   mapStyle.inputStyle.error ||
                   !mapStyle.inputStyle.url ||
-                  !mapStyle.inputStyle.label,
+                  !mapStyle.inputStyle.label ||
+                  !mapStyle.inputStyle.style,
                 children: 'modal.button.addStyle'
               }
             };

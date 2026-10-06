@@ -4,7 +4,7 @@
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {Map, MapRef} from 'react-map-gl';
+import type {MapRef} from 'react-map-gl';
 import {PickInfo} from '@deck.gl/core/lib/deck';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
@@ -62,6 +62,7 @@ import {
   GetMapRef
 } from '@kepler.gl/utils';
 import {breakPointValues} from '@kepler.gl/styles';
+import {getDefaultMapComponent} from './map-components';
 
 // default-settings
 import {
@@ -337,7 +338,7 @@ export interface MapContainerProps {
   locale?: any;
   theme?: any;
   editor?: any;
-  MapComponent?: typeof Map;
+  MapComponent?: React.ElementType;
   deckGlProps?: any;
   onDeckInitialized?: (a: any, b: any) => void;
   onViewStateChange?: (viewport: Viewport) => void;
@@ -379,7 +380,6 @@ export default function MapContainerFactory(
     declare context: React.ContextType<typeof MapViewStateContext>;
 
     static defaultProps = {
-      MapComponent: Map,
       deckGlProps: {},
       index: 0,
       primary: true
@@ -1049,7 +1049,7 @@ export default function MapContainerFactory(
         mapState,
         mapStyle,
         mapStateActions,
-        MapComponent = Map,
+        MapComponent: MapComponentOverride,
         mapboxApiAccessToken,
         // mapboxApiUrl,
         mapControls,
@@ -1079,6 +1079,7 @@ export default function MapContainerFactory(
       const baseMapLibraryName = getBaseMapLibrary(currentStyle);
       const baseMapLibraryConfig =
         getApplicationConfig().baseMapLibraryConfig?.[baseMapLibraryName];
+      const MapComponent = MapComponentOverride || getDefaultMapComponent(baseMapLibraryName);
 
       const internalViewState = this.context?.getInternalViewState(index);
       const mapProps = {
@@ -1086,7 +1087,9 @@ export default function MapContainerFactory(
         preserveDrawingBuffer: true,
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         // baseApiUrl: mapboxApiUrl,
-        mapLib: baseMapLibraryConfig.getMapLib(),
+        ...(baseMapLibraryName === 'maplibre'
+          ? {mapLib: baseMapLibraryConfig.getMapLib()}
+          : {}),
         transformRequest:
           this.props.transformRequest ||
           transformRequest(currentStyle?.accessToken || mapboxApiAccessToken)
@@ -1179,7 +1182,9 @@ export default function MapContainerFactory(
               style={MAP_STYLE.top}
               mapboxAccessToken={mapProps.mapboxAccessToken}
               transformRequest={mapProps.transformRequest}
-              mapLib={baseMapLibraryConfig.getMapLib()}
+              {...(baseMapLibraryName === 'maplibre'
+                ? {mapLib: baseMapLibraryConfig.getMapLib()}
+                : {})}
               {...topMapContainerProps}
             />
           ) : null}

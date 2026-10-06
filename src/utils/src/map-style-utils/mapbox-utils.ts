@@ -61,6 +61,17 @@ export const transformRequest = (
 
 type StyleWithSources = {
   sources?: Record<string, any>;
+  imports?: unknown[];
+};
+
+/**
+ * Returns true for styles that compose a basemap through Style Spec imports.
+ * Imported layers must be left intact because they cannot be split into
+ * kepler.gl's legacy layer groups.
+ */
+export const isImportBasedStyle = (style?: StyleWithSources | null): boolean => {
+  const imports = style?.imports;
+  return Array.isArray(imports) && imports.length > 0;
 };
 
 export const getBaseMapLibrary = (baseMapStyle?: {
@@ -72,7 +83,10 @@ export const getBaseMapLibrary = (baseMapStyle?: {
       return MAP_LIB_OPTIONS.MAPBOX;
     }
 
-    if ((baseMapStyle.style as StyleWithSources)?.sources?.['mapbox'])
+    if (
+      (baseMapStyle.style as StyleWithSources)?.sources?.['mapbox'] ||
+      isImportBasedStyle(baseMapStyle.style as StyleWithSources)
+    )
       return MAP_LIB_OPTIONS.MAPBOX;
   }
 
