@@ -695,3 +695,72 @@ test('#file-handler -> readFileInBatches.keplerMap -> processFileData', async t 
 
   t.end();
 });
+
+const SHIFT_JIS_CSV_BYTES = Uint8Array.from([
+  110, 97, 109, 101, 44, 108, 97, 116, 44, 108, 110, 103, 10, 147, 140, 139, 158, 137, 119, 44, 51,
+  53, 46, 54, 56, 49, 50, 51, 54, 44, 49, 51, 57, 46, 55, 54, 55, 49, 50, 53, 10, 145, 229, 141, 227,
+  137, 119, 44, 51, 52, 46, 55, 48, 50, 52, 56, 53, 44, 49, 51, 53, 46, 52, 57, 53, 57, 53, 49, 10
+]);
+
+const SHIFT_JIS_GEOJSON_BYTES = Uint8Array.from([
+  123, 34, 116, 121, 112, 101, 34, 58, 34, 70, 101, 97, 116, 117, 114, 101, 67, 111, 108, 108, 101,
+  99, 116, 105, 111, 110, 34, 44, 34, 102, 101, 97, 116, 117, 114, 101, 115, 34, 58, 91, 123, 34,
+  116, 121, 112, 101, 34, 58, 34, 70, 101, 97, 116, 117, 114, 101, 34, 44, 34, 112, 114, 111, 112,
+  101, 114, 116, 105, 101, 115, 34, 58, 123, 34, 110, 97, 109, 101, 34, 58, 34, 147, 140, 139, 158,
+  137, 119, 34, 125, 44, 34, 103, 101, 111, 109, 101, 116, 114, 121, 34, 58, 123, 34, 116, 121, 112,
+  101, 34, 58, 34, 80, 111, 110, 116, 34, 44, 34, 99, 111, 111, 114, 100, 105, 110, 97, 116, 101,
+  115, 34, 58, 91, 49, 51, 57, 46, 55, 54, 55, 49, 50, 53, 44, 51, 53, 46, 54, 56, 49, 50, 51, 54,
+  93, 125, 125, 93, 125
+]);
+
+const UTF8_JAPANESE_CSV =
+  'name,lat,lng\n東京駅,35.681236,139.767125\n大阪駅,34.702485,135.495951\n';
+
+async function collectLastBatch(file) {
+  const gen = await readFileInBatches({file, fileList: []});
+  let last = null;
+  let batch = await gen.next();
+  while (!batch.done) {
+    last = batch.value;
+    batch = await gen.next();
+  }
+  return last;
+}
+
+test('#file-handler -> Shift JIS CSV decodes to UTF-8 rows', async t => {
+  const file = new File([SHIFT_JIS_CSV_BYTES], 'tokyo-sjis.csv', {type: 'text/csv'});
+  const content = await collectLastBatch(file);
+  const processed = await processFileData({content, fileCache: []});
+  const {fields, rows} = processed[0].data;
+  const nameIndex = fields.findIndex(field => field.name === 'name');
+
+  t.ok(nameIndex >= 0, 'should keep the name column');
+  t.equal(rows.length, 2, 'should load two rows');
+  t.equal(rows[0][nameIndex], '東京駅', 'first row should be 東京駅');
+  t.equal(rows[1][nameIndex], '大阪駅', 'second row should be 大阪駅');
+  t.end();
+});
+
+test('#file-handler -> Shift JIS GeoJSON decodes to UTF-8 properties', async t => {
+  const file = new File([SHIFT_JIS_GEOJSON_BYTES], 'tokyo-sjis.geojson', {type: ''});
+  const content = await collectLastBatch(file);
+  const processed = await processFileData({content, fileCache: []});
+  const {fields, rows} = processed[0].data;
+  const nameIndex = fields.findIndex(field => field.name === 'name');
+
+  t.ok(nameIndex >= 0, 'should keep the name property');
+  t.equal(rows[0][nameIndex], '東京駅', 'GeoJSON name should be 東京駅');
+  t.end();
+});
+
+test('#file-handler -> UTF-8 Japanese CSV still loads as UTF-8', async t => {
+  const file = new File([UTF8_JAPANESE_CSV], 'tokyo-utf8.csv', {type: 'text/csv'});
+  const content = await collectLastBatch(file);
+  const processed = await processFileData({content, fileCache: []});
+  const {fields, rows} = processed[0].data;
+  const nameIndex = fields.findIndex(field => field.name === 'name');
+
+  t.equal(rows[0][nameIndex], '東京駅', 'UTF-8 CSV should still load 東京駅');
+  t.equal(rows[1][nameIndex], '大阪駅', 'UTF-8 CSV should still load 大阪駅');
+  t.end();
+});

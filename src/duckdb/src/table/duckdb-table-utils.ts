@@ -14,6 +14,7 @@ import {DataType} from 'apache-arrow/type';
 import {DuckDBDataProtocol} from '@duckdb/duckdb-wasm';
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
+import {decodeUploadedTextFile} from '@kepler.gl/processors';
 import {ProtoDatasetField} from '@kepler.gl/types';
 import {DatabaseConnection, getApplicationConfig} from '@kepler.gl/utils';
 
@@ -459,6 +460,11 @@ export async function tableFromFile(file: File | null): Promise<null | Error> {
     return new Error("File Drag & Drop: File extension isn't supported");
   }
 
+  let sourceFile = file;
+  if (fileExt === 'csv' || fileExt === 'json' || fileExt === 'geojson') {
+    sourceFile = await decodeUploadedTextFile(file);
+  }
+
   const db = await getApplicationConfig().database;
   if (!db) {
     return new Error('The database is not configured properly.');
@@ -475,13 +481,18 @@ export async function tableFromFile(file: File | null): Promise<null | Error> {
       load spatial;`);
 
     if (fileExt === 'arrow') {
-      const arrayBuffer = await file.arrayBuffer();
+      const arrayBuffer = await sourceFile.arrayBuffer();
       const uint8Array = new Uint8Array(arrayBuffer);
       const arrowTable = arrow.tableFromIPC(uint8Array);
 
       await c.insertArrowTable(arrowTable, {name: tableName});
     } else {
-      await db.registerFileHandle(sourceName, file, DuckDBDataProtocol.BROWSER_FILEREADER, true);
+      await db.registerFileHandle(
+        sourceName,
+        sourceFile,
+        DuckDBDataProtocol.BROWSER_FILEREADER,
+        true
+      );
 
       if (fileExt === 'csv') {
         await c.query(`
