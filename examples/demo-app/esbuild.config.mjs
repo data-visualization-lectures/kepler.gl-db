@@ -12,6 +12,7 @@ import { join } from 'node:path';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const KeplerPackage = require('../../package.json');
+const {RESOLVE_ALIASES} = require('../../webpack/shared-webpack-configuration');
 
 const args = process.argv;
 const isProductionBuild = args.includes('--build');
@@ -353,7 +354,7 @@ function openURL(url) {
         sourcemap: true,
         // add alias to resolve libraries so there is only one copy of them
         ...(process.env.NODE_ENV === 'local'
-          ? { alias: localAliases }
+          ? { alias: {...RESOLVE_ALIASES, ...localAliases} }
           : { alias: getThirdPartyLibraryAliases(false) }),
         banner: {
           js: `new EventSource('/esbuild').addEventListener('change', () => location.reload());`

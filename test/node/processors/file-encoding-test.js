@@ -9,8 +9,13 @@ import {
   detectTextFileEncoding,
   hasBinarySignature,
   isBinaryDataFileName,
-  isValidUtf8
+  isValidUtf8,
+  processFileData,
+  readFileInBatches
 } from '@kepler.gl/processors';
+import {installFilePolyfills} from '@loaders.gl/polyfills';
+
+installFilePolyfills();
 
 // CP932 of:
 // name,lat,lng
@@ -103,6 +108,17 @@ test('#file-encoding -> unknown 8-bit bytes stay untouched', t => {
   t.end();
 });
 
+async function collectLastBatch(file) {
+  const gen = await readFileInBatches({file, fileCache: [], loaders: [], loadOptions: {}});
+  let last = null;
+  let batch = await gen.next();
+  while (!batch.done) {
+    last = batch.value;
+    batch = await gen.next();
+  }
+  return last;
+}
+
 test('#file-encoding -> decodeUploadedTextFile converts only Shift JIS files', async t => {
   if (typeof File === 'undefined') {
     t.ok(true, 'File is not available in this runtime');
@@ -122,5 +138,61 @@ test('#file-encoding -> decodeUploadedTextFile converts only Shift JIS files', a
   t.equal(parquetResult, parquetFile, 'binary File instance should be reused');
   t.notEqual(sjisResult, sjisFile, 'Shift JIS File should be replaced');
   t.equal(await sjisResult.text(), UTF8_CSV, 'converted File should be UTF-8 text');
+  t.end();
+});
+
+test('#file-encoding -> readFileInBatches loads Shift JIS CSV as UTF-8 rows', async t => {
+  if (typeof File === 'undefined') {
+    t.ok(true, 'File is not available in this runtime');
+    t.end();
+    return;
+  }
+
+  const file = new File([SHIFT_JIS_CSV_BYTES], 'tokyo-sjis.csv', {type: 'text/csv'});
+  const content = await collectLastBatch(file);
+  const processed = await processFileData({content, fileCache: []});
+  const {fields, rows} = processed[0].data;
+  const nameIndex = fields.findIndex(field => field.name === 'name');
+
+  t.ok(nameIndex >= 0, 'should keep the name column');
+  t.equal(rows.length, 2, 'should load two rows');
+  t.equal(rows[0][nameIndex], '東京駅', 'first row should be 東京駅');
+  t.equal(rows[1][nameIndex], '大阪駅', 'second row should be 大阪駅');
+  t.end();
+});
+
+test('#file-encoding -> readFileInBatches loads Shift JIS GeoJSON as UTF-8 properties', async t => {
+  if (typeof File === 'undefined') {
+    t.ok(true, 'File is not available in this runtime');
+    t.end();
+    return;
+  }
+
+  const file = new File([SHIFT_JIS_GEOJSON_BYTES], 'tokyo-sjis.geojson', {type: ''});
+  const content = await collectLastBatch(file);
+  const processed = await processFileData({content, fileCache: []});
+  const {fields, rows} = processed[0].data;
+  const nameIndex = fields.findIndex(field => field.name === 'name');
+
+  t.ok(nameIndex >= 0, 'should keep the name property');
+  t.equal(rows[0][nameIndex], '東京駅', 'GeoJSON name should be 東京駅');
+  t.end();
+});
+
+test('#file-encoding -> readFileInBatches keeps UTF-8 Japanese CSV as UTF-8', async t => {
+  if (typeof File === 'undefined') {
+    t.ok(true, 'File is not available in this runtime');
+    t.end();
+    return;
+  }
+
+  const file = new File([UTF8_CSV], 'tokyo-utf8.csv', {type: 'text/csv'});
+  const content = await collectLastBatch(file);
+  const processed = await processFileData({content, fileCache: []});
+  const {fields, rows} = processed[0].data;
+  const nameIndex = fields.findIndex(field => field.name === 'name');
+
+  t.equal(rows[0][nameIndex], '東京駅', 'UTF-8 CSV should still load 東京駅');
+  t.equal(rows[1][nameIndex], '大阪駅', 'UTF-8 CSV should still load 大阪駅');
   t.end();
 });
