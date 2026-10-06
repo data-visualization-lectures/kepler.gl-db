@@ -27,6 +27,7 @@ import {
   processRowObject
 } from './data-processor';
 
+import {decodeUploadedTextFile} from './file-encoding';
 import {FileCacheItem, ValidKeplerGlMap} from './types';
 
 const BATCH_TYPE = {
@@ -200,10 +201,11 @@ export async function readFileInBatches({
     ...loadOptions
   };
 
-  const batchIterator = await parseInBatches(file, loaders, loadOptions);
-  const progressIterator = makeProgressIterator(batchIterator, {size: file.size});
+  const decodedFile = await decodeUploadedTextFile(file);
+  const batchIterator = await parseInBatches(decodedFile, loaders, loadOptions);
+  const progressIterator = makeProgressIterator(batchIterator, {size: decodedFile.size});
 
-  return readBatch(progressIterator, file.name);
+  return readBatch(progressIterator, decodedFile.name);
 }
 
 export async function processFileData({
