@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {MapLib, MapRef} from 'react-map-gl';
-
 import {KEPLER_UNFOLDED_BUCKET} from '@kepler.gl/constants';
 import type {BaseMapLibraryType} from '@kepler.gl/constants';
 
 import type {DatabaseAdapter} from './application-config-types';
 
-export type MapLibInstance = MapLib<any>;
-export type GetMapRef = ReturnType<MapRef['getMap']>;
+export type MapLibInstance = any;
+export type GetMapRef = any;
 
 export type BaseMapLibraryConfig = {
   getMapLib: () => Promise<MapLibInstance>;

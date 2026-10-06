@@ -18,11 +18,18 @@ import {
   mapConfigChange,
   mapStyleChange,
   inputMapStyle,
+  loadCustomMapStyle,
+  addCustomMapStyle,
   editCustomMapStyle,
   removeCustomMapStyle
 } from '@kepler.gl/actions';
 import SchemaManager from '@kepler.gl/schemas';
-import {DEFAULT_MAPBOX_API_URL, KEPLER_UNFOLDED_BUCKET, NO_MAP_ID} from '@kepler.gl/constants';
+import {
+  DEFAULT_MAPBOX_API_URL,
+  KEPLER_UNFOLDED_BUCKET,
+  NO_BASEMAP_ICON,
+  NO_MAP_ID
+} from '@kepler.gl/constants';
 
 // helpers
 import {
@@ -928,5 +935,45 @@ test('#mapStyleReducer -> REMOVE_CUSTOM_MAP_STYLE -> removal of not currently se
     'should not change the active styleType when removing a custom style that was not the active styleType'
   );
 
+  t.end();
+});
+
+test('#mapStyleReducer -> add an import-based Mapbox Studio style', t => {
+  const url = 'mapbox://styles/example/standard-style';
+  const style = {
+    version: 8,
+    name: 'Studio Standard',
+    imports: [{id: 'basemap', url: 'mapbox://styles/mapbox/standard'}],
+    sources: {},
+    layers: [{id: 'custom-layer', type: 'fill', source: 'custom'}]
+  };
+
+  let nextState = reducer(
+    InitialMapStyle,
+    inputMapStyle({url, label: 'Studio Standard'}, {longitude: 0, latitude: 0, zoom: 1})
+  );
+  nextState = reducer(nextState, loadCustomMapStyle({style}));
+  nextState = reducer(nextState, addCustomMapStyle());
+
+  const currentStyle = nextState.mapStyles[nextState.styleType];
+  t.deepEqual(currentStyle.style, style, 'keeps the complete import-based style');
+  t.deepEqual(currentStyle.layerGroups, [], 'does not expose legacy layer groups');
+  t.equal(nextState.bottomMapStyle, currentStyle.style, 'renders the original style as one basemap');
+  t.equal(nextState.topMapStyle, null, 'does not duplicate imported labels into a top map');
+  t.ok(currentStyle.icon.endsWith(NO_BASEMAP_ICON), 'uses the generic basemap placeholder');
+  t.end();
+});
+
+test('#mapStyleReducer -> changing a custom style URL clears stale style data', t => {
+  const existingStyle = {version: 8, sources: {}, layers: []};
+  let nextState = reducer(
+    InitialMapStyle,
+    inputMapStyle({url: 'mapbox://styles/example/old', label: 'Old'})
+  );
+  nextState = reducer(nextState, loadCustomMapStyle({style: existingStyle}));
+  nextState = reducer(nextState, inputMapStyle({url: 'mapbox://styles/example/new'}));
+
+  t.equal(nextState.inputStyle.style, null, 'clears the previous URL style');
+  t.equal(nextState.inputStyle.error, false, 'clears the previous URL error state');
   t.end();
 });
