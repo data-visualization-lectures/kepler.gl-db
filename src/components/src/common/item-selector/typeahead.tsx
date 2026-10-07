@@ -265,9 +265,9 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     // call focus on entry or div to trigger key events listener
     if (this.props.autoFocus) {
       if (this.entry.current) {
-        this.entry.current.focus();
+        this.entry.current.focus({preventScroll: true});
       } else {
-        this.root.current?.focus();
+        this.root.current?.focus({preventScroll: true});
       }
     }
   }
@@ -277,7 +277,7 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
 
   focus = () => {
     if (this.entry.current) {
-      this.entry.current.focus();
+      this.entry.current.focus({preventScroll: true});
     }
   };
 

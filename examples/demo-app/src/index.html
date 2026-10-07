@@ -25,14 +25,15 @@
     html {
       background: var(--dataviz-tool-header-background);
       height: 100%;
-      overflow: hidden;
+      /* clip is not a scroll container, so focusing a menu cannot scroll the page. */
+      overflow: clip;
     }
 
     body {
       margin: 0;
       padding: 0;
       height: 100%;
-      overflow: hidden;
+      overflow: clip;
       background: var(--dataviz-tool-header-background);
       font-family: sans-serif;
     }
@@ -55,7 +56,7 @@
       right: 0;
       bottom: 0;
       left: 0;
-      overflow: hidden;
+      overflow: clip;
     }
 
     dataviz-tool-header {
@@ -105,6 +106,23 @@
   <dataviz-header></dataviz-header>
   <dataviz-tool-header></dataviz-tool-header>
   <div id="root"></div>
+  <script>
+    (function () {
+      function pin(el) {
+        if (!el) return;
+        if (el.scrollTop) el.scrollTop = 0;
+        if (el.scrollLeft) el.scrollLeft = 0;
+      }
+      document.addEventListener('scroll', function (event) {
+        var target = event.target;
+        if (target === document || target === document.documentElement || target === document.body) {
+          window.scrollTo(0, 0);
+          return;
+        }
+        if (target && target.id === 'root') pin(target);
+      }, true);
+    })();
+  </script>
   <script src="https://app.dataviz.jp/lib/supabase.js"></script>
   <script src="https://app.dataviz.jp/lib/dataviz-auth-client.js"></script>
   <script src="https://id.data-viz-lectures.com/lib/dataviz-tool-header.js" defer></script>

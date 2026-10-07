@@ -311,7 +311,9 @@ function openURL(url) {
         sourcemap: false,
         // Add alias resolution for build
         alias: {
-          ...getThirdPartyLibraryAliases(true)
+          ...getThirdPartyLibraryAliases(true),
+          // Ship this fork's source, not the published npm packages.
+          ...RESOLVE_ALIASES
         },
         // Add these production optimizations
         define: {
