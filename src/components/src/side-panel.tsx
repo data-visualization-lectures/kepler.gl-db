@@ -32,14 +32,17 @@ import {SidePanelProps, SidePanelItem} from './types';
 export const StyledSidePanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
   flex-grow: 1;
+  min-height: 0;
   padding: ${props => props.theme.sidePanelInnerPadding}px;
   overflow-y: scroll;
   overflow-x: hidden;
+  /* Opening a menu must not drag this scroller upward under the toolbar. */
+  overflow-anchor: none;
 
   .side-panel__content__inner {
     display: flex;
-    height: 100%;
     flex-direction: column;
+    min-height: 100%;
   }
 `;
 

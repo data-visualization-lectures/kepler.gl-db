@@ -102,10 +102,6 @@ const defaultModalStyle = {
     padding: '0px 0px 0px 0px'
   },
   overlay: {
-    right: 'auto',
-    bottom: 'auto',
-    width: '100vw',
-    height: '100vh',
     backgroundColor: 'rgba(0, 0, 0, 0)'
   }
 };

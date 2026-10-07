@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useContext, useMemo, useState} from 'react';
 import styled from 'styled-components';
 
 import {ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
@@ -26,6 +26,7 @@ import Accessor from '../../common/item-selector/accessor';
 import DropdownList from '../../common/item-selector/dropdown-list';
 import LazyTippy from '../../map/lazy-tippy';
 import Typeahead from '../../common/item-selector/typeahead';
+import {RootContext} from '../../context';
 
 type TippyInstance = any; // 'tippy-js'
 
@@ -61,10 +62,27 @@ export type ColorScaleSelectorProps = {
 };
 
 const DropdownPropContext = React.createContext({});
+// Keep the menu the same width as its trigger once it is portaled out of the side panel.
+const sameWidth = {
+  name: 'sameWidth',
+  enabled: true,
+  phase: 'beforeWrite' as const,
+  requires: ['computeStyles'],
+  fn({state}: {state: any}) {
+    state.styles.popper.width = `${state.rects.reference.width}px`;
+  },
+  effect({state}: {state: any}) {
+    state.elements.popper.style.width = `${state.elements.reference.offsetWidth}px`;
+  }
+};
 const POPPER_OPTIONS = {
+  // Fixed, and mounted outside the scrolling panel, so opening it cannot
+  // grow the panel's scroll size or introduce a scrollbar gutter.
+  strategy: 'fixed',
   modifiers: [
     // zero offsets since they are already added in VerticalToolbar
-    {name: 'offset', options: {offset: [0, 0]}}
+    {name: 'offset', options: {offset: [0, 0]}},
+    sameWidth
   ]
 };
 
@@ -86,22 +104,19 @@ const StyledScaleSelectDropdown = styled.div`
 `;
 const DropdownWrapper = styled.div`
   border: 0;
-  width: 100%;
   left: 0;
   z-index: ${props => props.theme.dropdownWrapperZ};
   position: absolute;
   margin-top: ${props => props.theme.dropdownWapperMargin}px;
-`;
 
-const StyledColorScaleSelector = styled.div`
-  position: relative;
   .typeahead {
     // adds padding to bottom of dropdown
     margin-bottom: 40px;
   }
-  [data-tippy-root] {
-    width: 100%;
-  }
+`;
+
+const StyledColorScaleSelector = styled.div`
+  position: relative;
 `;
 
 function hideTippy(tippyInstance) {
@@ -147,6 +162,7 @@ function ColorScaleSelectorFactory(
       [dropdownSelectProps.getOptionValue]
     );
     const [tippyInstance, setTippyInstance] = useState<TippyInstance>();
+    const rootContext = useContext(RootContext);
     const isEditingColorBreaks = colorUIConfig?.colorRangeConfig?.customBreaks;
 
     // Stores the previous selection for live preview: when choosing Custom/Custom Ordinal, we apply a temporary palette.
@@ -350,7 +366,7 @@ function ColorScaleSelectorFactory(
           <LazyTippy
             trigger="click"
             placement="bottom-start"
-            appendTo="parent"
+            appendTo={() => rootContext?.current || document.body}
             interactive={true}
             hideOnClick={!isEditingColorBreaks}
             onCreate={setTippyInstance}
