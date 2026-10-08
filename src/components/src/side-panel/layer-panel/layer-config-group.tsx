@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useLayoutEffect, useRef, useState} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {FormattedMessage} from 'react-intl';
 import Switch from '../../common/switch';
 import InfoHelperFactory from '../../common/info-helper';
-import {VertThreeDots} from '../../common/icons';
+import {ArrowDown, ArrowUp} from '../../common/icons';
 import {shouldForwardProp} from '../../common/styled-components';
 import {Layer} from '@kepler.gl/layers';
 import {LayerVisConfig} from '@kepler.gl/types';
@@ -40,7 +40,7 @@ export const StyledLayerConfigGroupAction = styled.div`
 export const ConfigGroupCollapsibleContent = styled.div.attrs({
   className: 'layer-config-group__content__collapsible'
 })`
-  transition: max-height 0.3s ease-out;
+  transition: max-height 0.3s cubic-bezier(0.23, 1, 0.32, 1);
   height: max-content;
   max-height: 1200px;
   overflow: auto;
@@ -79,6 +79,82 @@ export const StyledLayerConfigGroup = styled.div`
 interface StyledConfigGroupHeaderProps {
   collapsible?: boolean;
 }
+
+// Same 0.3s window as the collapsible max-height. Custom ease-out so the
+// chevron starts immediately instead of the weak built-in ease-out.
+const CHEVRON_TRANSITION = 'transform 0.3s cubic-bezier(0.23, 1, 0.32, 1)';
+
+export const StyledConfigGroupChevron = styled.span.withConfig({shouldForwardProp}).attrs({
+  className: 'layer-config-group__chevron'
+})`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  flex-shrink: 0;
+  transform: rotate(0deg);
+  transition: ${CHEVRON_TRANSITION};
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
+function prefersReducedMotion() {
+  return (
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+/**
+ * Collapsed shows ArrowUp. Expanded shows ArrowDown.
+ * The glyph is swapped under a 180° rotation so the turn and the content
+ * max-height finish together, and the resting icon still matches the state.
+ */
+const LayerConfigGroupChevron: React.FC<{
+  collapsed: boolean;
+  IconComponent?: React.ElementType;
+}> = ({collapsed, IconComponent}) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const hasMounted = useRef(false);
+  const Glyph = IconComponent ?? (collapsed ? ArrowUp : ArrowDown);
+
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node || IconComponent) {
+      return undefined;
+    }
+
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return undefined;
+    }
+
+    if (prefersReducedMotion()) {
+      node.style.transition = 'none';
+      node.style.transform = '';
+      return undefined;
+    }
+
+    // Incoming glyph already points the right way. Start it 180° off so the
+    // turn reads as up → down (or the reverse) instead of a hard swap.
+    // Reading layout flushes the start angle so the CSS transition can run.
+    const fromDeg = collapsed ? 180 : -180;
+    node.style.transition = 'none';
+    node.style.transform = `rotate(${fromDeg}deg)`;
+    void node.offsetWidth;
+    node.style.transition = '';
+    node.style.transform = '';
+    return undefined;
+  }, [collapsed, IconComponent]);
+
+  return (
+    <StyledConfigGroupChevron ref={ref}>
+      <Glyph height="18px" />
+    </StyledConfigGroupChevron>
+  );
+};
 
 export const StyledConfigGroupHeader = styled.div.withConfig({shouldForwardProp}).attrs({
   className: 'layer-config-group__header'
@@ -164,16 +240,22 @@ function LayerConfigGroupFactory(
     description = '',
     disabled = false,
     expanded = false,
-    IconComponent = VertThreeDots
+    IconComponent
   }) => {
     const [collapsed, toggleCollapsed] = useState(!expanded);
     const onToggleCollapsed = useCallback(() => {
-      collapsible && toggleCollapsed(!collapsed);
-    }, [collapsed, toggleCollapsed, collapsible]);
+      if (collapsible) {
+        toggleCollapsed(value => !value);
+      }
+    }, [collapsible]);
 
     return (
       <StyledLayerConfigGroup className={classnames('layer-config-group', {collapsed, disabled})}>
-        <StyledConfigGroupHeader onClick={onToggleCollapsed} collapsible={collapsible}>
+        <StyledConfigGroupHeader
+          onClick={onToggleCollapsed}
+          collapsible={collapsible}
+          aria-expanded={collapsible ? !collapsed : undefined}
+        >
           <LayerConfigGroupLabel label={label} description={description} collapsed={collapsed} />
           <StyledLayerConfigGroupAction className="layer-config-group__action">
             {property ? (
@@ -183,7 +265,9 @@ function LayerConfigGroupFactory(
                 onChange={() => onChange?.({[property]: !layer?.config.visConfig[property]})}
               />
             ) : null}
-            {collapsible ? <IconComponent height="18px" /> : null}
+            {collapsible ? (
+              <LayerConfigGroupChevron collapsed={collapsed} IconComponent={IconComponent} />
+            ) : null}
           </StyledLayerConfigGroupAction>
         </StyledConfigGroupHeader>
         <ConfigGroupContent
