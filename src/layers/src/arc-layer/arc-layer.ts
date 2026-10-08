@@ -126,17 +126,17 @@ export const COLUMN_MODE_GEOARROW = 'geoarrow';
 const SUPPORTED_COLUMN_MODES = [
   {
     key: COLUMN_MODE_POINTS,
-    label: 'Points',
+    label: 'layer.columnMode.points',
     requiredColumns: arcRequiredColumns
   },
   {
     key: COLUMN_MODE_NEIGHBORS,
-    label: 'Point and Neighbors',
+    label: 'layer.columnMode.pointAndNeighbors',
     requiredColumns: neighborRequiredColumns
   },
   {
     key: COLUMN_MODE_GEOARROW,
-    label: 'Geoarrow Points',
+    label: 'layer.columnMode.geoarrowPoints',
     requiredColumns: geoarrowRequiredColumns
   }
 ];

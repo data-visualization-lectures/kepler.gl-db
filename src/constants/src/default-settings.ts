@@ -534,38 +534,38 @@ export type TableOption = {
 export const TABLE_OPTION_LIST: TableOption[] = [
   {
     value: TABLE_OPTION.SORT_ASC,
-    display: 'Sort Ascending',
+    display: 'dataTable.sortAsc',
     icon: 'ArrowUp',
     condition: props => props.sortTableColumn && props.sortMode !== SORT_ORDER.ASCENDING
   },
   {
     value: TABLE_OPTION.SORT_DES,
-    display: 'Sort Descending',
+    display: 'dataTable.sortDesc',
     icon: 'ArrowDown',
     condition: props => props.sortTableColumn && props.sortMode !== SORT_ORDER.DESCENDING
   },
   {
     value: TABLE_OPTION.UNSORT,
-    display: 'Unsort Column',
+    display: 'dataTable.unsort',
     icon: 'Cancel',
     condition: props => props.isSorted
   },
   {
     value: TABLE_OPTION.PIN,
-    display: 'Pin Column',
+    display: 'dataTable.pin',
     icon: 'Pin',
     condition: props => !props.isPinned
   },
   {
     value: TABLE_OPTION.UNPIN,
-    display: 'Unpin Column',
+    display: 'dataTable.unpin',
     icon: 'Cancel',
     condition: props => props.isPinned
   },
-  {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: 'Clipboard'},
+  {value: TABLE_OPTION.COPY, display: 'dataTable.copy', icon: 'Clipboard'},
   {
     value: TABLE_OPTION.FORMAT_COLUMN,
-    display: 'Format Column',
+    display: 'dataTable.formatColumn',
     icon: 'Hash',
     condition: props => props.setDisplayFormat
   }

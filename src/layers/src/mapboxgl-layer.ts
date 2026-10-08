@@ -23,7 +23,7 @@ export const mapboxRequiredColumns = ['lat', 'lng'];
 const SUPPORTED_COLUMN_MODES = [
   {
     key: COLUMN_MODE_POINTS,
-    label: 'Points',
+    label: 'layer.columnMode.points',
     requiredColumns: mapboxRequiredColumns
   }
 ];

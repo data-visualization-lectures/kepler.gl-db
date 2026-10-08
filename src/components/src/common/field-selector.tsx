@@ -12,6 +12,7 @@ import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
 import ItemSelector from './item-selector/item-selector';
 import {classList} from './item-selector/dropdown-list';
 import FieldTokenFactory from '../common/field-token';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 const defaultDisplayOption = (d: Field) => d.displayName || d.name;
 const defaultValueOption = (d: Field) => d.name;
@@ -59,7 +60,11 @@ export function FieldListItemFactoryFactory(FieldToken) {
   return FieldListItemFactory;
 }
 
-const SuggestedFieldHeader = () => <div>Suggested Field</div>;
+const SuggestedFieldHeader = () => (
+  <div>
+    <FormattedMessage id="fieldSelector.suggested" />
+  </div>
+);
 
 export type MinimalField = {name: string; displayName: string; format: string; type?: string};
 export type FieldType = string | TooltipField | Field;

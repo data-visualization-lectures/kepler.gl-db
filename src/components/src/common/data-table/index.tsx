@@ -9,6 +9,7 @@ import {createSelector} from 'reselect';
 import get from 'lodash/get';
 import debounce from 'lodash/debounce';
 import {ArrowDown} from '../icons';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 import {CellSizeCache} from './cell-size';
 
@@ -265,7 +266,11 @@ const StatsControl = ({
 }) => (
   <StyledStatsControl top={top} showStats={showStats}>
     <div onClick={toggleShowStats}>
-      {showStats ? 'Hide Column Stats' : 'Show Column Stats'}
+      {showStats ? (
+        <FormattedMessage id="dataTable.hideColumnStats" />
+      ) : (
+        <FormattedMessage id="dataTable.showColumnStats" />
+      )}
       <ArrowDown height="18px" />
     </div>
   </StyledStatsControl>

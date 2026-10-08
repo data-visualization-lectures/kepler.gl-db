@@ -88,12 +88,12 @@ export const COLUMN_MODE_GEOARROW = 'geoarrow';
 const SUPPORTED_COLUMN_MODES = [
   {
     key: COLUMN_MODE_POINTS,
-    label: 'Points',
+    label: 'layer.columnMode.points',
     requiredColumns: pointRequiredColumns
   },
   {
     key: COLUMN_MODE_GEOARROW,
-    label: 'Geoarrow Points',
+    label: 'layer.columnMode.geoarrowPoints',
     requiredColumns: geoarrowRequiredColumns
   }
 ];
