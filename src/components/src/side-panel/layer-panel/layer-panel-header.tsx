@@ -15,6 +15,7 @@ import {Tooltip, shouldForwardProp} from '../../common/styled-components';
 import {
   Copy,
   ArrowDown,
+  ArrowUp,
   EyeSeen,
   EyeUnseen,
   Trash,
@@ -71,6 +72,7 @@ export type LayerPanelHeaderProps = {
     visible: ComponentType<Partial<BaseProps>>;
     hidden: ComponentType<Partial<BaseProps>>;
     enableConfig: ComponentType<Partial<BaseProps>>;
+    disableConfig?: ComponentType<Partial<BaseProps>>;
     resetIsValid: ComponentType<Partial<BaseProps>>;
     duplicate: ComponentType<Partial<BaseProps>>;
     crosshairs: ComponentType<Partial<BaseProps>>;
@@ -338,7 +340,11 @@ export function LayerPanelHeaderActionSectionFactory(
           id={layerId}
           tooltip={'tooltip.layerSettings'}
           onClick={onToggleEnableConfig}
-          IconComponent={actionIcons.enableConfig}
+          IconComponent={
+            isConfigActive && actionIcons.disableConfig
+              ? actionIcons.disableConfig
+              : actionIcons.enableConfig
+          }
         />
       </HeaderActionSection>
     );
@@ -368,6 +374,7 @@ const defaultActionIcons = {
   visible: props => <EyeSeen {...props} height="16px" />,
   hidden: props => <EyeUnseen {...props} height="16px" />,
   enableConfig: props => <ArrowDown {...props} height="18px" />,
+  disableConfig: props => <ArrowUp {...props} height="18px" />,
   duplicate: props => <Copy {...props} height="14px" />,
   resetIsValid: Reset,
   crosshairs: props => <ZoomIn {...props} height="14px" />

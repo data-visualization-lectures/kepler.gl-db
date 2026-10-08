@@ -108,7 +108,7 @@ function prefersReducedMotion() {
 }
 
 /**
- * Collapsed shows ArrowUp. Expanded shows ArrowDown.
+ * Collapsed shows ArrowDown. Expanded shows ArrowUp.
  * The glyph is swapped under a 180° rotation so the turn and the content
  * max-height finish together, and the resting icon still matches the state.
  */
@@ -118,7 +118,7 @@ const LayerConfigGroupChevron: React.FC<{
 }> = ({collapsed, IconComponent}) => {
   const ref = useRef<HTMLSpanElement>(null);
   const hasMounted = useRef(false);
-  const Glyph = IconComponent ?? (collapsed ? ArrowUp : ArrowDown);
+  const Glyph = IconComponent ?? (collapsed ? ArrowDown : ArrowUp);
 
   useLayoutEffect(() => {
     const node = ref.current;
@@ -138,7 +138,7 @@ const LayerConfigGroupChevron: React.FC<{
     }
 
     // Incoming glyph already points the right way. Start it 180° off so the
-    // turn reads as up → down (or the reverse) instead of a hard swap.
+    // turn reads as down → up (or the reverse) instead of a hard swap.
     // Reading layout flushes the start angle so the CSS transition can run.
     const fromDeg = collapsed ? 180 : -180;
     node.style.transition = 'none';
