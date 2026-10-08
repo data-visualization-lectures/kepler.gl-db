@@ -195,7 +195,9 @@ export default function VisConfigSliderFactory(RangeSlider: ReturnType<typeof Ra
 
         {allowCustomValue ? (
           <InputWrapper>
-            <CustomInputLabel>custom input</CustomInputLabel>
+            <CustomInputLabel>
+              <FormattedMessage id="layer.customInput" />
+            </CustomInputLabel>
             <Checkbox id={`property.${property}`} checked={custom} onChange={onChangeCheckbox} />
           </InputWrapper>
         ) : null}

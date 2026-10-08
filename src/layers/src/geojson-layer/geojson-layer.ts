@@ -222,12 +222,12 @@ export const COLUMN_MODE_TABLE = 'table';
 const SUPPORTED_COLUMN_MODES = [
   {
     key: COLUMN_MODE_GEOJSON,
-    label: 'GeoJSON',
+    label: 'layer.columnMode.geojson',
     requiredColumns: ['geojson']
   },
   {
     key: COLUMN_MODE_TABLE,
-    label: 'Table columns',
+    label: 'layer.columnMode.tableColumns',
     requiredColumns: ['id', 'lat', 'lng'],
     optionalColumns: ['altitude', 'sortBy']
   }

@@ -267,7 +267,9 @@ function FilterSyncedDatasetPanelFactory(
       <SyncedDatasetsArea>
         {filter.dataId.length > 1 ? (
           <>
-            <StyledContentTitle>Datasets</StyledContentTitle>
+            <StyledContentTitle>
+              <FormattedMessage id="datasetTitle.datasets" />
+            </StyledContentTitle>
             {filter.dataId.map((dataId, index) => {
               return (
                 <DatasetItem

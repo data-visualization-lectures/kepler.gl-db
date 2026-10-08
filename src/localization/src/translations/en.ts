@@ -76,6 +76,16 @@ export default {
   },
   layer: {
     required: 'Required*',
+    customInput: 'custom input',
+    columnMode: {
+      pointColumns: 'Point Columns',
+      geojsonFeature: 'GeoJSON Feature',
+      geoarrowPoints: 'Geoarrow Points',
+      points: 'Points',
+      pointAndNeighbors: 'Point and Neighbors',
+      geojson: 'GeoJSON',
+      tableColumns: 'Table columns'
+    },
     columnModesSeparator: 'Or',
     radius: 'Radius',
     color: 'Color',
@@ -215,7 +225,8 @@ export default {
   },
   datasetTitle: {
     showDataTable: 'Show data table',
-    removeDataset: 'Remove dataset'
+    removeDataset: 'Remove dataset',
+    datasets: 'Datasets'
   },
   datasetInfo: {
     rowCount: '{rowCount} rows',
@@ -667,7 +678,25 @@ ${'```'}
   },
   fieldSelector: {
     clearAll: 'Clear All',
-    formatting: 'Formatting'
+    formatting: 'Formatting',
+    suggested: 'Suggested Field'
+  },
+  dataTable: {
+    integerFormat: '# Set Integer Number Format',
+    floatFormat: '# Set Float Number Format',
+    timestampFormat: '# Set Timestamp Format',
+    dateFormat: '# Set Date Format',
+    booleanFormat: '# Set Boolean Format',
+    sortAsc: 'Sort Ascending',
+    sortDesc: 'Sort Descending',
+    unsort: 'Unsort Column',
+    pin: 'Pin Column',
+    unpin: 'Unpin Column',
+    copy: 'Copy Column',
+    formatColumn: 'Format Column',
+    showColumnStats: 'Show Column Stats',
+    hideColumnStats: 'Hide Column Stats',
+    formatNone: 'None'
   },
   compare: {
     modeLabel: 'Comparison Mode',

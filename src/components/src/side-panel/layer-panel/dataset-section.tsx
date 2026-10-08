@@ -80,7 +80,10 @@ function DatasetSectionFactory(
     return (
       <StyledDatasetSection>
         <StyledDatasetTitle $showDatasetList={showDatasetList}>
-          <span>Datasets{datasetCount ? `(${datasetCount})` : ''}</span>
+          <span>
+            <FormattedMessage id="datasetTitle.datasets" />
+            {datasetCount ? `(${datasetCount})` : ''}
+          </span>
           <AddDataButton onClick={showAddDataModal} isInactive={!datasetCount} />
         </StyledDatasetTitle>
         {showDatasetList && (

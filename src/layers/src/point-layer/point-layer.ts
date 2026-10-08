@@ -146,19 +146,19 @@ export const geoarrowRequiredColumns: ['geoarrow'] = ['geoarrow'];
 const SUPPORTED_COLUMN_MODES = [
   {
     key: COLUMN_MODE_POINTS,
-    label: 'Point Columns',
+    label: 'layer.columnMode.pointColumns',
     requiredColumns: pointRequiredColumns,
     optionalColumns: pointOptionalColumns
   },
   {
     key: COLUMN_MODE_GEOJSON,
-    label: 'GeoJSON Feature',
+    label: 'layer.columnMode.geojsonFeature',
     requiredColumns: geojsonRequiredColumns,
     verifyField: f => !isGeoArrowPointField(f)
   },
   {
     key: COLUMN_MODE_GEOARROW,
-    label: 'Geoarrow Points',
+    label: 'layer.columnMode.geoarrowPoints',
     requiredColumns: geoarrowRequiredColumns,
     verifyField: f => isGeoArrowPointField(f)
   }

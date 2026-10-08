@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useState} from 'react';
+import {useIntl} from 'react-intl';
 import styled from 'styled-components';
 import Portaled from '../portaled';
 import DropdownList from '../item-selector/dropdown-list';
@@ -16,12 +17,15 @@ import {getFieldFormatLabels} from '@kepler.gl/utils';
 import {ColMeta} from '@kepler.gl/types';
 import {ArrowDown, ArrowUp, Clipboard, Pin, Cancel, Hash} from '../icons';
 
-const ListItem = ({value}) => (
-  <div>
-    <value.icon height="13px" />
-    {value.display}
-  </div>
-);
+const ListItem = ({value}) => {
+  const intl = useIntl();
+  return (
+    <div>
+      <value.icon height="13px" />
+      {intl.formatMessage({id: value.display})}
+    </div>
+  );
+};
 
 // make hash icon smaller
 const StyledOptionsDropdown = styled.div`
@@ -78,6 +82,7 @@ export type FormatterDropdownProps = {
 export const FormatterDropdown: React.FC<FormatterDropdownProps> = (
   props: FormatterDropdownProps
 ) => {
+  const intl = useIntl();
   const {
     left,
     top,
@@ -103,7 +108,10 @@ export const FormatterDropdown: React.FC<FormatterDropdownProps> = (
         <DropdownList
           options={formatLabels}
           selectionIndex={selectionIndex}
-          displayOption={option => (option as TooltipFormat).label}
+          displayOption={option => {
+            const label = (option as TooltipFormat).label;
+            return label === 'None' ? intl.formatMessage({id: 'dataTable.formatNone'}) : label;
+          }}
           onOptionSelected={onSelectDisplayFormat}
           light
         />

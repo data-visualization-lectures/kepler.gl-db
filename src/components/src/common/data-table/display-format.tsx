@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useState} from 'react';
+import {useIntl} from 'react-intl';
 import styled from 'styled-components';
 
 import {getFieldFormatLabels} from '@kepler.gl/utils';
@@ -55,8 +56,11 @@ export const NumberFormatConfig: React.FC<DataTableConfigProps> = ({
   setColumnDisplayFormat,
   onClose
 }: DataTableConfigProps) => {
+  const intl = useIntl();
   const [showFormatter, setShowFormatter] = useState(false);
   const [format, setFormat] = useState(defaultFormat);
+  const formatTip =
+    format === 'None' ? intl.formatMessage({id: 'dataTable.formatNone'}) : format;
 
   const onSetDisplayFormat = useCallback(
     (option: TooltipFormat) => {
@@ -77,7 +81,7 @@ export const NumberFormatConfig: React.FC<DataTableConfigProps> = ({
         id={id}
         type="text"
         value={title}
-        data-tip={format}
+        data-tip={formatTip}
         readOnly
         onClick={() => setShowFormatter(true)}
       />
@@ -106,29 +110,30 @@ function DataTableConfigFactory() {
   };
 
   const DataTableConfig = ({columns, colMeta, setColumnDisplayFormat, onClose}) => {
+    const intl = useIntl();
     const formatConfigs = [
       {
-        title: '# Set Integer Number Format',
+        titleId: 'dataTable.integerFormat',
         id: 'input-iteger-format',
         displayType: ALL_FIELD_TYPES.integer
       },
       {
-        title: '# Set Float Number Format',
+        titleId: 'dataTable.floatFormat',
         id: 'input-float-format',
         displayType: ALL_FIELD_TYPES.real
       },
       {
-        title: '# Set Timestamp Format',
+        titleId: 'dataTable.timestampFormat',
         id: 'input-datetime-format',
         displayType: ALL_FIELD_TYPES.timestamp
       },
       {
-        title: '# Set Date Format',
+        titleId: 'dataTable.dateFormat',
         id: 'input-date-format',
         displayType: ALL_FIELD_TYPES.date
       },
       {
-        title: '# Set Boolean Format',
+        titleId: 'dataTable.booleanFormat',
         id: 'input-bool-format',
         displayType: ALL_FIELD_TYPES.boolean
       }
@@ -139,7 +144,7 @@ function DataTableConfigFactory() {
         <StyledConfigPanelContent>
           {formatConfigs.map((config, index) => (
             <NumberFormatConfig
-              title={`${config.title}`}
+              title={intl.formatMessage({id: config.titleId})}
               key={index}
               id={config.id}
               defaultFormat={'None'}

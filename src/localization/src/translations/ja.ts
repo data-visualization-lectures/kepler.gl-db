@@ -19,9 +19,10 @@ export default {
     sum: '合計',
     pointCount: '点の数'
   },
-  placeholder: {
+    placeholder: {
     search: '検索',
     selectField: 'フィールドを選択',
+    selectLayer: 'レイヤを選択',
     yAxis: 'Y軸',
     selectType: 'タイプを選択',
     selectValue: '値を選択',
@@ -55,7 +56,10 @@ export default {
       fontColor: '文字色',
       textAnchor: '文字左右',
       alignment: '文字上下',
-      addMoreLabel: 'ラベルを追加'
+      addMoreLabel: 'ラベルを追加',
+      backgroundColor: '背景色',
+      outlineWidth: '輪郭線の太さ',
+      outlineColor: '輪郭線の色'
     }
   },
   sidebar: {
@@ -64,10 +68,35 @@ export default {
       filter: 'フィルター',
       interaction: 'インタラクション',
       basemap: 'ベースマップ'
+    },
+    panelViewToggle: {
+      list: 'リスト表示',
+      byDataset: 'データセット別表示'
     }
   },
   layer: {
     required: '必須*',
+    customInput: 'カスタム入力',
+    columnModesSeparator: 'または',
+    columnMode: {
+      pointColumns: '点の列',
+      geojsonFeature: 'GeoJSONフィーチャー',
+      geoarrowPoints: 'GeoArrowの点',
+      points: '点',
+      pointAndNeighbors: '点と近傍',
+      geojson: 'GeoJSON',
+      tableColumns: 'テーブルの列'
+    },
+    service: 'サービス',
+    layer: 'レイヤ',
+    appearance: '外観',
+    uniqueIdField: '一意IDフィールド',
+    interaction: 'インタラクション',
+    wms: {
+      hover: '値:'
+    },
+    layerUpdateError:
+      'レイヤの更新中にエラーが発生しました: {errorMessage}。入力データの形式が正しいか確認してください。',
     radius: '半径',
     color: '色',
     fillColor: '塗りつぶし色（fill）',
@@ -102,7 +131,10 @@ export default {
       hexagonid: 'H3',
       trip: 'trip',
       s2: 'S2',
-      '3d': '3D'
+      '3d': '3D',
+      vectortile: 'ベクタータイル',
+      rastertile: 'ラスタータイル',
+      wms: 'WMS'
     }
   },
   layerVisConfigs: {
@@ -125,12 +157,12 @@ export default {
     stroke: '線',
     strokeColor: '輪郭線の色',
     strokeColorRange: '輪郭線の色の範囲',
-    targetColor: 'Targetの色',
+    targetColor: 'ターゲットの色',
     colorAggregation: '色の集計',
     heightAggregation: '高さの集計',
     resolutionRange: '解像度の範囲',
     sizeScale: 'サイズのスケール',
-    worldUnitSize: 'World Unit Size',
+    worldUnitSize: 'ワールド単位サイズ',
     elevationScale: '標高のスケール',
     enableElevationZoomFactor: '標高ズーム係数を使用する',
     enableElevationZoomFactorDescription: '現在のズーム率に基づいて高さ/標高を調整します',
@@ -149,12 +181,28 @@ export default {
     heightRange: '高さの範囲',
     heightMultiplier: '高さ乗数',
     fixedHeight: '固定高さ',
-    fixedHeightDescription: '高さを変更せずに使用する'
+    fixedHeightDescription: '高さを変更せずに使用する',
+    allowHover: 'ホバーを許可',
+    showNeighborOnHover: 'ホバー時に近傍を強調',
+    showHighlightColor: '強調色を表示',
+    darkModeEnabled: '暗いベースマップ',
+    transparentBackground: '透明な背景'
   },
   layerManager: {
     addData: 'データ追加',
     addLayer: 'レイヤ追加',
-    layerBlending: 'レイヤのブレンド'
+    layerBlending: 'レイヤのブレンド',
+    overlayBlending: 'オーバーレイのブレンド'
+  },
+  effectManager: {
+    effects: 'エフェクト',
+    addEffect: 'エフェクトを追加',
+    pickDateTime: '日時を選択',
+    currentTime: '現在時刻',
+    pickCurrrentTime: '現在時刻を選択',
+    date: '日付',
+    time: '時刻',
+    timezone: 'タイムゾーン'
   },
   mapManager: {
     mapStyle: 'マップスタイル',
@@ -164,17 +212,27 @@ export default {
   },
   layerConfiguration: {
     defaultDescription: '選択されたフィールドに基づいて{property}を計算します',
-    howTo: '使い方'
+    howTo: '使い方',
+    showColorChart: 'カラーチャートを表示',
+    hideColorChart: 'カラーチャートを非表示'
   },
   filterManager: {
-    addFilter: 'フィルター追加'
+    addFilter: 'フィルター追加',
+    timeFilterSync: '同期するデータセット',
+    timeLayerSync: 'レイヤのタイムラインと連動',
+    timeLayerUnsync: 'レイヤのタイムラインとの連動を解除',
+    column: '列'
   },
   datasetTitle: {
     showDataTable: 'データ表を表示',
-    removeDataset: 'データセットを削除'
+    removeDataset: 'データセットを削除',
+    datasets: 'データセット'
   },
   datasetInfo: {
-    rowCount: '{rowCount}行'
+    rowCount: '{rowCount}行',
+    vectorTile: 'ベクタータイル',
+    rasterTile: 'ラスタータイル',
+    wmsTile: 'WMSタイル'
   },
   tooltip: {
     hideLayer: 'レイヤを非表示',
@@ -208,7 +266,26 @@ export default {
     play: '再生',
     pause: '一時停止',
     reset: 'リセット',
-    zoomToLayer: 'レイヤ全体を表示'
+    zoomToLayer: 'レイヤ全体を表示',
+    resetAfterError: 'エラー後にレイヤを再度有効にする',
+    removeBaseMapStyle: 'ベースマップのスタイルを削除',
+    timeFilterSync: '別データセットの列と同期',
+    export: '出力',
+    timeLayerSync: 'レイヤのタイムラインと連動',
+    timeLayerUnsync: 'レイヤのタイムラインとの連動を解除',
+    syncTimelineStart: '現在のフィルタ期間の開始',
+    syncTimelineEnd: '現在のフィルタ期間の終了',
+    showEffectPanel: 'エフェクトパネルを表示',
+    hideEffectPanel: 'エフェクトパネルを非表示',
+    removeEffect: 'エフェクトを削除',
+    disableEffect: 'エフェクトを無効化',
+    effectSettings: 'エフェクト設定'
+  },
+  editor: {
+    filterLayer: 'レイヤをフィルタ',
+    filterLayerDisabled: 'ポリゴン以外の図形ではフィルタできません',
+    copyGeometry: '図形をコピー',
+    noLayersToFilter: 'フィルタできるレイヤがありません'
   },
   toolbar: {
     exportImage: '画像を出力',
@@ -286,6 +363,7 @@ export default {
         '元データ（フィルタなし）とフィルタ済データのどちらをエクスポートするか選択します',
       filteredData: 'フィルタ済データ',
       unfilteredData: '元データ',
+      tiledDatasetWarning: '* タイルデータセットの書き出しには対応していません',
       fileCount: '{fileCount}個のファイル',
       rowCount: '{rowCount}行'
     },
@@ -456,7 +534,7 @@ ${'```'}
   - **alt**: - *任意*&nbsp;- ポイントの標高
   - **sort by**: - *任意*&nbsp;- ポイントをソートするために使用される \`sort by\` 列。指定がない場合、ポイントは行のインデックス順にソートされます。
 `,
-      exampleTable: 'Example CSV'
+      exampleTable: 'CSVの例'
     },
     iconInfo: {
       title: 'アイコンの描画方法',
@@ -479,7 +557,9 @@ ${'```'}
       back: '戻る',
       goToPage: 'Kepler.glの{displayName}ページに移動',
       storageMaps: 'ストレージ / 地図',
-      noSavedMaps: '保存済の地図はまだありません'
+      noSavedMaps: '保存済の地図はまだありません',
+      foursquareStorageMessage:
+        'Kepler.gl > 保存 > Foursquareストレージで保存した地図だけがここに表示されます'
     }
   },
   header: {
@@ -510,6 +590,12 @@ ${'```'}
     lat: '緯度',
     lng: '経度',
     altitude: '標高',
+    alt: '標高',
+    timestamp: '時刻',
+    neighbors: '近傍',
+    geoarrow: 'geoarrow',
+    geoarrow0: 'geoarrow 出発',
+    geoarrow1: 'geoarrow 到着',
     icon: 'アイコン',
     geojson: 'geojson',
     token: 'トークン',
@@ -519,6 +605,10 @@ ${'```'}
       lng0: '出発 経度',
       lat1: '到着 緯度',
       lng1: '到着 経度'
+    },
+    line: {
+      alt0: '出発標高',
+      alt1: '到着標高'
     },
     grid: {
       worldUnitSize: 'グリッドサイズ（km）'
@@ -538,7 +628,38 @@ ${'```'}
     cyclical: '循環的',
     all: '全て',
     colorBlindSafe: '色覚バリアフリー',
-    reversed: '反転'
+    reversed: '反転',
+    disableStepReason:
+      'カスタムの色区分では階級数を変更できません。階級を編集するにはカスタムパレットを使います',
+    preset: 'プリセットの色',
+    picker: 'カラーピッカー'
+  },
+  tilesetSetup: {
+    header: 'ベクタータイルの設定',
+    rasterTileHeader: 'ラスタータイルの設定',
+    addTilesetText: 'タイルセットを追加'
+  },
+  mapLegend: {
+    layers: {
+      line: {
+        singleColor: {
+          sourceColor: '出発',
+          targetColor: '到着'
+        }
+      },
+      arc: {
+        singleColor: {
+          sourceColor: '出発',
+          targetColor: '到着'
+        }
+      },
+      default: {
+        singleColor: {
+          color: '塗りつぶし色',
+          strokeColor: '輪郭線'
+        }
+      }
+    }
   },
   columnStats: {
     min: '最小値',
@@ -574,14 +695,32 @@ ${'```'}
     browseFiles: 'デバイスのファイルを選択',
     uploading: 'アップロード中',
     fileNotSupported: '{errorFiles} はサポートされていないファイルです。',
-    or: 'or'
+    or: 'または'
   },
   geocoder: {
     title: '住所または座標を入力（例： 37.79,-122.40）'
   },
   fieldSelector: {
     clearAll: '全て解除',
-    formatting: '値の形式'
+    formatting: '値の形式',
+    suggested: '候補フィールド'
+  },
+  dataTable: {
+    integerFormat: '整数の形式を設定',
+    floatFormat: '小数の形式を設定',
+    timestampFormat: 'タイムスタンプの形式を設定',
+    dateFormat: '日付の形式を設定',
+    booleanFormat: '真偽値の形式を設定',
+    sortAsc: '昇順で並べ替え',
+    sortDesc: '降順で並べ替え',
+    unsort: '並べ替えを解除',
+    pin: '列を固定',
+    unpin: '列の固定を解除',
+    copy: '列をコピー',
+    formatColumn: '列の形式',
+    showColumnStats: '列の統計を表示',
+    hideColumnStats: '列の統計を非表示',
+    formatNone: 'なし'
   },
   compare: {
     modeLabel: '比較モード',

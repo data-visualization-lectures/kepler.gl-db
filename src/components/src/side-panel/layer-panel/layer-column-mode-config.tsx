@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {Fragment, useCallback, useMemo} from 'react';
+import {useIntl} from 'react-intl';
 import styled from 'styled-components';
 
 import {
@@ -112,6 +113,7 @@ export function ColumnModeConfigFactory(
     selectColumnMode,
     getHelpHandler = () => null
   }: ColumnModeConfigProps) => {
+    const intl = useIntl();
     const columnModes = useMemo(
       () =>
         supportedColumnModes
@@ -167,7 +169,7 @@ export function ColumnModeConfigFactory(
                           name={`layer-${id}-input-modes`}
                           checked={isSelected}
                           id={`${id}-input-column-${columnMode}`}
-                          label={label}
+                          label={label ? intl.formatMessage({id: label}) : label}
                           onChange={selectColumnModeHandler}
                         />
                       </PanelHeaderContent>
