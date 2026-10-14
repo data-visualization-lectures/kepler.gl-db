@@ -84,6 +84,12 @@ const LoadDataModalStyle = css`
   top: 110px;
 `;
 
+const ShareMapModalStyle = css`
+  top: calc(var(--dataviz-app-top-offset, 104px) + 16px);
+  max-height: calc(100vh - var(--dataviz-app-top-offset, 104px) - 32px);
+  max-height: calc(100dvh - var(--dataviz-app-top-offset, 104px) - 32px);
+`;
+
 const DefaultStyle = css`
   max-width: 960px;
 `;
@@ -537,7 +543,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               title: 'modal.title.shareURL',
-              cssStyle: '',
+              cssStyle: ShareMapModalStyle,
               onCancel: this._onCloseSaveMap
             };
             break;
