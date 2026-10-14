@@ -6,6 +6,8 @@ import Window from 'global/window';
 // Add english messages here, other languages will use these
 // if translations not available for every message
 const en = {
+  'fileUploader.disclaimer':
+    '*Data loading and visualization take place in your browser. When you save a project, its data and map settings are stored on Dataviz Cloud servers. When you publish a share, it becomes viewable via the shared URL.',
   'modal.loadData.remote': 'Load Map using URL',
   'sampleMapsTab.noData': 'No data ?',
   'modal.shareMap.cloudSuccess': 'Open the saved projects page to manage your project.',
@@ -26,6 +28,8 @@ const en = {
 export const messages = {
   en,
   ja: {
+    'fileUploader.disclaimer':
+      '※データの読み込み・可視化はブラウザ上で行います。プロジェクトを保存すると、データと地図の設定がDataviz Cloudのサーバーに保存されます。公開シェアすると、共有URLから閲覧できるようになります。',
     'modal.loadData.remote': 'URL で地図を読み込む',
     'sampleMapsTab.noData': 'データがありませんか？',
     'modal.shareMap.cloudSuccess': '保存されたプロジェクトは「保存プロジェクト一覧」ページにアクセスしてください',
