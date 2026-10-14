@@ -1,150 +1,149 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-// @ts-nocheck
 import React from 'react';
-import {useCloudListProvider} from '../hooks/use-cloud-list-provider';
-import {renderWithTheme} from 'test/helpers/component-jest-utils';
+import {fireEvent, render, waitFor} from '@testing-library/react';
+import {IntlWrapper, renderWithTheme} from 'test/helpers/component-jest-utils';
+import {ThemeProvider} from 'styled-components';
+import {theme} from '@kepler.gl/styles';
+import {Provider} from '@kepler.gl/cloud-providers';
+import {CloudListProvider} from '../hooks/use-cloud-list-provider';
 import ShareMapUrlModalFactory from './share-map-modal';
 import {dataTestIds} from '@kepler.gl/constants';
-import {act} from '@testing-library/react';
-import {ThemeProvider} from 'styled-components';
-import {IntlProvider} from 'react-intl';
-import {theme} from '@kepler.gl/styles';
-import {messages} from '@kepler.gl/localization';
-
-jest.mock('../hooks/use-cloud-list-provider', () => ({
-  useCloudListProvider: jest.fn().mockImplementation(() => ({
-    provider: null,
-    setProvider: jest.fn(),
-    cloudProviders: []
-  }))
-}));
 
 const ShareMapUrlModal = ShareMapUrlModalFactory();
 
-const DEFAULT_PROPS = {
+const createProvider = (name = 'Dataviz Cloud', shareable = true) =>
+  Object.assign(new Provider({name, displayName: name, icon: () => null}), {
+    getUser: jest.fn().mockResolvedValue({name: 'Test user'}),
+    hasSharingUrl: () => shareable
+  });
+
+const createProps = () => ({
   isProviderLoading: false,
   onExport: jest.fn(),
-  providerError: null,
-  successInfo: undefined,
+  providerError: undefined,
+  successInfo: {},
   onUpdateImageSetting: jest.fn(),
   cleanupExportImage: jest.fn()
-};
+});
+
+function renderModal(providers, props = createProps()) {
+  const content = modalProps => (
+    <CloudListProvider providers={providers}>
+      <ShareMapUrlModal {...modalProps} />
+    </CloudListProvider>
+  );
+  const result = render(content(props), {
+    wrapper: ({children}) => (
+      <ThemeProvider theme={theme}>
+        <IntlWrapper>{children}</IntlWrapper>
+      </ThemeProvider>
+    )
+  });
+  return {...result, update: modalProps => result.rerender(content(modalProps))};
+}
 
 describe('ShareMapModal', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  test('does not export when no sharing providers are available', () => {
+    const props = createProps();
+    const {getByText, queryByTestId} = renderModal([createProvider('Private cloud', false)], props);
 
-  test('renders only list of providers', () => {
-    const {getByText, queryByTestId} = renderWithTheme(<ShareMapUrlModal {...DEFAULT_PROPS} />);
-    expect(getByText('modal.shareMap.title')).toBeInTheDocument();
+    expect(getByText('No storage provider available')).toBeInTheDocument();
     expect(queryByTestId(dataTestIds.providerShareMap)).toBeNull();
+    expect(props.onExport).not.toHaveBeenCalled();
   });
 
-  test('renders list of provider and sharing section', () => {
-    const mapProvider = {
-      name: 'test provider',
-      icon: jest.fn(),
-      getManagementUrl: jest.fn().mockImplementation(() => 'provider.url'),
-      listMaps: jest.fn().mockResolvedValue([]),
-      hasSharingUrl: jest.fn().mockImplementation(() => true)
-    };
-    useCloudListProvider.mockImplementation(() => ({
-      provider: mapProvider,
-      setProvider: jest.fn(),
-      cloudProviders: []
-    }));
+  test('automatically uses the only sharing provider without showing the selector', () => {
+    const provider = createProvider();
+    const props = createProps();
+    const {getByTestId, queryByTestId} = renderModal(
+      [createProvider('Private cloud', false), provider],
+      props
+    );
 
-    const {getByText, getByTestId} = renderWithTheme(<ShareMapUrlModal {...DEFAULT_PROPS} />);
-    expect(getByText('modal.shareMap.title')).toBeInTheDocument();
+    expect(queryByTestId(dataTestIds.providerSelect)).toBeNull();
     expect(getByTestId(dataTestIds.providerShareMap)).toBeInTheDocument();
+    expect(props.onExport).toHaveBeenCalledTimes(1);
+    expect(props.onExport).toHaveBeenCalledWith(provider);
   });
 
-  test('renders loading when isLoading is set to true', () => {
-    const mapProvider = {
-      name: 'test provider',
-      icon: jest.fn(),
-      getManagementUrl: jest.fn().mockImplementation(() => 'provider.url'),
-      listMaps: jest.fn().mockResolvedValue([]),
-      hasSharingUrl: jest.fn().mockImplementation(() => true)
-    };
-    useCloudListProvider.mockImplementation(() => ({
-      provider: mapProvider,
-      setProvider: jest.fn(),
-      cloudProviders: []
-    }));
+  test('does not generate another URL when status or the callback changes', () => {
+    const props = createProps();
+    const {update, getByDisplayValue, getByText} = renderModal([createProvider()], props);
+    update({...props, isProviderLoading: true});
+    expect(getByText('Map Uploading')).toBeInTheDocument();
+    update({...props, successInfo: {shareUrl: 'https://example.com/shares/test'}});
+    expect(getByDisplayValue('https://example.com/shares/test')).toBeInTheDocument();
+    expect(props.onExport).toHaveBeenCalledTimes(1);
 
-    const providerLoadingProps = {
-      ...DEFAULT_PROPS,
-      isProviderLoading: true
-    };
-
-    const {getByText} = renderWithTheme(<ShareMapUrlModal {...providerLoadingProps} />);
-    expect(getByText('modal.statusPanel.mapUploading')).toBeInTheDocument();
+    const nextExport = jest.fn();
+    update({...props, onExport: nextExport});
+    expect(nextExport).not.toHaveBeenCalled();
   });
 
-  test('calls onExport when provider is set correctly', () => {
-    const mapProvider = {
-      name: 'test provider',
-      icon: jest.fn(),
-      getManagementUrl: jest.fn().mockImplementation(() => 'provider.url'),
-      listMaps: jest.fn().mockResolvedValue([]),
-      hasSharingUrl: jest.fn().mockImplementation(() => true)
-    };
-    useCloudListProvider.mockImplementation(() => ({
-      provider: mapProvider,
-      setProvider: jest.fn(),
-      cloudProviders: []
-    }));
-
-    renderWithTheme(<ShareMapUrlModal {...DEFAULT_PROPS} />);
-
-    expect(DEFAULT_PROPS.onExport).toHaveBeenCalled();
-  });
-
-  test('calls onExport after provider was updated', () => {
-    const {rerender} = renderWithTheme(<ShareMapUrlModal {...DEFAULT_PROPS} />);
-
-    const mapProvider = {
-      name: 'test provider',
-      icon: jest.fn(),
-      getManagementUrl: jest.fn().mockImplementation(() => 'provider.url'),
-      listMaps: jest.fn().mockResolvedValue([]),
-      hasSharingUrl: jest.fn().mockImplementation(() => true)
-    };
-    useCloudListProvider.mockImplementation(() => ({
-      provider: mapProvider,
-      setProvider: jest.fn(),
-      cloudProviders: []
-    }));
-
-    act(() => {
-      rerender(
-        <ThemeProvider theme={theme}>
-          <IntlProvider locale="en" messages={messages}>
-            <ShareMapUrlModal {...DEFAULT_PROPS} />
-          </IntlProvider>
-        </ThemeProvider>
-      );
-    });
-
-    expect(DEFAULT_PROPS.onExport).toHaveBeenCalled();
-  });
-
-  it('displays share URL when provided', () => {
-    const shareUrl = 'http://example.com';
-    const {getByText} = renderWithTheme(
-      <ShareMapUrlModal {...DEFAULT_PROPS} successInfo={{shareUrl}} />
+  test('does not export twice when StrictMode replays effects', () => {
+    const props = createProps();
+    renderWithTheme(
+      <React.StrictMode>
+        <CloudListProvider providers={[createProvider()]}>
+          <ShareMapUrlModal {...props} />
+        </CloudListProvider>
+      </React.StrictMode>
     );
-    expect(getByText(/Share URL|modal\.shareMap\.generatedUrlTitle/)).toBeInTheDocument();
+    expect(props.onExport).toHaveBeenCalledTimes(1);
   });
 
-  it('renders errors', () => {
-    const {getByText} = renderWithTheme(
-      <ShareMapUrlModal {...DEFAULT_PROPS} providerError={new Error('timeout')} />
+  test('keeps provider selection when multiple sharing providers are available', async () => {
+    const first = createProvider('First cloud');
+    const second = createProvider('Second cloud');
+    const props = createProps();
+    const {getByText, getByTestId, queryByTestId} = renderModal([first, second], props);
+
+    expect(getByTestId(dataTestIds.providerSelect)).toBeInTheDocument();
+    expect(queryByTestId(dataTestIds.providerShareMap)).toBeNull();
+    expect(props.onExport).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(getByText('First cloud').parentElement).toHaveTextContent('Test user')
     );
-    expect(getByText('modal.statusPanel.error')).toBeInTheDocument();
+
+    fireEvent.click(getByText('First cloud'));
+    expect(props.onExport).toHaveBeenLastCalledWith(first);
+    fireEvent.click(getByText('Second cloud'));
+    expect(props.onExport).toHaveBeenLastCalledWith(second);
+    expect(props.onExport).toHaveBeenCalledTimes(2);
+  });
+
+  test('shows errors without retrying automatically', () => {
+    const props = createProps();
+    const {getByText, update} = renderModal([createProvider()], props);
+    update({...props, providerError: 'Unable to publish map'});
+
+    expect(getByText('Error')).toBeInTheDocument();
+    expect(getByText('Unable to publish map')).toBeInTheDocument();
+    expect(props.onExport).toHaveBeenCalledTimes(1);
+  });
+
+  test('copies the generated URL and shows confirmation', () => {
+    const execCommand = jest.fn().mockReturnValue(true);
+    Object.defineProperty(document, 'execCommand', {configurable: true, value: execCommand});
+    const props = {...createProps(), successInfo: {shareUrl: 'https://example.com/shares/test'}};
+    const {getByText} = renderModal([createProvider()], props);
+
+    fireEvent.click(getByText('Copy'));
+    expect(execCommand).toHaveBeenCalledWith('copy');
+    expect(getByText('Copied!')).toBeInTheDocument();
+    Reflect.deleteProperty(document, 'execCommand');
+  });
+
+  test('starts a new share operation when the modal is reopened', () => {
+    const provider = createProvider();
+    const props = createProps();
+    const {unmount} = renderModal([provider], props);
+    unmount();
+    expect(props.cleanupExportImage).toHaveBeenCalledTimes(1);
+
+    renderModal([provider], props);
+    expect(props.onExport).toHaveBeenCalledTimes(2);
   });
 });

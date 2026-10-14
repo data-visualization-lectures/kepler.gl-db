@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useState, useMemo} from 'react';
+import React, {useEffect, useState, useMemo, useRef} from 'react';
 import styled, {ThemeProvider} from 'styled-components';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
-import {themeLT} from '@kepler.gl/styles';
+import {media, themeLT} from '@kepler.gl/styles';
 import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
 
 import {
@@ -37,11 +37,14 @@ export const StyleSharingUrl = styled.div.attrs({
 
   input {
     border-right: 0;
+    min-width: 0;
+    flex: 1;
   }
 
   .button {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
+    flex-shrink: 0;
   }
 `;
 
@@ -71,24 +74,66 @@ const nop = () => {
 };
 
 const StyledShareMapModal = styled(StyledModalContent)`
-  padding: 24px 72px 40px 72px;
-  margin: 0 -72px -40px -72px;
-  display: flex;
+  padding: 16px 0 0;
+  margin: 0;
   flex-direction: column;
-`;
 
-const StyledInnerDiv = styled.div`
-  min-height: 500px;
+  ${StyledExportSection} {
+    margin: 0 0 16px;
+
+    .selection {
+      min-width: 0;
+
+      > div {
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      svg {
+        min-width: 0;
+      }
+    }
+  }
+
+  .notification-item {
+    box-sizing: border-box;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .notification-item--message {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  ${StyleSharingUrl} {
+    margin-bottom: 0;
+  }
+
+  ${media.portable`
+    padding: 16px 0 0;
+    margin: 0;
+  `}
+
+  ${media.palm`
+    ${StyledExportSection} {
+      flex-direction: column;
+      gap: 8px;
+
+      .description {
+        width: 100%;
+      }
+
+      .selection {
+        padding-left: 0;
+      }
+    }
+  `}
 `;
 
 const UNDERLINE_TEXT_DECORATION_STYLE = {textDecoration: 'underline'};
 
 const ShareMapHeader = ({cloudProviders}) => {
-  const shareableCloudProviders = useMemo(
-    () => cloudProviders.filter(cp => cp.hasSharingUrl()),
-    [cloudProviders]
-  );
-
   return (
     <StyledExportSection>
       <div className="description">
@@ -96,7 +141,7 @@ const ShareMapHeader = ({cloudProviders}) => {
           <FormattedMessage id={'modal.shareMap.title'} />
         </div>
       </div>
-      <ProviderSelect cloudProviders={shareableCloudProviders} />
+      <ProviderSelect cloudProviders={cloudProviders} />
     </StyledExportSection>
   );
 };
@@ -119,12 +164,24 @@ export default function ShareMapUrlModalFactory() {
     onUpdateImageSetting = nop,
     cleanupExportImage
   }) => {
-    const {provider, cloudProviders} = useCloudListProvider();
+    const {provider: selectedProvider, cloudProviders} = useCloudListProvider();
+    const shareableCloudProviders = useMemo(
+      () => cloudProviders.filter(cp => cp.hasSharingUrl()),
+      [cloudProviders]
+    );
+    const provider =
+      shareableCloudProviders.length === 1
+        ? shareableCloudProviders[0]
+        : shareableCloudProviders.find(cp => cp === selectedProvider);
+    const exportedProvider = useRef<Provider | null>(null);
     const {shareUrl, folderLink} = successInfo;
 
     useEffect(() => {
-      if (provider) {
+      if (provider && exportedProvider.current !== provider) {
+        exportedProvider.current = provider;
         onExport(provider);
+      } else if (!provider) {
+        exportedProvider.current = null;
       }
     }, [onExport, provider]);
 
@@ -136,9 +193,11 @@ export default function ShareMapUrlModalFactory() {
           cleanupExportImage={cleanupExportImage}
         >
           <StyledShareMapModal className="export-cloud-modal">
-            <ShareMapHeader cloudProviders={cloudProviders} />
-            {provider?.hasSharingUrl() ? (
-              <StyledInnerDiv data-testid={dataTestIds.providerShareMap}>
+            {shareableCloudProviders.length !== 1 && (
+              <ShareMapHeader cloudProviders={shareableCloudProviders} />
+            )}
+            {provider ? (
+              <div data-testid={dataTestIds.providerShareMap}>
                 <StyledExportSection>
                   <div className="description">
                     <div className="title">
@@ -194,7 +253,7 @@ export default function ShareMapUrlModalFactory() {
                     </div>
                   </StyledExportSection>
                 )}
-              </StyledInnerDiv>
+              </div>
             ) : null}
           </StyledShareMapModal>
         </ImageModalContainer>
