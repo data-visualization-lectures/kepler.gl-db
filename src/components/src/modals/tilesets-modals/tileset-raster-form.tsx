@@ -2,7 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useEffect, useState} from 'react';
+import {FormattedMessage} from '@kepler.gl/localization';
 import styled from 'styled-components';
+import {useIntl} from 'react-intl';
 
 import {PMTilesMetadata} from '@loaders.gl/pmtiles';
 
@@ -102,6 +104,7 @@ const parseMetadataAllowCollections = (
 };
 
 const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
+  const intl = useIntl();
   const [tileName, setTileName] = useState<string>('');
   const [tileNameWasModified, setTileNameWasModified] = useState<boolean>(false);
   const [metadataUrl, setMetadataUrl] = useState<string>('');
@@ -161,7 +164,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
           metadata,
           dataset: null,
           loading,
-          error: new Error('For .pmtiles in mvt format, please use the Vector Tile form.')
+          error: new Error(intl.formatMessage({id: 'tilesetSetup.useVectorForm'}))
         });
       }
 
@@ -186,9 +189,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
             // TODO display a warning, but not a blocking error
             rasterTileServers = [];
           } else {
-            error = new Error(
-              'Provide valid raster tile server urls to support STAC and elevations.'
-            );
+            error = new Error(intl.formatMessage({id: 'tilesetSetup.invalidRasterServers'}));
           }
         }
       }
@@ -214,6 +215,7 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
       });
     }
   }, [
+    intl,
     metadata,
     loading,
     metaError,
@@ -228,57 +230,63 @@ const RasterTileForm: React.FC<RasterTileFormProps> = ({setResponse}) => {
   return (
     <TilesetInputContainer>
       <div>
-        <label htmlFor="tileset-name">Name</label>
+        <label htmlFor="tileset-name">
+          <FormattedMessage id="tilesetSetup.name" />
+        </label>
         <InputLight
           id="tileset-name"
-          placeholder="Name your tileset"
+          placeholder={intl.formatMessage({id: 'tilesetSetup.namePlaceholder'})}
           value={tileName}
           onChange={onTileNameChange}
         />
       </div>
       <div>
         <LabelRow>
-          <label htmlFor="tile-metadata">Tileset metadata URL</label>
+          <label htmlFor="tile-metadata">
+            <FormattedMessage id="tilesetSetup.metadataUrl" />
+          </label>
           <InfoIconLink
             href={RASTER_TILE_DOCUMENTATION_URL}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Open Raster Tile Layer documentation"
+            aria-label={intl.formatMessage({id: 'tilesetSetup.rasterDocumentation'})}
           >
             <Help height="16px" />
           </InfoIconLink>
         </LabelRow>
         <InputLight
           id="tile-metadata"
-          placeholder="Tileset metadata URL"
+          placeholder={intl.formatMessage({id: 'tilesetSetup.metadataUrl'})}
           value={metadataUrl ?? undefined}
           onChange={onMetadataUrlChange}
         />
         <TilesetInputDescription>
-          Supports raster .pmtiles. Limited support for STAC Items and Collections.
+          <FormattedMessage id="tilesetSetup.rasterDescription" />
         </TilesetInputDescription>
       </div>
       {showServerInput && (
         <div>
           <LabelRow>
-            <label htmlFor="tileset-raster-servers">Raster tile servers</label>
+            <label htmlFor="tileset-raster-servers">
+              <FormattedMessage id="tilesetSetup.rasterServers" />
+            </label>
             <InfoIconLink
               href={RASTER_TILE_DOCUMENTATION_URL}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Open Raster Tile Layer documentation"
+              aria-label={intl.formatMessage({id: 'tilesetSetup.rasterDocumentation'})}
             >
               <Help height="16px" />
             </InfoIconLink>
           </LabelRow>
           <InputLight
             id="tileset-raster-servers"
-            placeholder="Raster tile servers (separated by commas)"
+            placeholder={intl.formatMessage({id: 'tilesetSetup.rasterServersPlaceholder'})}
             value={rasterTileServerUrls}
             onChange={onRasterTileServerUrlsChange}
           />
           <TilesetInputDescription>
-            Raster tile server URLs for Cloud Optimized GeoTIFF tilesets and elevation.
+            <FormattedMessage id="tilesetSetup.rasterServersDescription" />
           </TilesetInputDescription>
         </div>
       )}

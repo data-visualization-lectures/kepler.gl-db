@@ -2,7 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useEffect, useState} from 'react';
+import {FormattedMessage} from '@kepler.gl/localization';
 import styled from 'styled-components';
+import {useIntl} from 'react-intl';
 import {WMSCapabilities} from '@loaders.gl/wms';
 
 import {validateUrl} from '@kepler.gl/common-utils';
@@ -47,10 +49,11 @@ type WMSData = {
 };
 
 const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
+  const intl = useIntl();
   const [layerName, setLayerName] = useState<string>('');
   const [wmsUrl, setWmsUrl] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<Error | 'unknown' | null>(null);
   const [wmsData, setWMSData] = useState<WMSData | null>(null);
 
   const onLayerNameChange = useCallback(
@@ -93,7 +96,7 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
           version: datasetMetadata.version
         });
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Unknown error'));
+        setError(err instanceof Error ? err : 'unknown');
         setWMSData(null);
       } finally {
         setLoading(false);
@@ -120,41 +123,55 @@ const TilesetWMSForm: React.FC<WMSTileFormProps> = ({setResponse}) => {
         metadata: wmsData?.metadata ?? null,
         dataset,
         loading,
-        error
+        error:
+          error === 'unknown'
+            ? new Error(intl.formatMessage({id: 'tilesetSetup.unknownError'}))
+            : error
       });
     } else {
       setResponse({
         metadata: null,
         dataset: null,
         loading,
-        error
+        error:
+          error === 'unknown'
+            ? new Error(intl.formatMessage({id: 'tilesetSetup.unknownError'}))
+            : error
       });
     }
-  }, [setResponse, layerName, wmsUrl, wmsData, loading, error]);
+  }, [intl, setResponse, layerName, wmsUrl, wmsData, loading, error]);
 
   return (
     <TilesetInputContainer>
       <div>
-        <label htmlFor="layer-name">Name</label>
+        <label htmlFor="layer-name">
+          <FormattedMessage id="tilesetSetup.name" />
+        </label>
         <InputLight
           id="layer-name"
-          placeholder="Name your WMS layer"
+          placeholder={intl.formatMessage({id: 'tilesetSetup.wmsNamePlaceholder'})}
           value={layerName}
           onChange={onLayerNameChange}
         />
       </div>
       <div>
-        <label htmlFor="wms-url">WMS URL</label>
+        <label htmlFor="wms-url">
+          <FormattedMessage id="tilesetSetup.wmsUrl" />
+        </label>
         <InputLight
           id="wms-url"
-          placeholder="Enter WMS URL"
+          placeholder={intl.formatMessage({id: 'tilesetSetup.wmsUrlPlaceholder'})}
           value={wmsUrl}
           onChange={onWmsUrlChange}
         />
-        <TilesetInputDescription>Provide a valid WMS service URL.</TilesetInputDescription>
+        <TilesetInputDescription>
+          <FormattedMessage id="tilesetSetup.wmsDescription" />
+        </TilesetInputDescription>
       </div>
       <div>
-        <TilesetInputDescription>For example, try a public WMS URL:</TilesetInputDescription>
+        <TilesetInputDescription>
+          <FormattedMessage id="tilesetSetup.wmsExamples" />
+        </TilesetInputDescription>
         <ExampleUrlsContainer>
           <div className="example-url">• https://ows.terrestris.de/osm/service</div>
           <div className="example-url">

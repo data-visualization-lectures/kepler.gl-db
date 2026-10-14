@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import { LOCALES } from '../locales';
+import {LOCALES} from '../locales';
 
 export default {
   property: {
@@ -671,6 +671,33 @@ ${'```'}
   tilesetSetup: {
     header: 'Setup Vector Tiles',
     rasterTileHeader: 'Setup Raster Tiles',
+    type: 'Tileset Type',
+    vectorTile: 'Vector Tile',
+    rasterTile: 'Raster Tile',
+    wms: 'WMS',
+    name: 'Name',
+    namePlaceholder: 'Name your tileset',
+    url: 'Tileset URL',
+    metadataUrl: 'Tileset metadata URL',
+    metadataPlaceholder: 'Tileset metadata',
+    vectorDescription: 'Requires {x}, {y}, {z} placeholders in URL or .pmtiles extension.',
+    metadataDescription: 'Optional, but recommended. Supports json, txt',
+    metadataLoadingFailed: 'Metadata loading failed: {status} {statusText}',
+    useRasterForm: 'For .pmtiles in raster format, please use the Raster Tile form.',
+    useVectorForm: 'For .pmtiles in mvt format, please use the Vector Tile form.',
+    invalidRasterServers: 'Provide valid raster tile server urls to support STAC and elevations.',
+    rasterDocumentation: 'Open Raster Tile Layer documentation',
+    rasterDescription: 'Supports raster .pmtiles. Limited support for STAC Items and Collections.',
+    rasterServers: 'Raster tile servers',
+    rasterServersPlaceholder: 'Raster tile servers (separated by commas)',
+    rasterServersDescription:
+      'Raster tile server URLs for Cloud Optimized GeoTIFF tilesets and elevation.',
+    wmsNamePlaceholder: 'Name your WMS layer',
+    wmsUrl: 'WMS URL',
+    wmsUrlPlaceholder: 'Enter WMS URL',
+    wmsDescription: 'Provide a valid WMS service URL.',
+    wmsExamples: 'For example, try a public WMS URL:',
+    unknownError: 'Unknown error',
     addTilesetText: 'Add Tileset'
   },
   geocoder: {

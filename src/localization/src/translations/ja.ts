@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import { LOCALES } from '../locales';
+import {LOCALES} from '../locales';
 
 export default {
   property: {
@@ -19,7 +19,7 @@ export default {
     sum: '合計',
     pointCount: '点の数'
   },
-    placeholder: {
+  placeholder: {
     search: '検索',
     selectField: 'フィールドを選択',
     selectLayer: 'レイヤを選択',
@@ -635,6 +635,35 @@ ${'```'}
     picker: 'カラーピッカー'
   },
   tilesetSetup: {
+    type: 'タイルセットの種類',
+    vectorTile: 'ベクタータイル',
+    rasterTile: 'ラスタータイル',
+    wms: 'WMS',
+    name: '名前',
+    namePlaceholder: 'タイルセットの名前を入力',
+    url: 'タイルセットURL',
+    metadataUrl: 'タイルセットのメタデータURL',
+    metadataPlaceholder: 'タイルセットのメタデータ',
+    vectorDescription: 'URLに {x}、{y}、{z} のプレースホルダー、または .pmtiles 拡張子が必要です。',
+    metadataDescription: '省略可能ですが、指定を推奨します。json、txtに対応しています。',
+    metadataLoadingFailed: 'メタデータの読み込みに失敗しました: {status} {statusText}',
+    useRasterForm: 'ラスター形式の .pmtiles には、ラスタータイルのフォームを使用してください。',
+    useVectorForm: 'MVT形式の .pmtiles には、ベクタータイルのフォームを使用してください。',
+    invalidRasterServers:
+      'STACと標高データを利用するには、有効なラスタータイルサーバーのURLを指定してください。',
+    rasterDocumentation: 'ラスタータイルレイヤーのドキュメントを開く',
+    rasterDescription:
+      'ラスター形式の .pmtiles に対応しています。STACのアイテムとコレクションは一部対応しています。',
+    rasterServers: 'ラスタータイルサーバー',
+    rasterServersPlaceholder: 'ラスタータイルサーバーのURL（カンマ区切り）',
+    rasterServersDescription:
+      'Cloud Optimized GeoTIFFのタイルセットと標高データに使用するラスタータイルサーバーのURL。',
+    wmsNamePlaceholder: 'WMSレイヤーの名前を入力',
+    wmsUrl: 'WMS URL',
+    wmsUrlPlaceholder: 'WMSのURLを入力',
+    wmsDescription: '有効なWMSサービスのURLを指定してください。',
+    wmsExamples: '公開されているWMSのURLの例:',
+    unknownError: '不明なエラー',
     header: 'ベクタータイルの設定',
     rasterTileHeader: 'ラスタータイルの設定',
     addTilesetText: 'タイルセットを追加'

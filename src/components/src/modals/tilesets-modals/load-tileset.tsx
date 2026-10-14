@@ -2,9 +2,10 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useMemo, useState} from 'react';
-import {IntlShape} from 'react-intl';
+import {IntlShape, useIntl} from 'react-intl';
 import JSONPretty from 'react-json-pretty';
 import {AutoSizer} from 'react-virtualized';
+import {FormattedMessage} from '@kepler.gl/localization';
 import styled from 'styled-components';
 
 import {VectorTileIcon, RasterTileIcon, WMSLayerIcon} from '@kepler.gl/layers';
@@ -86,19 +87,19 @@ type LoadTilesetTabProps = {
 const TILE_TYPES = [
   {
     id: 'vectorTile',
-    label: 'Vector Tile',
+    label: 'tilesetSetup.vectorTile',
     Icon: VectorTileIcon,
     Component: TilesetVectorForm
   },
   {
     id: 'rasterTile',
-    label: 'Raster Tile',
+    label: 'tilesetSetup.rasterTile',
     Icon: RasterTileIcon,
     Component: TilesetRasterForm
   },
   {
     id: 'wms',
-    label: 'WMS',
+    label: 'tilesetSetup.wms',
     Icon: WMSLayerIcon,
     Component: TilesetWMSForm
   }
@@ -110,6 +111,7 @@ function isReady(response) {
 
 function LoadTilesetTabFactory() {
   const LoadTilesetTab: React.FC<LoadTilesetTabProps> = ({onTilesetAdded, isAddingDatasets}) => {
+    const intl = useIntl();
     const [typeIndex, setTypeIndex] = useState<number>(0);
     const [response, setResponse] = useState<MetaResponse>({});
 
@@ -149,13 +151,15 @@ function LoadTilesetTabFactory() {
       <LoadTilesetTabContainer>
         <Container>
           <div>
-            <StyledHeaderMessage>Tileset Type</StyledHeaderMessage>
+            <StyledHeaderMessage>
+              <FormattedMessage id="tilesetSetup.type" />
+            </StyledHeaderMessage>
 
             <TilesetTypeContainer className="tileset-type">
               {tileTypes.map((tileType, index) => (
                 <TilesetIcon
-                  key={tileType.label}
-                  name={tileType.label}
+                  key={tileType.id}
+                  name={intl.formatMessage({id: tileType.label})}
                   Icon={<tileType.Icon height={WIDTH_ICON} />}
                   onClick={() => setTypeIndex(index)}
                   selected={typeIndex === index}

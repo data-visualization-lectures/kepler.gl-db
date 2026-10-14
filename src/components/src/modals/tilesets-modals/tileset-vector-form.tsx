@@ -2,7 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useEffect, useState, useMemo} from 'react';
+import {FormattedMessage} from '@kepler.gl/localization';
 import styled from 'styled-components';
+import {useIntl} from 'react-intl';
 
 import {isPMTilesUrl} from '@kepler.gl/common-utils';
 import {
@@ -69,10 +71,14 @@ type TilesetVectorFormProps = {
 };
 
 const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
+  const intl = useIntl();
   const [tileName, setTileName] = useState<string>('');
   const [tileUrl, setTileUrl] = useState<string>('');
   const [metadataUrl, setMetadataUrl] = useState<string | null>('');
-  const [initialFetchError, setInitialFetchError] = useState<Error | null>(null);
+  const [initialFetchError, setInitialFetchError] = useState<{
+    status: number;
+    statusText: string;
+  } | null>(null);
 
   const onTileNameChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,9 +112,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
           setInitialFetchError(null);
           setMetadataUrl(potentialMetadataUrl);
         } else {
-          setInitialFetchError(
-            new Error(`Metadata loading failed: ${resp.status} ${resp.statusText}`)
-          );
+          setInitialFetchError({status: resp.status, statusText: resp.statusText});
         }
       } else {
         setInitialFetchError(null);
@@ -148,7 +152,7 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
           metadata,
           dataset: null,
           loading,
-          error: new Error('For .pmtiles in raster format, please use the Raster Tile form.')
+          error: new Error(intl.formatMessage({id: 'tilesetSetup.useRasterForm'}))
         });
       }
 
@@ -161,17 +165,30 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
         metadata,
         dataset,
         loading,
-        error: metaError || initialFetchError
+        error:
+          metaError ||
+          (initialFetchError
+            ? new Error(
+                intl.formatMessage({id: 'tilesetSetup.metadataLoadingFailed'}, initialFetchError)
+              )
+            : null)
       });
     } else {
       setResponse({
         metadata,
         dataset: null,
         loading,
-        error: metaError || initialFetchError
+        error:
+          metaError ||
+          (initialFetchError
+            ? new Error(
+                intl.formatMessage({id: 'tilesetSetup.metadataLoadingFailed'}, initialFetchError)
+              )
+            : null)
       });
     }
   }, [
+    intl,
     setResponse,
     metadata,
     loading,
@@ -194,37 +211,45 @@ const TilesetVectorForm: React.FC<TilesetVectorFormProps> = ({setResponse}) => {
   return (
     <TilesetInputContainer>
       <div>
-        <label htmlFor="tileset-name">Name</label>
+        <label htmlFor="tileset-name">
+          <FormattedMessage id="tilesetSetup.name" />
+        </label>
         <InputLight
           id="tileset-name"
-          placeholder="Name your tileset"
+          placeholder={intl.formatMessage({id: 'tilesetSetup.namePlaceholder'})}
           value={tileName}
           onChange={onTileNameChange}
         />
       </div>
       <div>
-        <label htmlFor="tile-url">Tileset URL</label>
+        <label htmlFor="tile-url">
+          <FormattedMessage id="tilesetSetup.url" />
+        </label>
         <InputLight
           id="tile-url"
-          placeholder="Tileset URL"
+          placeholder={intl.formatMessage({id: 'tilesetSetup.url'})}
           value={tileUrl}
           onChange={onTileUrlChange}
         />
         <TilesetInputDescription>
-          Requires &#123;x&#125;, &#123;y&#125;, &#123;z&#125; placeholders in URL or .pmtile
-          extension.
+          <FormattedMessage
+            id="tilesetSetup.vectorDescription"
+            values={{x: '{x}', y: '{y}', z: '{z}'}}
+          />
         </TilesetInputDescription>
       </div>
       <div>
-        <label htmlFor="tile-metadata">Tileset metadata URL</label>
+        <label htmlFor="tile-metadata">
+          <FormattedMessage id="tilesetSetup.metadataUrl" />
+        </label>
         <InputLight
           id="tile-metadata"
-          placeholder="Tileset metadata"
+          placeholder={intl.formatMessage({id: 'tilesetSetup.metadataPlaceholder'})}
           value={metadataUrl ?? undefined}
           onChange={onTileMetaUrlChange}
         />
         <TilesetInputDescription>
-          Optional, but recommended. Supports json, txt
+          <FormattedMessage id="tilesetSetup.metadataDescription" />
         </TilesetInputDescription>
       </div>
     </TilesetInputContainer>
